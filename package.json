@@ -1,0 +1,14 @@
+{
+  "name": "festora",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint"
+  },
+  "devDependencies": {
+    "turbo": "^2.1.3"
+  },
+  "packageManager": "pnpm@9.15.9"
+}
