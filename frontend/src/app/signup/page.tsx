@@ -34,8 +34,8 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="mx-auto max-w-sm px-6 py-16">
-      <h1 className="text-2xl font-bold">Sign up</h1>
+    <main className="mx-auto max-w-sm px-4 py-10 sm:px-6 sm:py-16">
+      <h1 className="text-xl font-bold sm:text-2xl">Sign up</h1>
       <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
         <input
           className="rounded-md border border-gray-300 px-3 py-2 text-sm"
@@ -75,7 +75,7 @@ export default function SignupPage() {
         <button
           type="submit"
           disabled={loading}
-          className="rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50"
+          className="w-full rounded-md bg-orange-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50"
         >
           {loading ? "Signing up..." : "Sign up"}
         </button>

@@ -24,9 +24,9 @@ export function ListingCard({ listing }: { listing: ListingDTO }) {
           className="h-full w-full object-cover"
         />
       </div>
-      <div className="p-3">
-        <p className="font-semibold text-gray-900">{formatPrice(listing.price, listing.priceUnit)}</p>
-        <p className="mt-1 truncate text-sm text-gray-700">{listing.title}</p>
+      <div className="p-2 sm:p-3">
+        <p className="text-sm font-semibold text-gray-900 sm:text-base">{formatPrice(listing.price, listing.priceUnit)}</p>
+        <p className="mt-1 truncate text-xs text-gray-700 sm:text-sm">{listing.title}</p>
         <p className="mt-1 truncate text-xs text-gray-500">{listing.storeName}</p>
         {listing.city && <p className="text-xs text-gray-400">{listing.city}</p>}
       </div>

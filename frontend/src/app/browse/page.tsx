@@ -18,8 +18,8 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   const { listings } = await serverFetch<{ listings: ListingDTO[] }>(`/listings?${query.toString()}`);
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
-      <h1 className="text-xl font-bold">
+    <main className="mx-auto max-w-6xl px-3 py-6 sm:px-4 sm:py-8">
+      <h1 className="text-lg font-bold sm:text-xl">
         {params.q ? `Results for "${params.q}"` : "Browse listings"}
       </h1>
 
