@@ -12,6 +12,7 @@ export const listingController = {
 
     if (query.categorySlug) filter.categorySlug = query.categorySlug;
     if (query.subcategorySlug) filter.subcategorySlug = query.subcategorySlug;
+    if (query.type) filter.type = query.type;
     if (query.city) filter.city = new RegExp(`^${query.city}$`, "i");
     if (query.q) filter.$text = { $search: query.q };
 

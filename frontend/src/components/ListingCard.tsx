@@ -14,7 +14,7 @@ export function ListingCard({ listing }: { listing: ListingDTO }) {
   return (
     <Link
       href={`/listings/${listing.id}`}
-      className="block overflow-hidden rounded-lg border border-gray-200 bg-white hover:shadow-md"
+      className="block overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-shadow hover:shadow-md"
     >
       <div className="aspect-[4/3] w-full overflow-hidden bg-gray-100">
         {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -23,7 +23,10 @@ async function seed() {
   for (const subcategory of SEED_SUBCATEGORIES) {
     await SubcategoryModel.updateOne({ slug: subcategory.slug }, { $set: subcategory }, { upsert: true });
   }
-  console.log(`[seed] upserted ${SEED_SUBCATEGORIES.length} subcategories`);
+  const { deletedCount } = await SubcategoryModel.deleteMany({
+    slug: { $nin: SEED_SUBCATEGORIES.map((s) => s.slug) },
+  });
+  console.log(`[seed] upserted ${SEED_SUBCATEGORIES.length} subcategories, removed ${deletedCount} stale`);
 
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
   let listingCount = 0;

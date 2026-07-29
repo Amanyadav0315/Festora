@@ -16,6 +16,7 @@ export const createListingSchema = z.object({
 export const listListingsQuerySchema = z.object({
   categorySlug: z.enum(CATEGORY_SLUGS).optional(),
   subcategorySlug: z.string().optional(),
+  type: z.enum(["product", "rental", "venue", "service"]).optional(),
   city: z.string().optional(),
   q: z.string().optional(),
   limit: z.coerce.number().min(1).max(50).default(20),
