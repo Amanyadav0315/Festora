@@ -8,8 +8,10 @@ function toDTO(c: any) {
   return {
     id: c._id.toString(),
     name: c.name,
+    nameHi: c.nameHi,
     slug: c.slug,
     description: c.description,
+    descriptionHi: c.descriptionHi,
     icon: c.icon,
     imageUrl: c.imageUrl,
   };
@@ -27,7 +29,9 @@ export const categoryController = {
     if (!category) throw new ApiError(404, "Category not found");
 
     if (input.name !== undefined) category.name = input.name;
+    if (input.nameHi !== undefined) category.nameHi = input.nameHi;
     if (input.description !== undefined) category.description = input.description;
+    if (input.descriptionHi !== undefined) category.descriptionHi = input.descriptionHi;
     if (input.icon !== undefined) category.icon = input.icon;
     if (req.file) category.imageUrl = categoryImageUrl(req.file.filename);
 

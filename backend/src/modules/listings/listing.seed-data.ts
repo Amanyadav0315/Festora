@@ -2,6 +2,7 @@ import type { CategorySlug, ListingType } from "@festora/types";
 
 interface SeedVendor {
   name: string;
+  phone: string;
   email: string;
   storeName: string;
   categories: CategorySlug[];
@@ -22,6 +23,7 @@ const PLACEHOLDER_IMAGE = "/placeholder-listing.svg";
 export const SEED_VENDORS: SeedVendor[] = [
   {
     name: "Rajesh Sharma",
+    phone: "9810000001",
     email: "sharma.tents@festora.demo",
     storeName: "Sharma Tent House",
     categories: ["tent-house-mandap"],
@@ -49,6 +51,7 @@ export const SEED_VENDORS: SeedVendor[] = [
   },
   {
     name: "DJ Karan",
+    phone: "9810000002",
     email: "djkaran@festora.demo",
     storeName: "Karan Beats & Sound",
     categories: ["dj-sound"],
@@ -66,6 +69,7 @@ export const SEED_VENDORS: SeedVendor[] = [
   },
   {
     name: "Priya Studios",
+    phone: "9810000003",
     email: "priya.studios@festora.demo",
     storeName: "Priya Photography Studio",
     categories: ["photography-videography"],
@@ -84,6 +88,7 @@ export const SEED_VENDORS: SeedVendor[] = [
   },
   {
     name: "Grand Palace Banquets",
+    phone: "9810000004",
     email: "grandpalace@festora.demo",
     storeName: "Grand Palace Banquet Hall",
     categories: ["banquet-halls"],
@@ -101,6 +106,7 @@ export const SEED_VENDORS: SeedVendor[] = [
   },
   {
     name: "Annapurna Caterers",
+    phone: "9810000005",
     email: "annapurna@festora.demo",
     storeName: "Annapurna Caterers",
     categories: ["catering"],
@@ -128,6 +134,7 @@ export const SEED_VENDORS: SeedVendor[] = [
   },
   {
     name: "Green Valley Resorts",
+    phone: "9810000006",
     email: "greenvalley@festora.demo",
     storeName: "Green Valley Farmhouse",
     categories: ["resorts-farmhouses"],

@@ -9,12 +9,18 @@ const SALT_ROUNDS = 10;
 
 export const authService = {
   async signup(input: SignupInput) {
-    const existing = await userRepository.findByEmail(input.email);
-    if (existing) throw new ApiError(409, "Email already in use");
+    const existingPhone = await userRepository.findByPhone(input.phone);
+    if (existingPhone) throw new ApiError(409, "Phone number already in use");
+
+    if (input.email) {
+      const existingEmail = await userRepository.findByEmail(input.email);
+      if (existingEmail) throw new ApiError(409, "Email already in use");
+    }
 
     const passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS);
     const user = await userRepository.create({
       name: input.name,
+      phone: input.phone,
       email: input.email,
       passwordHash,
       role: input.role,
@@ -24,11 +30,11 @@ export const authService = {
   },
 
   async login(input: LoginInput) {
-    const user = await userRepository.findByEmail(input.email);
-    if (!user) throw new ApiError(401, "Invalid email or password");
+    const user = await userRepository.findByIdentifier(input.identifier);
+    if (!user) throw new ApiError(401, "Invalid credentials");
 
     const valid = await bcrypt.compare(input.password, user.passwordHash);
-    if (!valid) throw new ApiError(401, "Invalid email or password");
+    if (!valid) throw new ApiError(401, "Invalid credentials");
 
     return buildAuthResult(user);
   },

@@ -35,7 +35,9 @@ function CategoryEditModal({
   onSaved: (updated: CategoryDTO) => void;
 }) {
   const [name, setName] = useState(category.name);
+  const [nameHi, setNameHi] = useState(category.nameHi ?? "");
   const [description, setDescription] = useState(category.description ?? "");
+  const [descriptionHi, setDescriptionHi] = useState(category.descriptionHi ?? "");
   const [icon, setIcon] = useState(category.icon ?? "");
   const [image, setImage] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
@@ -48,7 +50,9 @@ function CategoryEditModal({
     try {
       const formData = new FormData();
       formData.set("name", name);
+      formData.set("nameHi", nameHi);
       formData.set("description", description);
+      formData.set("descriptionHi", descriptionHi);
       formData.set("icon", icon);
       if (image) formData.set("image", image);
 
@@ -79,11 +83,28 @@ function CategoryEditModal({
           />
         </label>
         <label className="text-xs font-medium text-gray-600">
+          Name (Hindi)
+          <input
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            value={nameHi}
+            onChange={(e) => setNameHi(e.target.value)}
+          />
+        </label>
+        <label className="text-xs font-medium text-gray-600">
           Description
           <textarea
             className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            rows={2}
+          />
+        </label>
+        <label className="text-xs font-medium text-gray-600">
+          Description (Hindi)
+          <textarea
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            value={descriptionHi}
+            onChange={(e) => setDescriptionHi(e.target.value)}
             rows={2}
           />
         </label>
@@ -127,6 +148,7 @@ function SubcategoryFormModal({
   onSaved: (saved: SubcategoryDTO, isNew: boolean) => void;
 }) {
   const [name, setName] = useState(subcategory?.name ?? "");
+  const [nameHi, setNameHi] = useState(subcategory?.nameHi ?? "");
   const [categorySlug, setCategorySlug] = useState<string>(subcategory?.categorySlug ?? categories[0]?.slug ?? "");
   const [featured, setFeatured] = useState(subcategory?.featured ?? false);
   const [image, setImage] = useState<File | null>(null);
@@ -140,6 +162,7 @@ function SubcategoryFormModal({
     try {
       const formData = new FormData();
       formData.set("name", name);
+      formData.set("nameHi", nameHi);
       formData.set("categorySlug", categorySlug);
       formData.set("featured", String(featured));
       if (image) formData.set("image", image);
@@ -178,6 +201,14 @@ function SubcategoryFormModal({
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
+          />
+        </label>
+        <label className="text-xs font-medium text-gray-600">
+          Name (Hindi)
+          <input
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            value={nameHi}
+            onChange={(e) => setNameHi(e.target.value)}
           />
         </label>
         <label className="text-xs font-medium text-gray-600">
@@ -301,6 +332,7 @@ export default function AdminCategoriesPage() {
                 )}
               </div>
               <p className="mt-2 text-xs font-medium text-gray-800">{cat.name}</p>
+              {cat.nameHi && <p className="text-[10px] text-gray-400">{cat.nameHi}</p>}
               <button
                 onClick={() => setEditingCategory(cat)}
                 className="mt-2 text-xs font-medium text-orange-600 hover:underline"
@@ -338,6 +370,7 @@ export default function AdminCategoriesPage() {
                 )}
               </div>
               <p className="mt-2 truncate text-xs font-medium text-gray-800">{sub.name}</p>
+              {sub.nameHi && <p className="truncate text-[10px] text-gray-400">{sub.nameHi}</p>}
               <p className="truncate text-[11px] text-gray-400">
                 {categories.find((c) => c.slug === sub.categorySlug)?.name ?? sub.categorySlug}
                 {sub.featured ? " · featured" : ""}

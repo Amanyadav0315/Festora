@@ -14,7 +14,8 @@ export type CategorySlug = (typeof CATEGORY_SLUGS)[number];
 export interface UserDTO {
   id: string;
   name: string;
-  email: string;
+  phone: string;
+  email?: string;
   role: UserRole;
   createdAt: string;
 }
@@ -22,8 +23,10 @@ export interface UserDTO {
 export interface CategoryDTO {
   id: string;
   name: string;
+  nameHi?: string;
   slug: CategorySlug;
   description?: string;
+  descriptionHi?: string;
   icon?: string;
   imageUrl?: string;
 }
@@ -31,6 +34,7 @@ export interface CategoryDTO {
 export interface SubcategoryDTO {
   id: string;
   name: string;
+  nameHi?: string;
   slug: string;
   categorySlug: CategorySlug;
   description?: string;

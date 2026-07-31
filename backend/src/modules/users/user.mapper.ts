@@ -5,7 +5,8 @@ export function toUserDTO(user: UserDocument): UserDTO {
   return {
     id: user._id.toString(),
     name: user.name,
-    email: user.email,
+    phone: user.phone,
+    email: user.email ?? undefined,
     role: user.role as UserDTO["role"],
     createdAt: (user as any).createdAt.toISOString(),
   };

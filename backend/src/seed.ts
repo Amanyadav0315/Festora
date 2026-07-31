@@ -13,6 +13,7 @@ import { SEED_VENDORS, PLACEHOLDER_IMAGE } from "./modules/listings/listing.seed
 const DEMO_PASSWORD = "demo1234";
 const ADMIN_EMAIL = "adm@festora.com";
 const ADMIN_PASSWORD = "Pass@admfestora";
+const ADMIN_PHONE = "9800000000";
 
 async function seed() {
   await connectDB();
@@ -32,7 +33,15 @@ async function seed() {
   const adminPasswordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
   await UserModel.updateOne(
     { email: ADMIN_EMAIL },
-    { $set: { name: "Festora Admin", email: ADMIN_EMAIL, passwordHash: adminPasswordHash, role: "admin" } },
+    {
+      $set: {
+        name: "Festora Admin",
+        phone: ADMIN_PHONE,
+        email: ADMIN_EMAIL,
+        passwordHash: adminPasswordHash,
+        role: "admin",
+      },
+    },
     { upsert: true }
   );
   console.log(`[seed] upserted admin account: ${ADMIN_EMAIL}`);
@@ -43,7 +52,7 @@ async function seed() {
   for (const vendor of SEED_VENDORS) {
     const user = await UserModel.findOneAndUpdate(
       { email: vendor.email },
-      { $set: { name: vendor.name, email: vendor.email, passwordHash, role: "vendor" } },
+      { $set: { name: vendor.name, phone: vendor.phone, email: vendor.email, passwordHash, role: "vendor" } },
       { upsert: true, new: true }
     );
 

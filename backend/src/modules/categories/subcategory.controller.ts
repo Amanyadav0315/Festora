@@ -9,6 +9,7 @@ function toDTO(s: any) {
   return {
     id: s._id.toString(),
     name: s.name,
+    nameHi: s.nameHi,
     slug: s.slug,
     categorySlug: s.categorySlug,
     description: s.description,
@@ -40,6 +41,7 @@ export const subcategoryController = {
 
     const subcategory = await SubcategoryModel.create({
       name: input.name,
+      nameHi: input.nameHi,
       slug,
       categorySlug: input.categorySlug,
       description: input.description,
@@ -57,6 +59,7 @@ export const subcategoryController = {
     if (!subcategory) throw new ApiError(404, "Category not found");
 
     if (input.name !== undefined) subcategory.name = input.name;
+    if (input.nameHi !== undefined) subcategory.nameHi = input.nameHi;
     if (input.categorySlug !== undefined) subcategory.categorySlug = input.categorySlug;
     if (input.description !== undefined) subcategory.description = input.description;
     if (input.icon !== undefined) subcategory.icon = input.icon;

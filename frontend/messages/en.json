@@ -1,0 +1,56 @@
+{
+  "common": {
+    "brand": "Festora",
+    "english": "English",
+    "hindi": "Hindi"
+  },
+  "navbar": {
+    "searchPlaceholder": "Search \"Wedding DJ\"",
+    "search": "Search",
+    "wishlist": "Wishlist",
+    "login": "Login",
+    "logout": "Log out",
+    "greeting": "Hi, {name}",
+    "sell": "+ Sell"
+  },
+  "bottomNav": {
+    "home": "Home",
+    "rent": "Rent",
+    "sell": "Sell",
+    "wishlist": "Wishlist",
+    "account": "Account",
+    "vendorAccount": "Vendor account",
+    "buyerAccount": "Buyer account"
+  },
+  "home": {
+    "recommendations": "Fresh recommendations",
+    "empty": "No listings yet — check back soon.",
+    "browseCategories": "Browse categories",
+    "viewAllCategories": "View all categories ({count})",
+    "showLess": "Show less"
+  },
+  "auth": {
+    "login": "Log in",
+    "signup": "Sign up",
+    "name": "Name",
+    "phone": "Phone number",
+    "identifier": "Phone or email",
+    "email": "Email (optional)",
+    "password": "Password",
+    "buyerRole": "I'm booking services (buyer)",
+    "vendorRole": "I offer services (vendor)",
+    "loggingIn": "Logging in...",
+    "signingUp": "Signing up...",
+    "somethingWrong": "Something went wrong"
+  },
+  "onboarding": {
+    "welcomeTitle": "Welcome to Festora",
+    "welcomeSubtitle": "Find and book the best tent houses, DJs, photographers, banquet halls, caterers and resorts near you.",
+    "startNow": "Start now",
+    "authTitle": "Log in or create an account",
+    "authSubtitle": "So we can save your bookings and wishlist — or skip for now.",
+    "skip": "Skip",
+    "languageTitle": "Choose your language",
+    "languageSubtitle": "You can change this anytime from the menu."
+  }
+}

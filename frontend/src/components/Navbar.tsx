@@ -2,15 +2,21 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import type { UserDTO } from "@festora/types";
 import { AUTH_CHANGED_EVENT, clearSession, getUser } from "@/lib/auth-client";
 import { INDIA_CITIES } from "@/lib/cities";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 const LOCATION_KEY = "festora_location";
+const HIDDEN_PREFIXES = ["/welcome", "/onboarding"];
 
 export function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
+  const t = useTranslations("navbar");
+  const tCommon = useTranslations("common");
   const [user, setUser] = useState<UserDTO | null>(null);
   const [location, setLocation] = useState<string>("All India");
   const [search, setSearch] = useState("");
@@ -54,11 +60,15 @@ export function Navbar() {
     }
   }
 
+  if (HIDDEN_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    return null;
+  }
+
   return (
     <header className="sticky top-0 z-30 border-b border-gray-200 bg-white">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
         <Link href="/" className="hidden shrink-0 text-xl font-extrabold text-orange-600 lg:block">
-          Festora
+          {tCommon("brand")}
         </Link>
 
         <select
@@ -79,7 +89,7 @@ export function Navbar() {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder='Search "Wedding DJ"'
+            placeholder={t("searchPlaceholder")}
             className="w-full rounded-l-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
           />
           <button
@@ -87,25 +97,27 @@ export function Navbar() {
             className="rounded-r-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700"
             aria-label="Search"
           >
-            Search
+            {t("search")}
           </button>
         </form>
 
         <nav className="hidden shrink-0 items-center gap-4 text-sm lg:flex">
+          <LanguageSwitcher />
+
           <Link href="/wishlist" className="text-gray-700 hover:text-orange-600">
-            Wishlist
+            {t("wishlist")}
           </Link>
 
           {user ? (
             <div className="flex items-center gap-3">
-              <span className="text-gray-700">Hi, {user.name.split(" ")[0]}</span>
+              <span className="text-gray-700">{t("greeting", { name: user.name.split(" ")[0] })}</span>
               <button onClick={handleLogout} className="text-gray-500 hover:text-orange-600">
-                Log out
+                {t("logout")}
               </button>
             </div>
           ) : (
             <Link href="/login" className="text-gray-700 hover:text-orange-600">
-              Login
+              {t("login")}
             </Link>
           )}
 
@@ -114,7 +126,7 @@ export function Navbar() {
             onClick={handleSellClick}
             className="flex items-center gap-1 rounded-full bg-orange-600 px-4 py-2 font-semibold text-white hover:bg-orange-700"
           >
-            + Sell
+            {t("sell")}
           </Link>
         </nav>
 
@@ -122,7 +134,7 @@ export function Navbar() {
         <div className="flex w-full flex-col gap-2.5 lg:hidden">
           <div className="flex items-center gap-3">
             <Link href="/" className="shrink-0 text-lg font-extrabold text-orange-600">
-              Festora
+              {tCommon("brand")}
             </Link>
 
             <div className="relative shrink-0">
@@ -160,6 +172,8 @@ export function Navbar() {
             </div>
 
             <div className="ml-auto flex shrink-0 items-center gap-1">
+              <LanguageSwitcher compact />
+
               <Link
                 href="/wishlist"
                 aria-label="Wishlist"

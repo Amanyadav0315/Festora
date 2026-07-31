@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import type { UserDTO } from "@festora/types";
 import { AUTH_CHANGED_EVENT, clearSession, getUser } from "@/lib/auth-client";
+
+const HIDDEN_PREFIXES = ["/welcome", "/onboarding"];
 
 function HomeIcon({ className }: { className?: string }) {
   return (
@@ -76,6 +79,7 @@ function NavItem({
 export function MobileBottomNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const t = useTranslations("bottomNav");
   const [user, setUser] = useState<UserDTO | null>(null);
   const [accountOpen, setAccountOpen] = useState(false);
 
@@ -108,6 +112,10 @@ export function MobileBottomNav() {
     router.push("/");
   }
 
+  if (HIDDEN_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    return null;
+  }
+
   return (
     <>
       {accountOpen && (
@@ -120,22 +128,22 @@ export function MobileBottomNav() {
 
       {accountOpen && user && (
         <div className="fixed inset-x-3 bottom-[4.25rem] z-40 rounded-xl border border-gray-200 bg-white p-4 shadow-lg lg:hidden">
-          <p className="text-sm font-semibold text-gray-900">Hi, {user.name.split(" ")[0]}</p>
-          <p className="text-xs text-gray-500">{user.role === "vendor" ? "Vendor account" : "Buyer account"}</p>
+          <p className="text-sm font-semibold text-gray-900">{user.name.split(" ")[0]}</p>
+          <p className="text-xs text-gray-500">{user.role === "vendor" ? t("vendorAccount") : t("buyerAccount")}</p>
           <button
             onClick={handleLogout}
             className="mt-3 w-full rounded-md border border-gray-300 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
-            Log out
+            {t("account")}
           </button>
         </div>
       )}
 
       <nav className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden">
-        <NavItem href="/" label="Home" icon={<HomeIcon className="h-5 w-5" />} active={pathname === "/"} />
+        <NavItem href="/" label={t("home")} icon={<HomeIcon className="h-5 w-5" />} active={pathname === "/"} />
         <NavItem
           href="/browse?type=rental"
-          label="Rent"
+          label={t("rent")}
           icon={<RentIcon className="h-5 w-5" />}
           active={pathname === "/browse"}
         />
@@ -150,12 +158,12 @@ export function MobileBottomNav() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
             </svg>
           </span>
-          Sell
+          {t("sell")}
         </Link>
 
         <NavItem
           href="/wishlist"
-          label="Wishlist"
+          label={t("wishlist")}
           icon={<WishlistIcon className="h-5 w-5" active={pathname === "/wishlist"} />}
           active={pathname === "/wishlist"}
         />
@@ -169,12 +177,12 @@ export function MobileBottomNav() {
             }`}
           >
             <AccountIcon className="h-5 w-5" />
-            Account
+            {t("account")}
           </button>
         ) : (
           <NavItem
             href="/login"
-            label="Account"
+            label={t("account")}
             icon={<AccountIcon className="h-5 w-5" />}
             active={pathname === "/login"}
           />

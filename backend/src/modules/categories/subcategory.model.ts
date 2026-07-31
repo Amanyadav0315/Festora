@@ -4,6 +4,7 @@ import { CATEGORY_SLUGS } from "@festora/types";
 const subcategorySchema = new Schema(
   {
     name: { type: String, required: true },
+    nameHi: { type: String },
     slug: { type: String, required: true, unique: true },
     categorySlug: { type: String, enum: CATEGORY_SLUGS, required: true },
     description: { type: String },
