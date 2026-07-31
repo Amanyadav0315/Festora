@@ -30,4 +30,16 @@ export const storeController = {
     if (!store) throw new ApiError(404, "Store not found");
     res.json({ store: toStoreDTO(store) });
   },
+
+  async getByOwner(req: Request, res: Response) {
+    const store = await StoreModel.findOne({ ownerId: req.params.userId });
+    if (!store) throw new ApiError(404, "Store not found");
+    res.json({ store: toStoreDTO(store) });
+  },
+
+  async getById(req: Request, res: Response) {
+    const store = await StoreModel.findById(req.params.id);
+    if (!store) throw new ApiError(404, "Store not found");
+    res.json({ store: toStoreDTO(store) });
+  },
 };

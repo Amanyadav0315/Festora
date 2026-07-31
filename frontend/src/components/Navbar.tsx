@@ -13,6 +13,40 @@ import { ProfileMenu } from "@/components/ProfileMenu";
 const LOCATION_KEY = "festora_location";
 const HIDDEN_PREFIXES = ["/welcome", "/onboarding"];
 
+function WishlistIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={1.8}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 19.3l-1.15-1.02C6.4 14.55 3.5 11.97 3.5 8.8 3.5 6.2 5.6 4.1 8.2 4.1c1.47 0 2.88.68 3.8 1.76a5.1 5.1 0 0 1 3.8-1.76c2.6 0 4.7 2.1 4.7 4.7 0 3.17-2.9 5.75-7.35 9.5L12 19.3z"
+      />
+    </svg>
+  );
+}
+
+function RentIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={2}>
+      <rect x="3" y="6" width="18" height="13" rx="2" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 6V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 11h18" />
+    </svg>
+  );
+}
+
+function ChatIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={1.8}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M4 4.5h16a1 1 0 0 1 1 1V15a1 1 0 0 1-1 1H9l-4.5 4V16H4a1 1 0 0 1-1-1V5.5a1 1 0 0 1 1-1z"
+      />
+    </svg>
+  );
+}
+
 export function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
@@ -95,8 +129,28 @@ export function Navbar() {
         <nav className="hidden shrink-0 items-center gap-4 text-sm lg:flex">
           <LanguageSwitcher />
 
-          <Link href="/wishlist" className="text-gray-700 hover:text-orange-600">
-            {t("wishlist")}
+          <Link
+            href="/browse?type=rental"
+            className="flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3.5 py-1.5 font-semibold text-orange-700 hover:border-orange-300 hover:bg-orange-100"
+          >
+            <RentIcon className="h-4 w-4" />
+            {t("rent")}
+          </Link>
+
+          <Link
+            href="/chats"
+            aria-label={t("chats")}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100"
+          >
+            <ChatIcon className="h-5 w-5" />
+          </Link>
+
+          <Link
+            href="/wishlist"
+            aria-label={t("wishlist")}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100"
+          >
+            <WishlistIcon className="h-5 w-5" />
           </Link>
 
           {user ? (
@@ -161,17 +215,11 @@ export function Navbar() {
               <LanguageSwitcher compact />
 
               <Link
-                href="/wishlist"
-                aria-label="Wishlist"
+                href="/chats"
+                aria-label={t("chats")}
                 className="flex h-9 w-9 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100"
               >
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8}>
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 19.3l-1.15-1.02C6.4 14.55 3.5 11.97 3.5 8.8 3.5 6.2 5.6 4.1 8.2 4.1c1.47 0 2.88.68 3.8 1.76a5.1 5.1 0 0 1 3.8-1.76c2.6 0 4.7 2.1 4.7 4.7 0 3.17-2.9 5.75-7.35 9.5L12 19.3z"
-                  />
-                </svg>
+                <ChatIcon className="h-5 w-5" />
               </Link>
             </div>
           </div>

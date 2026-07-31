@@ -15,11 +15,12 @@ export const listingController = {
     if (query.type) filter.type = query.type;
     if (query.city) filter.city = new RegExp(`^${query.city}$`, "i");
     if (query.q) filter.$text = { $search: query.q };
+    if (query.storeId) filter.storeId = query.storeId;
 
     const listings = await ListingModel.find(filter)
       .sort({ createdAt: -1 })
       .limit(query.limit)
-      .populate("storeId", "name");
+      .populate("storeId", "name ownerId");
 
     res.json({ listings: listings.map(toListingDTO) });
   },
@@ -30,7 +31,7 @@ export const listingController = {
     if (!store) throw new ApiError(404, "Create a store before adding listings");
 
     const listing = await ListingModel.create({ ...input, storeId: store._id });
-    const populated = await listing.populate("storeId", "name");
+    const populated = await listing.populate("storeId", "name ownerId");
     res.status(201).json({ listing: toListingDTO(populated) });
   },
 };

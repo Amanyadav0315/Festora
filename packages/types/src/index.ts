@@ -59,6 +59,7 @@ export interface ListingDTO {
   id: string;
   storeId: string;
   storeName: string;
+  ownerId?: string;
   categorySlug: CategorySlug;
   subcategorySlug?: string;
   type: ListingType;
@@ -83,6 +84,24 @@ export interface BookingDTO {
   eventDate?: string;
   notes?: string;
   createdAt: string;
+}
+
+export interface FollowUserSummaryDTO {
+  id: string;
+  name: string;
+}
+
+export interface PublicUserProfileDTO {
+  id: string;
+  name: string;
+  createdAt: string;
+  followersCount: number;
+  followingCount: number;
+  postsCount: number;
+  isFollowing: boolean;
+  isBlocked: boolean;
+  isSelf: boolean;
+  store?: StoreDTO;
 }
 
 export interface AuthTokensDTO {

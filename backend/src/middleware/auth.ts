@@ -33,6 +33,20 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+export function optionalAuth(req: Request, res: Response, next: NextFunction) {
+  const header = req.headers.authorization;
+  const token = header?.startsWith("Bearer ") ? header.slice(7) : undefined;
+
+  if (token) {
+    try {
+      req.user = jwt.verify(token, env.jwtAccessSecret) as AccessTokenPayload;
+    } catch {
+      // ignore invalid/expired token on optional auth routes
+    }
+  }
+  next();
+}
+
 export function requireRole(...roles: UserRole[]) {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) throw new ApiError(401, "Authentication required");

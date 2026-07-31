@@ -6,6 +6,7 @@ export function toListingDTO(listing: any): ListingDTO {
     id: listing._id.toString(),
     storeId: (store?._id ?? listing.storeId).toString(),
     storeName: store?.name ?? "",
+    ownerId: store?.ownerId ? store.ownerId.toString() : undefined,
     categorySlug: listing.categorySlug,
     subcategorySlug: listing.subcategorySlug,
     type: listing.type,

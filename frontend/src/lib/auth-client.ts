@@ -2,7 +2,7 @@
 
 import type { UserDTO } from "@festora/types";
 
-const ACCESS_TOKEN_KEY = "festora_access_token";
+export const ACCESS_TOKEN_KEY = "festora_access_token";
 const USER_KEY = "festora_user";
 export const AUTH_CHANGED_EVENT = "festora_auth_changed";
 

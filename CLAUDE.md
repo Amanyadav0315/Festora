@@ -65,7 +65,7 @@ docker compose up -d          # start MongoDB
 pnpm install
 cp backend/.env.example backend/.env
 cp frontend/.env.local.example frontend/.env.local
-pnpm --filter @festora/api seed   # seed categories, subcategories, demo vendors/listings
+pnpm --filter @festora/api seed   # seed categories, subcategories, admin account
 pnpm dev                          # runs backend (:4000) + frontend (:3000) + admin (:3001) via turbo
 ```
 

@@ -17,6 +17,9 @@ export const userRepository = {
   findById(id: string) {
     return UserModel.findById(id);
   },
+  updateProfile(id: string, data: { name?: string; email?: string }) {
+    return UserModel.findByIdAndUpdate(id, { $set: data }, { new: true });
+  },
   create(data: { name: string; phone: string; email?: string; passwordHash: string; role?: "user" | "admin" }) {
     return UserModel.create(data);
   },

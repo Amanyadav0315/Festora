@@ -27,7 +27,22 @@ export function ListingCard({ listing }: { listing: ListingDTO }) {
       <div className="p-2 sm:p-3">
         <p className="text-sm font-semibold text-gray-900 sm:text-base">{formatPrice(listing.price, listing.priceUnit)}</p>
         <p className="mt-1 truncate text-xs text-gray-700 sm:text-sm">{listing.title}</p>
-        <p className="mt-1 truncate text-xs text-gray-500">{listing.storeName}</p>
+        {listing.ownerId ? (
+          <span
+            role="link"
+            tabIndex={0}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              window.location.href = `/u/${listing.ownerId}`;
+            }}
+            className="mt-1 block truncate text-xs text-gray-500 hover:text-orange-600 hover:underline"
+          >
+            {listing.storeName}
+          </span>
+        ) : (
+          <p className="mt-1 truncate text-xs text-gray-500">{listing.storeName}</p>
+        )}
         {listing.city && <p className="text-xs text-gray-400">{listing.city}</p>}
       </div>
     </Link>

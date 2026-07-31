@@ -1,8 +1,10 @@
 import { Router } from "express";
 import { userController } from "./user.controller";
 import { asyncHandler } from "../../middleware/asyncHandler";
-import { requireAuth } from "../../middleware/auth";
+import { optionalAuth, requireAuth } from "../../middleware/auth";
 
 export const userRouter = Router();
 
 userRouter.get("/me", requireAuth, asyncHandler(userController.me));
+userRouter.patch("/me", requireAuth, asyncHandler(userController.updateMe));
+userRouter.get("/:id", optionalAuth, asyncHandler(userController.publicProfile));

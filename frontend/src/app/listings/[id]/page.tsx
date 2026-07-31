@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ListingDTO } from "@festora/types";
 import { serverFetch } from "@/lib/server-api";
 
@@ -29,7 +30,14 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       </p>
       {listing.description && <p className="mt-4 text-sm text-gray-700 sm:text-base">{listing.description}</p>}
       <p className="mt-4 text-sm text-gray-500">
-        Sold by {listing.storeName}
+        Sold by{" "}
+        {listing.ownerId ? (
+          <Link href={`/u/${listing.ownerId}`} className="font-medium text-orange-600 hover:underline">
+            {listing.storeName}
+          </Link>
+        ) : (
+          listing.storeName
+        )}
         {listing.city ? ` · ${listing.city}` : ""}
       </p>
     </main>

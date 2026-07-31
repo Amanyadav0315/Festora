@@ -9,6 +9,7 @@ import { categoryRouter } from "./modules/categories/category.routes";
 import { subcategoryRouter } from "./modules/categories/subcategory.routes";
 import { storeRouter } from "./modules/stores/store.routes";
 import { listingRouter } from "./modules/listings/listing.routes";
+import { socialRouter } from "./modules/social/social.routes";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler";
 
 export function createApp() {
@@ -27,6 +28,7 @@ export function createApp() {
   app.use("/api/subcategories", subcategoryRouter);
   app.use("/api/stores", storeRouter);
   app.use("/api/listings", listingRouter);
+  app.use("/api/social", socialRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

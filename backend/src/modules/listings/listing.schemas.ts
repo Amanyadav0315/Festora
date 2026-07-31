@@ -19,6 +19,7 @@ export const listListingsQuerySchema = z.object({
   type: z.enum(["product", "rental", "venue", "service"]).optional(),
   city: z.string().optional(),
   q: z.string().optional(),
+  storeId: z.string().optional(),
   limit: z.coerce.number().min(1).max(50).default(20),
 });
 
