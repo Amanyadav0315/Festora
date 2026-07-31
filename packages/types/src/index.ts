@@ -25,6 +25,7 @@ export interface CategoryDTO {
   slug: CategorySlug;
   description?: string;
   icon?: string;
+  imageUrl?: string;
 }
 
 export interface SubcategoryDTO {
@@ -34,6 +35,7 @@ export interface SubcategoryDTO {
   categorySlug: CategorySlug;
   description?: string;
   icon?: string;
+  imageUrl?: string;
   featured: boolean;
 }
 

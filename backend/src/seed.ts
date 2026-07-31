@@ -11,22 +11,31 @@ import { ListingModel } from "./modules/listings/listing.model";
 import { SEED_VENDORS, PLACEHOLDER_IMAGE } from "./modules/listings/listing.seed-data";
 
 const DEMO_PASSWORD = "demo1234";
+const ADMIN_EMAIL = "adm@festora.com";
+const ADMIN_PASSWORD = "Pass@admfestora";
 
 async function seed() {
   await connectDB();
 
+  // Bootstrap only: categories/subcategories are managed from the admin panel afterwards,
+  // so re-running seed must never overwrite admin edits.
   for (const category of SEED_CATEGORIES) {
-    await CategoryModel.updateOne({ slug: category.slug }, { $set: category }, { upsert: true });
+    await CategoryModel.updateOne({ slug: category.slug }, { $setOnInsert: category }, { upsert: true });
   }
-  console.log(`[seed] upserted ${SEED_CATEGORIES.length} categories`);
+  console.log(`[seed] bootstrapped ${SEED_CATEGORIES.length} categories (existing ones left untouched)`);
 
   for (const subcategory of SEED_SUBCATEGORIES) {
-    await SubcategoryModel.updateOne({ slug: subcategory.slug }, { $set: subcategory }, { upsert: true });
+    await SubcategoryModel.updateOne({ slug: subcategory.slug }, { $setOnInsert: subcategory }, { upsert: true });
   }
-  const { deletedCount } = await SubcategoryModel.deleteMany({
-    slug: { $nin: SEED_SUBCATEGORIES.map((s) => s.slug) },
-  });
-  console.log(`[seed] upserted ${SEED_SUBCATEGORIES.length} subcategories, removed ${deletedCount} stale`);
+  console.log(`[seed] bootstrapped ${SEED_SUBCATEGORIES.length} subcategories (existing ones left untouched)`);
+
+  const adminPasswordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
+  await UserModel.updateOne(
+    { email: ADMIN_EMAIL },
+    { $set: { name: "Festora Admin", email: ADMIN_EMAIL, passwordHash: adminPasswordHash, role: "admin" } },
+    { upsert: true }
+  );
+  console.log(`[seed] upserted admin account: ${ADMIN_EMAIL}`);
 
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
   let listingCount = 0;

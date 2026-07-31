@@ -13,5 +13,7 @@ export const env = {
   jwtRefreshSecret: required("JWT_REFRESH_SECRET"),
   accessTokenTtl: process.env.ACCESS_TOKEN_TTL ?? "15m",
   refreshTokenTtl: process.env.REFRESH_TOKEN_TTL ?? "7d",
-  corsOrigin: process.env.CORS_ORIGIN ?? "http://localhost:3000",
+  corsOrigins: (process.env.CORS_ORIGIN ?? "http://localhost:3000,http://localhost:3001")
+    .split(",")
+    .map((origin) => origin.trim()),
 };

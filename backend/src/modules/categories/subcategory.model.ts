@@ -8,6 +8,7 @@ const subcategorySchema = new Schema(
     categorySlug: { type: String, enum: CATEGORY_SLUGS, required: true },
     description: { type: String },
     icon: { type: String },
+    imageUrl: { type: String },
     featured: { type: Boolean, default: false },
   },
   { timestamps: true }

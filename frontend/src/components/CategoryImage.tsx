@@ -1,9 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { ASSET_BASE_URL } from "@/lib/api";
 
-export function CategoryImage({ slug, name, className }: { slug: string; name: string; className?: string }) {
+export function CategoryImage({
+  slug,
+  name,
+  imageUrl,
+  className,
+}: {
+  slug: string;
+  name: string;
+  imageUrl?: string;
+  className?: string;
+}) {
   const [failed, setFailed] = useState(false);
+  const primarySrc = imageUrl ? `${ASSET_BASE_URL}${imageUrl}` : `/categories/${slug}.jpg`;
 
   if (failed) {
     return (
@@ -16,7 +28,7 @@ export function CategoryImage({ slug, name, className }: { slug: string; name: s
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={`/categories/${slug}.jpg`}
+      src={primarySrc}
       alt={name}
       onError={() => setFailed(true)}
       className={`object-cover ${className ?? ""}`}

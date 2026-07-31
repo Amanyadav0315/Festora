@@ -30,8 +30,11 @@ If a task seems to need one of these, stop and ask the user first.
 ## Stack
 
 - Monorepo: pnpm workspaces + Turborepo
-- `frontend/` — Next.js 15 (App Router), single app covering both buyer and vendor flows.
-  Will split into separate vendor-dashboard/admin apps later — don't split preemptively.
+- `frontend/` — Next.js 15 (App Router), the public site covering both buyer and vendor flows.
+  Runs on :3000. Will split into a separate vendor-dashboard app later — don't split preemptively.
+- `admin/` — Next.js 15 (App Router), standalone admin panel app. Runs on :3001. Admin-only
+  auth (checks `role === "admin"`, redirects otherwise). Currently manages categories/subcategories;
+  listings/users/vendors management is a future phase.
 - `backend/` — Express.js modular monolith. Each domain lives under `src/modules/<name>/`
   with `*.model.ts`, `*.repository.ts`, `*.service.ts`, `*.controller.ts`, `*.routes.ts`,
   `*.schemas.ts` (zod validation), and optionally `*.mapper.ts` (DB doc -> DTO).
@@ -62,7 +65,7 @@ pnpm install
 cp backend/.env.example backend/.env
 cp frontend/.env.local.example frontend/.env.local
 pnpm --filter @festora/api seed   # seed categories, subcategories, demo vendors/listings
-pnpm dev                          # runs backend (:4000) + frontend (:3000) via turbo
+pnpm dev                          # runs backend (:4000) + frontend (:3000) + admin (:3001) via turbo
 ```
 
 ## Phased delivery

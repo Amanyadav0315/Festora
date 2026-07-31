@@ -14,7 +14,7 @@ import { notFoundHandler, errorHandler } from "./middleware/errorHandler";
 export function createApp() {
   const app = express();
 
-  app.use(cors({ origin: env.corsOrigin, credentials: true }));
+  app.use(cors({ origin: env.corsOrigins, credentials: true }));
   app.use(express.json());
   app.use(cookieParser());
   app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
