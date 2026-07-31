@@ -19,7 +19,7 @@ export const storeController = {
   async create(req: Request, res: Response) {
     const input = createStoreSchema.parse(req.body);
     const existing = await StoreModel.findOne({ ownerId: req.user!.sub });
-    if (existing) throw new ApiError(409, "Vendor already has a store");
+    if (existing) throw new ApiError(409, "You already have a store");
 
     const store = await StoreModel.create({ ...input, ownerId: req.user!.sub });
     res.status(201).json({ store: toStoreDTO(store) });

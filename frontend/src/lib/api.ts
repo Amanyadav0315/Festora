@@ -3,10 +3,20 @@ export const ASSET_BASE_URL = API_URL.replace(/\/api$/, "");
 
 export class ApiRequestError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  errors?: Record<string, string>;
+  constructor(status: number, message: string, errors?: Record<string, string>) {
     super(message);
     this.status = status;
+    this.errors = errors;
   }
+}
+
+function messageFromBody(body: { message?: string; errors?: Record<string, string> }): string {
+  if (body.errors) {
+    const first = Object.values(body.errors)[0];
+    if (first) return first;
+  }
+  return body.message ?? "Request failed";
 }
 
 export async function apiFetch<T>(
@@ -27,7 +37,7 @@ export async function apiFetch<T>(
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ message: res.statusText }));
-    throw new ApiRequestError(res.status, body.message ?? "Request failed");
+    throw new ApiRequestError(res.status, messageFromBody(body), body.errors);
   }
 
   if (res.status === 204) return undefined as T;
@@ -48,7 +58,7 @@ export async function apiUpload<T>(
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ message: res.statusText }));
-    throw new ApiRequestError(res.status, body.message ?? "Request failed");
+    throw new ApiRequestError(res.status, messageFromBody(body), body.errors);
   }
 
   if (res.status === 204) return undefined as T;

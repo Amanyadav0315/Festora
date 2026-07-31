@@ -17,7 +17,7 @@ export const userRepository = {
   findById(id: string) {
     return UserModel.findById(id);
   },
-  create(data: { name: string; phone: string; email?: string; passwordHash: string; role: "buyer" | "vendor" | "admin" }) {
+  create(data: { name: string; phone: string; email?: string; passwordHash: string; role?: "user" | "admin" }) {
     return UserModel.create(data);
   },
 };

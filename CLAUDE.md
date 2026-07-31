@@ -30,8 +30,8 @@ If a task seems to need one of these, stop and ask the user first.
 ## Stack
 
 - Monorepo: pnpm workspaces + Turborepo
-- `frontend/` — Next.js 15 (App Router), the public site covering both buyer and vendor flows.
-  Runs on :3000. Will split into a separate vendor-dashboard app later — don't split preemptively.
+- `frontend/` — Next.js 15 (App Router), the public site. No buyer/vendor split — every signed-in
+  user can both browse/book and post their own store + listings. Runs on :3000.
 - `admin/` — Next.js 15 (App Router), standalone admin panel app. Runs on :3001. Admin-only
   auth (checks `role === "admin"`, redirects otherwise). Currently manages categories/subcategories;
   listings/users/vendors management is a future phase.
@@ -45,8 +45,9 @@ If a task seems to need one of these, stop and ask the user first.
 - Auth: email/password with JWT access token (returned in response body, stored in
   localStorage client-side) + refresh token (httpOnly cookie, scoped to `/api/auth`).
   No OTP, no email verification.
-- RBAC: three roles only — `buyer`, `vendor`, `admin`. Enforced via `requireAuth` +
-  `requireRole(...)` middleware in `backend/src/middleware/auth.ts`.
+- RBAC: two roles only — `user`, `admin`. Every `user` can create a store and post listings
+  (no separate vendor role/approval step). Enforced via `requireAuth` + `requireRole(...)`
+  middleware in `backend/src/middleware/auth.ts`.
 - File uploads: multer to local disk (`backend/uploads/`, gitignored), served at
   `/uploads/*`. Not Cloudinary.
 

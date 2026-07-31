@@ -5,9 +5,10 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import type { UserDTO } from "@festora/types";
-import { AUTH_CHANGED_EVENT, clearSession, getUser } from "@/lib/auth-client";
+import { AUTH_CHANGED_EVENT, getUser } from "@/lib/auth-client";
 import { INDIA_CITIES } from "@/lib/cities";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { ProfileMenu } from "@/components/ProfileMenu";
 
 const LOCATION_KEY = "festora_location";
 const HIDDEN_PREFIXES = ["/welcome", "/onboarding"];
@@ -43,20 +44,10 @@ export function Navbar() {
     router.push(`/browse?${params.toString()}`);
   }
 
-  function handleLogout() {
-    clearSession();
-    router.push("/");
-  }
-
   function handleSellClick(e: React.MouseEvent) {
     if (!user) {
       e.preventDefault();
       router.push("/login");
-      return;
-    }
-    if (user.role !== "vendor") {
-      e.preventDefault();
-      router.push("/become-a-vendor");
     }
   }
 
@@ -109,12 +100,7 @@ export function Navbar() {
           </Link>
 
           {user ? (
-            <div className="flex items-center gap-3">
-              <span className="text-gray-700">{t("greeting", { name: user.name.split(" ")[0] })}</span>
-              <button onClick={handleLogout} className="text-gray-500 hover:text-orange-600">
-                {t("logout")}
-              </button>
-            </div>
+            <ProfileMenu user={user} size="sm" />
           ) : (
             <Link href="/login" className="text-gray-700 hover:text-orange-600">
               {t("login")}
@@ -187,29 +173,6 @@ export function Navbar() {
                   />
                 </svg>
               </Link>
-              {user ? (
-                <button
-                  onClick={handleLogout}
-                  aria-label="Log out"
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100"
-                >
-                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <circle cx="12" cy="8" r="3.5" strokeLinecap="round" strokeLinejoin="round" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 20c1.4-3.5 4.4-5.5 7.5-5.5s6.1 2 7.5 5.5" />
-                  </svg>
-                </button>
-              ) : (
-                <Link
-                  href="/login"
-                  aria-label="Login"
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100"
-                >
-                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <circle cx="12" cy="8" r="3.5" strokeLinecap="round" strokeLinejoin="round" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 20c1.4-3.5 4.4-5.5 7.5-5.5s6.1 2 7.5 5.5" />
-                  </svg>
-                </Link>
-              )}
             </div>
           </div>
 

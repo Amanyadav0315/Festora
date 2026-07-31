@@ -52,7 +52,7 @@ async function seed() {
   for (const vendor of SEED_VENDORS) {
     const user = await UserModel.findOneAndUpdate(
       { email: vendor.email },
-      { $set: { name: vendor.name, phone: vendor.phone, email: vendor.email, passwordHash, role: "vendor" } },
+      { $set: { name: vendor.name, phone: vendor.phone, email: vendor.email, passwordHash, role: "user" } },
       { upsert: true, new: true }
     );
 

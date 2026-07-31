@@ -37,8 +37,6 @@
     "identifier": "फ़ोन या ईमेल",
     "email": "ईमेल (वैकल्पिक)",
     "password": "पासवर्ड",
-    "buyerRole": "मैं सेवाएं बुक कर रहा/रही हूँ (खरीदार)",
-    "vendorRole": "मैं सेवाएं प्रदान करता/करती हूँ (विक्रेता)",
     "loggingIn": "लॉग इन हो रहा है...",
     "signingUp": "साइन अप हो रहा है...",
     "somethingWrong": "कुछ गलत हो गया"
@@ -52,5 +50,25 @@
     "skip": "छोड़ें",
     "languageTitle": "अपनी भाषा चुनें",
     "languageSubtitle": "आप इसे मेनू से कभी भी बदल सकते हैं।"
+  },
+  "profileMenu": {
+    "viewProfile": "प्रोफ़ाइल देखें और संपादित करें",
+    "cart": "कार्ट",
+    "wishlist": "विशलिस्ट",
+    "language": "भाषा",
+    "settings": "सेटिंग्स",
+    "help": "सहायता",
+    "logout": "लॉग आउट",
+    "profileTitle": "आपकी प्रोफ़ाइल",
+    "cartTitle": "आपका कार्ट",
+    "settingsTitle": "सेटिंग्स",
+    "helpTitle": "सहायता और समर्थन",
+    "comingSoon": "यह पेज जल्द ही आ रहा है।",
+    "editName": "नाम",
+    "editPhone": "फ़ोन नंबर",
+    "editEmail": "ईमेल",
+    "notProvided": "उपलब्ध नहीं",
+    "adminRole": "एडमिन",
+    "role": "खाता प्रकार"
   }
 }

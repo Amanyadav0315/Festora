@@ -23,7 +23,6 @@ export const authService = {
       phone: input.phone,
       email: input.email,
       passwordHash,
-      role: input.role,
     });
 
     return buildAuthResult(user);

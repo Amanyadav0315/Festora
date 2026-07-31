@@ -1,4 +1,4 @@
-export type UserRole = "buyer" | "vendor" | "admin";
+export type UserRole = "user" | "admin";
 
 export const CATEGORY_SLUGS = [
   "tent-house-mandap",

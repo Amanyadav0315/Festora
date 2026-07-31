@@ -13,7 +13,6 @@ export default function SignupPage() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"buyer" | "vendor">("buyer");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -24,7 +23,7 @@ export default function SignupPage() {
     try {
       const res = await apiFetch<AuthResponse>("/auth/signup", {
         method: "POST",
-        body: JSON.stringify({ name, phone, email: email || undefined, password, role }),
+        body: JSON.stringify({ name, phone, email: email || undefined, password }),
       });
       saveAccessToken(res.accessToken);
       saveUser(res.user);
@@ -71,15 +70,6 @@ export default function SignupPage() {
           required
           minLength={6}
         />
-        <select
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-          value={role}
-          onChange={(e) => setRole(e.target.value as "buyer" | "vendor")}
-        >
-          <option value="buyer">{t("buyerRole")}</option>
-          <option value="vendor">{t("vendorRole")}</option>
-        </select>
-
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         <button

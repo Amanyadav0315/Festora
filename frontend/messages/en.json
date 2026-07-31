@@ -37,8 +37,6 @@
     "identifier": "Phone or email",
     "email": "Email (optional)",
     "password": "Password",
-    "buyerRole": "I'm booking services (buyer)",
-    "vendorRole": "I offer services (vendor)",
     "loggingIn": "Logging in...",
     "signingUp": "Signing up...",
     "somethingWrong": "Something went wrong"
@@ -52,5 +50,25 @@
     "skip": "Skip",
     "languageTitle": "Choose your language",
     "languageSubtitle": "You can change this anytime from the menu."
+  },
+  "profileMenu": {
+    "viewProfile": "View and edit profile",
+    "cart": "Cart",
+    "wishlist": "Wishlist",
+    "language": "Language",
+    "settings": "Settings",
+    "help": "Help",
+    "logout": "Log out",
+    "profileTitle": "Your profile",
+    "cartTitle": "Your cart",
+    "settingsTitle": "Settings",
+    "helpTitle": "Help & support",
+    "comingSoon": "This page is coming soon.",
+    "editName": "Name",
+    "editPhone": "Phone number",
+    "editEmail": "Email",
+    "notProvided": "Not provided",
+    "adminRole": "Admin",
+    "role": "Account type"
   }
 }
