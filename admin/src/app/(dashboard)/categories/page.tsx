@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { CategoryDTO, SubcategoryDTO } from "@festora/types";
+import { MAX_MAIN_CATEGORIES } from "@festora/types";
 import { apiFetch, apiUpload, ApiRequestError, ASSET_BASE_URL } from "@/lib/api";
 import { getAccessToken } from "@/lib/auth-client";
 import { ImageField } from "@/components/admin/ImageField";
@@ -25,23 +26,28 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
   );
 }
 
-function CategoryEditModal({
+function CategoryFormModal({
   category,
+  mainCount,
   onClose,
   onSaved,
 }: {
-  category: CategoryDTO;
+  category: CategoryDTO | null;
+  mainCount: number;
   onClose: () => void;
-  onSaved: (updated: CategoryDTO) => void;
+  onSaved: (saved: CategoryDTO, isNew: boolean) => void;
 }) {
-  const [name, setName] = useState(category.name);
-  const [nameHi, setNameHi] = useState(category.nameHi ?? "");
-  const [description, setDescription] = useState(category.description ?? "");
-  const [descriptionHi, setDescriptionHi] = useState(category.descriptionHi ?? "");
-  const [icon, setIcon] = useState(category.icon ?? "");
+  const [name, setName] = useState(category?.name ?? "");
+  const [nameHi, setNameHi] = useState(category?.nameHi ?? "");
+  const [description, setDescription] = useState(category?.description ?? "");
+  const [descriptionHi, setDescriptionHi] = useState(category?.descriptionHi ?? "");
+  const [icon, setIcon] = useState(category?.icon ?? "");
+  const [isMain, setIsMain] = useState(category?.isMain ?? false);
   const [image, setImage] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const mainSlotsFull = mainCount >= MAX_MAIN_CATEGORIES && !(category?.isMain ?? false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -54,14 +60,24 @@ function CategoryEditModal({
       formData.set("description", description);
       formData.set("descriptionHi", descriptionHi);
       formData.set("icon", icon);
+      formData.set("isMain", String(isMain));
       if (image) formData.set("image", image);
 
-      const { category: updated } = await apiUpload<{ category: CategoryDTO }>(
-        `/categories/${category.id}`,
-        formData,
-        { method: "PATCH", accessToken: getAccessToken() ?? undefined }
-      );
-      onSaved(updated);
+      const accessToken = getAccessToken() ?? undefined;
+      if (category) {
+        const { category: updated } = await apiUpload<{ category: CategoryDTO }>(
+          `/categories/${category.id}`,
+          formData,
+          { method: "PATCH", accessToken }
+        );
+        onSaved(updated, false);
+      } else {
+        const { category: created } = await apiUpload<{ category: CategoryDTO }>("/categories", formData, {
+          method: "POST",
+          accessToken,
+        });
+        onSaved(created, true);
+      }
       onClose();
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : "Something went wrong");
@@ -71,7 +87,7 @@ function CategoryEditModal({
   }
 
   return (
-    <Modal title="Edit category" onClose={onClose}>
+    <Modal title={category ? "Edit category" : "Add category"} onClose={onClose}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <label className="text-xs font-medium text-gray-600">
           Name
@@ -119,8 +135,23 @@ function CategoryEditModal({
         </label>
         <div>
           <p className="mb-1 text-xs font-medium text-gray-600">Picture</p>
-          <ImageField currentImageUrl={category.imageUrl} onChange={setImage} />
+          <ImageField currentImageUrl={category?.imageUrl} onChange={setImage} />
         </div>
+
+        <label className="flex items-center gap-2 text-xs font-medium text-gray-600">
+          <input
+            type="checkbox"
+            checked={isMain}
+            disabled={mainSlotsFull}
+            onChange={(e) => setIsMain(e.target.checked)}
+          />
+          Show as main category ({mainCount}/{MAX_MAIN_CATEGORIES} used)
+        </label>
+        {mainSlotsFull && (
+          <p className="text-[11px] text-amber-600">
+            All {MAX_MAIN_CATEGORIES} main category slots are in use. Remove one before adding another.
+          </p>
+        )}
 
         {error && <p className="text-xs text-red-600">{error}</p>}
 
@@ -129,7 +160,7 @@ function CategoryEditModal({
           disabled={saving}
           className="mt-2 w-full rounded-md bg-orange-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50"
         >
-          {saving ? "Saving..." : "Save changes"}
+          {saving ? "Saving..." : category ? "Save changes" : "Create"}
         </button>
       </form>
     </Modal>
@@ -254,10 +285,14 @@ export default function AdminCategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryDTO | null>(null);
   const [subModalOpen, setSubModalOpen] = useState(false);
   const [editingSubcategory, setEditingSubcategory] = useState<SubcategoryDTO | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
+
+  const mainCount = categories.filter((c) => c.isMain).length;
 
   useEffect(() => {
     async function load() {
@@ -276,6 +311,37 @@ export default function AdminCategoriesPage() {
     }
     load();
   }, []);
+
+  function openAddCategory() {
+    setEditingCategory(null);
+    setCategoryModalOpen(true);
+  }
+
+  function openEditCategory(cat: CategoryDTO) {
+    setEditingCategory(cat);
+    setCategoryModalOpen(true);
+  }
+
+  function handleCategorySaved(saved: CategoryDTO, isNew: boolean) {
+    setCategories((prev) =>
+      isNew ? [...prev, saved].sort((a, b) => a.name.localeCompare(b.name)) : prev.map((c) => (c.id === saved.id ? saved : c))
+    );
+  }
+
+  async function handleDeleteCategory(id: string) {
+    setDeletingCategoryId(id);
+    try {
+      await apiFetch(`/categories/${id}`, {
+        method: "DELETE",
+        accessToken: getAccessToken() ?? undefined,
+      });
+      setCategories((prev) => prev.filter((c) => c.id !== id));
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? err.message : "Failed to delete category");
+    } finally {
+      setDeletingCategoryId(null);
+    }
+  }
 
   function openAddSubcategory() {
     setEditingSubcategory(null);
@@ -316,10 +382,21 @@ export default function AdminCategoriesPage() {
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
 
       <section className="mt-6">
-        <h2 className="text-sm font-semibold text-gray-900">Main categories</h2>
-        <p className="mt-1 text-xs text-gray-500">
-          Fixed set of 6 — you can edit their name, description, icon, and picture, but not add or remove them.
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-900">Categories</h2>
+            <p className="mt-1 text-xs text-gray-500">
+              Main categories ({mainCount}/{MAX_MAIN_CATEGORIES}) show up prominently on the homepage. Mark up to{" "}
+              {MAX_MAIN_CATEGORIES}; remove one before adding another once full.
+            </p>
+          </div>
+          <button
+            onClick={openAddCategory}
+            className="shrink-0 rounded-md bg-orange-600 px-3 py-2 text-xs font-semibold text-white hover:bg-orange-700"
+          >
+            + Add category
+          </button>
+        </div>
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {categories.map((cat) => (
             <div key={cat.id} className="rounded-xl border border-gray-200 bg-white p-3 text-center">
@@ -333,12 +410,22 @@ export default function AdminCategoriesPage() {
               </div>
               <p className="mt-2 text-xs font-medium text-gray-800">{cat.name}</p>
               {cat.nameHi && <p className="text-[10px] text-gray-400">{cat.nameHi}</p>}
-              <button
-                onClick={() => setEditingCategory(cat)}
-                className="mt-2 text-xs font-medium text-orange-600 hover:underline"
-              >
-                Edit
-              </button>
+              {cat.isMain && <p className="mt-0.5 text-[10px] font-medium text-orange-600">Main</p>}
+              <div className="mt-2 flex gap-2">
+                <button
+                  onClick={() => openEditCategory(cat)}
+                  className="flex-1 rounded-md border border-gray-300 py-1 text-[11px] font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDeleteCategory(cat.id)}
+                  disabled={deletingCategoryId === cat.id}
+                  className="flex-1 rounded-md border border-red-200 py-1 text-[11px] font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+                >
+                  {deletingCategoryId === cat.id ? "..." : "Delete"}
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -395,11 +482,12 @@ export default function AdminCategoriesPage() {
         </div>
       </section>
 
-      {editingCategory && (
-        <CategoryEditModal
+      {categoryModalOpen && (
+        <CategoryFormModal
           category={editingCategory}
-          onClose={() => setEditingCategory(null)}
-          onSaved={(updated) => setCategories((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))}
+          mainCount={mainCount}
+          onClose={() => setCategoryModalOpen(false)}
+          onSaved={handleCategorySaved}
         />
       )}
 

@@ -9,6 +9,7 @@ const categorySchema = new Schema(
     descriptionHi: { type: String },
     icon: { type: String },
     imageUrl: { type: String },
+    isMain: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

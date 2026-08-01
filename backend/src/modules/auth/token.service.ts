@@ -7,15 +7,19 @@ export interface TokenSubject {
   role: UserRole;
 }
 
+function ttlForRole(role: UserRole) {
+  return role === "admin" ? env.adminTokenTtl : env.userTokenTtl;
+}
+
 export const tokenService = {
   signAccessToken(user: TokenSubject) {
     return jwt.sign({ sub: user.id, role: user.role }, env.jwtAccessSecret, {
-      expiresIn: env.accessTokenTtl,
+      expiresIn: ttlForRole(user.role),
     });
   },
   signRefreshToken(user: TokenSubject) {
     return jwt.sign({ sub: user.id, role: user.role }, env.jwtRefreshSecret, {
-      expiresIn: env.refreshTokenTtl,
+      expiresIn: ttlForRole(user.role),
     });
   },
   verifyRefreshToken(token: string) {

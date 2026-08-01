@@ -7,6 +7,13 @@ import { uploadCategoryImage } from "../../middleware/upload";
 export const categoryRouter = Router();
 
 categoryRouter.get("/", asyncHandler(categoryController.list));
+categoryRouter.post(
+  "/",
+  requireAuth,
+  requireRole("admin"),
+  uploadCategoryImage.single("image"),
+  asyncHandler(categoryController.create)
+);
 categoryRouter.patch(
   "/:id",
   requireAuth,
@@ -14,3 +21,4 @@ categoryRouter.patch(
   uploadCategoryImage.single("image"),
   asyncHandler(categoryController.update)
 );
+categoryRouter.delete("/:id", requireAuth, requireRole("admin"), asyncHandler(categoryController.remove));

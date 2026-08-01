@@ -1,8 +1,7 @@
 import { z } from "zod";
-import { CATEGORY_SLUGS } from "@festora/types";
 
 export const createListingSchema = z.object({
-  categorySlug: z.enum(CATEGORY_SLUGS),
+  categorySlug: z.string().min(1),
   subcategorySlug: z.string().optional(),
   type: z.enum(["product", "rental", "venue", "service"]),
   title: z.string().min(3).max(150),
@@ -14,7 +13,7 @@ export const createListingSchema = z.object({
 });
 
 export const listListingsQuerySchema = z.object({
-  categorySlug: z.enum(CATEGORY_SLUGS).optional(),
+  categorySlug: z.string().min(1).optional(),
   subcategorySlug: z.string().optional(),
   type: z.enum(["product", "rental", "venue", "service"]).optional(),
   city: z.string().optional(),

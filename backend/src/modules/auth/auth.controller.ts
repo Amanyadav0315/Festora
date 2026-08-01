@@ -4,26 +4,31 @@ import { signupSchema, loginSchema } from "./auth.schemas";
 import { ApiError } from "../../middleware/errorHandler";
 
 const REFRESH_COOKIE = "festora_refresh_token";
-const REFRESH_COOKIE_OPTIONS = {
-  httpOnly: true,
-  sameSite: "lax" as const,
-  secure: false,
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-  path: "/api/auth",
-};
+const ADMIN_REFRESH_COOKIE_MAX_AGE = 24 * 60 * 60 * 1000;
+const USER_REFRESH_COOKIE_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
+
+function refreshCookieOptions(role: string) {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: false,
+    maxAge: role === "admin" ? ADMIN_REFRESH_COOKIE_MAX_AGE : USER_REFRESH_COOKIE_MAX_AGE,
+    path: "/api/auth",
+  };
+}
 
 export const authController = {
   async signup(req: Request, res: Response) {
     const input = signupSchema.parse(req.body);
     const result = await authService.signup(input);
-    res.cookie(REFRESH_COOKIE, result.refreshToken, REFRESH_COOKIE_OPTIONS);
+    res.cookie(REFRESH_COOKIE, result.refreshToken, refreshCookieOptions(result.user.role));
     res.status(201).json({ user: result.user, accessToken: result.accessToken });
   },
 
   async login(req: Request, res: Response) {
     const input = loginSchema.parse(req.body);
     const result = await authService.login(input);
-    res.cookie(REFRESH_COOKIE, result.refreshToken, REFRESH_COOKIE_OPTIONS);
+    res.cookie(REFRESH_COOKIE, result.refreshToken, refreshCookieOptions(result.user.role));
     res.status(200).json({ user: result.user, accessToken: result.accessToken });
   },
 
@@ -31,7 +36,7 @@ export const authController = {
     const refreshToken = req.cookies?.[REFRESH_COOKIE];
     if (!refreshToken) throw new ApiError(401, "No refresh token provided");
     const result = await authService.refresh(refreshToken);
-    res.cookie(REFRESH_COOKIE, result.refreshToken, REFRESH_COOKIE_OPTIONS);
+    res.cookie(REFRESH_COOKIE, result.refreshToken, refreshCookieOptions(result.user.role));
     res.status(200).json({ user: result.user, accessToken: result.accessToken });
   },
 

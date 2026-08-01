@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { CATEGORY_SLUGS } from "@festora/types";
 
 const featuredCoerce = z
   .union([z.boolean(), z.string()])
@@ -10,7 +9,7 @@ export const createSubcategorySchema = z.object({
   name: z.string().min(2).max(80),
   nameHi: z.string().max(80).optional(),
   slug: z.string().min(2).max(100).optional(),
-  categorySlug: z.enum(CATEGORY_SLUGS),
+  categorySlug: z.string().min(1),
   description: z.string().max(300).optional(),
   icon: z.string().max(10).optional(),
   featured: featuredCoerce,
@@ -19,7 +18,7 @@ export const createSubcategorySchema = z.object({
 export const updateSubcategorySchema = z.object({
   name: z.string().min(2).max(80).optional(),
   nameHi: z.string().max(80).optional(),
-  categorySlug: z.enum(CATEGORY_SLUGS).optional(),
+  categorySlug: z.string().min(1).optional(),
   description: z.string().max(300).optional(),
   icon: z.string().max(10).optional(),
   featured: featuredCoerce,

@@ -26,7 +26,7 @@ export default function AdminLoginPage() {
     try {
       const res = await apiFetch<AuthResponse>("/auth/login", {
         method: "POST",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ identifier: email, password }),
       });
       if (res.user.role !== "admin") {
         setError("This account does not have admin access.");

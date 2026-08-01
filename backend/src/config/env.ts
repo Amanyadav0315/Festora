@@ -11,8 +11,8 @@ export const env = {
   mongoUri: process.env.MONGO_URI ?? "mongodb://localhost:27017/festora",
   jwtAccessSecret: required("JWT_ACCESS_SECRET"),
   jwtRefreshSecret: required("JWT_REFRESH_SECRET"),
-  accessTokenTtl: process.env.ACCESS_TOKEN_TTL ?? "15m",
-  refreshTokenTtl: process.env.REFRESH_TOKEN_TTL ?? "7d",
+  adminTokenTtl: process.env.ADMIN_TOKEN_TTL ?? "24h",
+  userTokenTtl: process.env.USER_TOKEN_TTL ?? "30d",
   corsOrigins: (process.env.CORS_ORIGIN ?? "http://localhost:3000,http://localhost:3001")
     .split(",")
     .map((origin) => origin.trim()),

@@ -1,15 +1,8 @@
 export type UserRole = "user" | "admin";
 
-export const CATEGORY_SLUGS = [
-  "tent-house-mandap",
-  "dj-sound",
-  "photography-videography",
-  "banquet-halls",
-  "catering",
-  "resorts-farmhouses",
-] as const;
+export const MAX_MAIN_CATEGORIES = 8;
 
-export type CategorySlug = (typeof CATEGORY_SLUGS)[number];
+export type CategorySlug = string;
 
 export interface UserDTO {
   id: string;
@@ -29,6 +22,7 @@ export interface CategoryDTO {
   descriptionHi?: string;
   icon?: string;
   imageUrl?: string;
+  isMain: boolean;
 }
 
 export interface SubcategoryDTO {
