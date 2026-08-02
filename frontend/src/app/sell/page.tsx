@@ -71,6 +71,11 @@ export default function SellPage() {
   const [newImages, setNewImages] = useState<File[]>([]);
   const totalImageCount = existingImages.length + newImages.length;
 
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log("[sell] newImages state committed, length =", newImages.length);
+  }, [newImages]);
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [created, setCreated] = useState<ListingDTO | null>(null);
@@ -235,7 +240,9 @@ export default function SellPage() {
   }
 
   function addImages(files: FileList | null) {
-    if (!files) return;
+    // eslint-disable-next-line no-console
+    console.log("[sell] file input changed:", files ? files.length : 0, "file(s)");
+    if (!files || files.length === 0) return;
     const room = MAX_LISTING_IMAGES - totalImageCount;
     if (room <= 0) return;
     setNewImages((prev) => [...prev, ...Array.from(files).slice(0, room)]);
@@ -360,6 +367,10 @@ export default function SellPage() {
   return (
     <main className="mx-auto max-w-lg px-4 py-6 sm:py-10">
       <h1 className="text-lg font-bold sm:text-xl">{t("title")}</h1>
+      <p className="mt-1 rounded bg-yellow-200 px-2 py-1 text-xs font-bold text-black">
+        DEBUG: existingImages={existingImages.length} newImages={newImages.length} totalImageCount=
+        {totalImageCount}
+      </p>
       <p className="mt-1 text-xs text-gray-500">{t("step", { current: step, total: TOTAL_STEPS })}</p>
       <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
         <div
