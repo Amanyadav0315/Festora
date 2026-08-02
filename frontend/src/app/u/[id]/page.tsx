@@ -27,8 +27,10 @@ export default function PublicProfilePage() {
         setProfile(p);
 
         if (p.store) {
+          const suffix = p.isSelf ? "&includeInactive=true" : "";
           const { listings: l } = await apiFetch<{ listings: ListingDTO[] }>(
-            `/listings?storeId=${p.store.id}&limit=50`
+            `/listings?storeId=${p.store.id}&limit=50${suffix}`,
+            { accessToken: token }
           );
           if (!cancelled) setListings(l);
         }

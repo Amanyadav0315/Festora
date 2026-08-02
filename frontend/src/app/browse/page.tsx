@@ -3,7 +3,7 @@ import { serverFetch } from "@/lib/server-api";
 import { ListingCard } from "@/components/ListingCard";
 
 interface BrowsePageProps {
-  searchParams: Promise<{ q?: string; city?: string; subcategory?: string; category?: string; type?: string }>;
+  searchParams: Promise<{ q?: string; city?: string; subcategory?: string; category?: string; purpose?: string }>;
 }
 
 export default async function BrowsePage({ searchParams }: BrowsePageProps) {
@@ -13,7 +13,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   if (params.city) query.set("city", params.city);
   if (params.subcategory) query.set("subcategorySlug", params.subcategory);
   if (params.category) query.set("categorySlug", params.category);
-  if (params.type) query.set("type", params.type);
+  if (params.purpose) query.set("purpose", params.purpose);
   query.set("limit", "40");
 
   const { listings } = await serverFetch<{ listings: ListingDTO[] }>(`/listings?${query.toString()}`);
@@ -21,7 +21,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   return (
     <main className="mx-auto max-w-6xl px-3 py-6 sm:px-4 sm:py-8">
       <h1 className="text-lg font-bold sm:text-xl">
-        {params.q ? `Results for "${params.q}"` : params.type === "rental" ? "Rentals" : "Browse listings"}
+        {params.q ? `Results for "${params.q}"` : params.purpose === "rent" ? "Rentals" : "Browse listings"}
       </h1>
 
       {listings.length === 0 ? (

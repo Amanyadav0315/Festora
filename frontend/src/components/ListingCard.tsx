@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ListingDTO } from "@festora/types";
+import { ImageCarousel } from "@/components/ImageCarousel";
 
 function formatPrice(price: number, priceUnit?: string) {
   const formatted = new Intl.NumberFormat("en-IN", {
@@ -16,13 +17,8 @@ export function ListingCard({ listing }: { listing: ListingDTO }) {
       href={`/listings/${listing.id}`}
       className="block overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-shadow hover:shadow-md"
     >
-      <div className="aspect-[4/3] w-full overflow-hidden bg-gray-100">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={listing.images[0] ?? "/placeholder-listing.svg"}
-          alt={listing.title}
-          className="h-full w-full object-cover"
-        />
+      <div className="w-full overflow-hidden bg-gray-100">
+        <ImageCarousel images={listing.images} alt={listing.title} />
       </div>
       <div className="p-2 sm:p-3">
         <p className="text-sm font-semibold text-gray-900 sm:text-base">{formatPrice(listing.price, listing.priceUnit)}</p>

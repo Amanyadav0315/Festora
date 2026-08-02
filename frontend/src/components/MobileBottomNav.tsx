@@ -106,7 +106,7 @@ export function MobileBottomNav() {
       <nav className="fixed inset-x-0 bottom-0 z-50 flex items-stretch border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden">
         <NavItem href="/" label={t("home")} icon={<HomeIcon className="h-5 w-5" />} active={pathname === "/"} />
         <NavItem
-          href="/browse?type=rental"
+          href="/browse?purpose=rent"
           label={t("rent")}
           icon={<RentIcon className="h-5 w-5" />}
           active={pathname === "/browse"}

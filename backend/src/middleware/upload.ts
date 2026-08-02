@@ -37,3 +37,13 @@ export const uploadCategoryImage = multer({
 export function categoryImageUrl(filename: string): string {
   return `/uploads/categories/${filename}`;
 }
+
+export const uploadListingImages = multer({
+  storage: makeStorage("listings"),
+  limits: { fileSize: 5 * 1024 * 1024, files: 6 },
+  fileFilter: imageFileFilter,
+});
+
+export function listingImageUrl(filename: string): string {
+  return `/uploads/listings/${filename}`;
+}

@@ -47,18 +47,29 @@ export interface StoreDTO {
   createdAt: string;
 }
 
-export type ListingType = "product" | "rental" | "venue" | "service";
+export const MIN_LISTING_KEYWORDS = 3;
+export const MAX_LISTING_KEYWORDS = 10;
+export const MAX_LISTING_CATEGORIES = 3;
+export const MAX_LISTING_DESCRIPTION_LENGTH = 200;
+export const MIN_LISTING_IMAGES = 1;
+export const MAX_LISTING_IMAGES = 6;
+
+export type ListingCondition = "new" | "old";
+export type ListingPurpose = "sell" | "rent";
 
 export interface ListingDTO {
   id: string;
   storeId: string;
   storeName: string;
   ownerId?: string;
-  categorySlug: CategorySlug;
+  categorySlugs: CategorySlug[];
   subcategorySlug?: string;
-  type: ListingType;
+  condition: ListingCondition;
+  purpose: ListingPurpose;
   title: string;
-  description?: string;
+  keywords: string[];
+  description: string;
+  descriptionHi?: string;
   price: number;
   priceUnit?: string;
   images: string[];

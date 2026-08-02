@@ -130,7 +130,7 @@ export function Navbar() {
           <LanguageSwitcher />
 
           <Link
-            href="/browse?type=rental"
+            href="/browse?purpose=rent"
             className="flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3.5 py-1.5 font-semibold text-orange-700 hover:border-orange-300 hover:bg-orange-100"
           >
             <RentIcon className="h-4 w-4" />

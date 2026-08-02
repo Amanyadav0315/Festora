@@ -8,6 +8,7 @@ import type { ListingDTO, PublicUserProfileDTO } from "@festora/types";
 import { apiFetch, ApiRequestError } from "@/lib/api";
 import { getAccessToken, getUser } from "@/lib/auth-client";
 import { ListingCard } from "@/components/ListingCard";
+import { OwnListingCard } from "@/components/OwnListingCard";
 
 function DotsIcon({ className }: { className?: string }) {
   return (
@@ -43,6 +44,7 @@ export function SocialProfile({
   const locale = useLocale();
   const SAFETY_TIPS = [t("safetyTip1"), t("safetyTip2"), t("safetyTip3"), t("safetyTip4"), t("safetyTip5")];
   const [profile, setProfile] = useState(initialProfile);
+  const [ownListings, setOwnListings] = useState(listings);
   const [busy, setBusy] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [msgOpen, setMsgOpen] = useState(false);
@@ -270,13 +272,24 @@ export function SocialProfile({
         <h2 className="text-base font-bold text-gray-900">
           {profile.isSelf ? t("yourListings") : t("usersListings", { name: profile.name })}
         </h2>
-        {listings.length === 0 ? (
+        {ownListings.length === 0 ? (
           <p className="mt-3 text-sm text-gray-500">{t("noListings")}</p>
         ) : (
           <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
-            {listings.map((listing) => (
-              <ListingCard key={listing.id} listing={listing} />
-            ))}
+            {ownListings.map((listing) =>
+              profile.isSelf ? (
+                <OwnListingCard
+                  key={listing.id}
+                  listing={listing}
+                  onDeleted={(id) => setOwnListings((prev) => prev.filter((l) => l.id !== id))}
+                  onToggled={(updated) =>
+                    setOwnListings((prev) => prev.map((l) => (l.id === updated.id ? updated : l)))
+                  }
+                />
+              ) : (
+                <ListingCard key={listing.id} listing={listing} />
+              )
+            )}
           </div>
         )}
       </div>
