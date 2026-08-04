@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -45,6 +45,10 @@ export function SocialProfile({
   const SAFETY_TIPS = [t("safetyTip1"), t("safetyTip2"), t("safetyTip3"), t("safetyTip4"), t("safetyTip5")];
   const [profile, setProfile] = useState(initialProfile);
   const [ownListings, setOwnListings] = useState(listings);
+
+  useEffect(() => {
+    setOwnListings(listings);
+  }, [listings]);
   const [busy, setBusy] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [msgOpen, setMsgOpen] = useState(false);
@@ -296,66 +300,80 @@ export function SocialProfile({
 
       {msgOpen && (
         <div
-          className="fixed inset-0 z-30 flex items-end justify-center bg-black/40 sm:items-center"
+          className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 p-4 pt-[15vh]"
           onClick={() => setMsgOpen(false)}
         >
-          <div className="w-full max-w-sm rounded-t-2xl bg-white p-5 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-base font-bold text-gray-900">{t("safetyTitle")}</h3>
-            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-gray-600">
-              {SAFETY_TIPS.map((tip) => (
-                <li key={tip}>{tip}</li>
-              ))}
-            </ul>
-            <button
-              type="button"
-              onClick={() => {
-                setMsgOpen(false);
-                router.push("/chats");
-              }}
-              className="mt-5 w-full rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-700"
-            >
-              {t("continueToChat")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setMsgOpen(false)}
-              className="mt-2 w-full rounded-lg px-4 py-2.5 text-sm font-medium text-gray-500 hover:bg-gray-50"
-            >
-              {t("cancel")}
-            </button>
+          <div
+            className="flex max-h-[75vh] w-full max-w-sm flex-col rounded-2xl bg-white"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="min-h-0 flex-1 overflow-y-auto p-5">
+              <h3 className="text-base font-bold text-gray-900">{t("safetyTitle")}</h3>
+              <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-gray-600">
+                {SAFETY_TIPS.map((tip) => (
+                  <li key={tip}>{tip}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="shrink-0 p-5 pt-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setMsgOpen(false);
+                  router.push("/chats");
+                }}
+                className="w-full rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-700"
+              >
+                {t("continueToChat")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMsgOpen(false)}
+                className="mt-2 w-full rounded-lg px-4 py-2.5 text-sm font-medium text-gray-500 hover:bg-gray-50"
+              >
+                {t("cancel")}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {reportOpen && (
         <div
-          className="fixed inset-0 z-30 flex items-end justify-center bg-black/40 sm:items-center"
+          className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 p-4 pt-[15vh]"
           onClick={() => setReportOpen(false)}
         >
-          <div className="w-full max-w-sm rounded-t-2xl bg-white p-5 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-base font-bold text-gray-900">{t("reportTitle", { name: profile.name })}</h3>
-            <textarea
-              value={reportReason}
-              onChange={(e) => setReportReason(e.target.value)}
-              placeholder={t("reportPlaceholder")}
-              rows={4}
-              className="mt-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
-            />
-            <button
-              type="button"
-              disabled={busy}
-              onClick={submitReport}
-              className="mt-3 w-full rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
-            >
-              {t("submitReport")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setReportOpen(false)}
-              className="mt-2 w-full rounded-lg px-4 py-2.5 text-sm font-medium text-gray-500 hover:bg-gray-50"
-            >
-              {t("cancel")}
-            </button>
+          <div
+            className="flex max-h-[75vh] w-full max-w-sm flex-col rounded-2xl bg-white"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="min-h-0 flex-1 overflow-y-auto p-5">
+              <h3 className="text-base font-bold text-gray-900">{t("reportTitle", { name: profile.name })}</h3>
+              <textarea
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+                placeholder={t("reportPlaceholder")}
+                rows={4}
+                className="mt-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
+              />
+            </div>
+            <div className="shrink-0 p-5 pt-0">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={submitReport}
+                className="w-full rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+              >
+                {t("submitReport")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setReportOpen(false)}
+                className="mt-2 w-full rounded-lg px-4 py-2.5 text-sm font-medium text-gray-500 hover:bg-gray-50"
+              >
+                {t("cancel")}
+              </button>
+            </div>
           </div>
         </div>
       )}

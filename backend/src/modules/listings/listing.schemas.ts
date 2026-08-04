@@ -17,6 +17,7 @@ export const createListingSchema = z.object({
   priceUnit: z.string().max(50).optional(),
   images: z.array(z.string()).default([]),
   city: z.string().max(100).optional(),
+  locationUrl: z.string().trim().url().max(500).optional().or(z.literal("").transform(() => undefined)),
 });
 
 export const updateListingSchema = z.object({
@@ -32,6 +33,7 @@ export const updateListingSchema = z.object({
   priceUnit: z.string().max(50).optional(),
   existingImages: jsonArray.pipe(z.array(z.string())).optional(),
   city: z.string().max(100).optional(),
+  locationUrl: z.string().trim().url().max(500).optional().or(z.literal("").transform(() => undefined)),
   isActive: z
     .union([z.boolean(), z.string()])
     .transform((v) => v === true || v === "true")

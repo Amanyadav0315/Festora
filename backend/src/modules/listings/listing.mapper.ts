@@ -19,6 +19,7 @@ export function toListingDTO(listing: any): ListingDTO {
     priceUnit: listing.priceUnit,
     images: listing.images ?? [],
     city: listing.city,
+    locationUrl: listing.locationUrl,
     isActive: listing.isActive,
     createdAt: listing.createdAt.toISOString(),
   };

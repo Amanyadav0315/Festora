@@ -19,6 +19,7 @@ const listingSchema = new Schema(
       validate: (v: string[]) => v.length >= 1 && v.length <= 6,
     },
     city: { type: String },
+    locationUrl: { type: String },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }

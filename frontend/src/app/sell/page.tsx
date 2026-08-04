@@ -29,6 +29,7 @@ interface Draft {
   price: string;
   priceUnit: string;
   city: string;
+  locationUrl: string;
   description: string;
   descriptionHi: string;
 }
@@ -63,6 +64,7 @@ export default function SellPage() {
   const [price, setPrice] = useState("");
   const [priceUnit, setPriceUnit] = useState("");
   const [city, setCity] = useState("");
+  const [locationUrl, setLocationUrl] = useState("");
   const [priceGuidance, setPriceGuidance] = useState<number | null>(null);
   const [description, setDescription] = useState("");
   const [descriptionHi, setDescriptionHi] = useState("");
@@ -70,11 +72,6 @@ export default function SellPage() {
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [newImages, setNewImages] = useState<File[]>([]);
   const totalImageCount = existingImages.length + newImages.length;
-
-  useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.log("[sell] newImages state committed, length =", newImages.length);
-  }, [newImages]);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -110,6 +107,7 @@ export default function SellPage() {
           setPrice(String(listing.price));
           setPriceUnit(listing.priceUnit ?? "");
           setCity(listing.city ?? "");
+          setLocationUrl(listing.locationUrl ?? "");
           setDescription(listing.description);
           setDescriptionHi(listing.descriptionHi ?? "");
           if (isEdit) setExistingImages(listing.images);
@@ -132,6 +130,7 @@ export default function SellPage() {
       setPrice(draft.price);
       setPriceUnit(draft.priceUnit);
       setCity(draft.city);
+      setLocationUrl(draft.locationUrl ?? "");
       setDescription(draft.description);
       setDescriptionHi(draft.descriptionHi);
     } catch {
@@ -153,6 +152,7 @@ export default function SellPage() {
       price,
       priceUnit,
       city,
+      locationUrl,
       description,
       descriptionHi,
     };
@@ -170,6 +170,7 @@ export default function SellPage() {
     price,
     priceUnit,
     city,
+    locationUrl,
     description,
     descriptionHi,
   ]);
@@ -240,12 +241,14 @@ export default function SellPage() {
   }
 
   function addImages(files: FileList | null) {
-    // eslint-disable-next-line no-console
-    console.log("[sell] file input changed:", files ? files.length : 0, "file(s)");
     if (!files || files.length === 0) return;
     const room = MAX_LISTING_IMAGES - totalImageCount;
     if (room <= 0) return;
-    setNewImages((prev) => [...prev, ...Array.from(files).slice(0, room)]);
+    // Snapshot into a plain array now: `files` is a live FileList tied to the
+    // input element, and the onChange handler resets input.value right after
+    // this call, which would otherwise clear the list before it's read.
+    const picked = Array.from(files).slice(0, room);
+    setNewImages((prev) => [...prev, ...picked]);
   }
 
   function removeExistingImage(url: string) {
@@ -294,6 +297,7 @@ export default function SellPage() {
       formData.append("price", price);
       if (priceUnit.trim()) formData.append("priceUnit", priceUnit.trim());
       if (city) formData.append("city", city);
+      if (locationUrl.trim()) formData.append("locationUrl", locationUrl.trim());
       if (isEdit) formData.append("existingImages", JSON.stringify(existingImages));
       newImages.forEach((file) => formData.append("images", file));
 
@@ -325,6 +329,7 @@ export default function SellPage() {
     setPrice("");
     setPriceUnit("");
     setCity("");
+    setLocationUrl("");
     setDescription("");
     setDescriptionHi("");
     setExistingImages([]);
@@ -367,10 +372,6 @@ export default function SellPage() {
   return (
     <main className="mx-auto max-w-lg px-4 py-6 sm:py-10">
       <h1 className="text-lg font-bold sm:text-xl">{t("title")}</h1>
-      <p className="mt-1 rounded bg-yellow-200 px-2 py-1 text-xs font-bold text-black">
-        DEBUG: existingImages={existingImages.length} newImages={newImages.length} totalImageCount=
-        {totalImageCount}
-      </p>
       <p className="mt-1 text-xs text-gray-500">{t("step", { current: step, total: TOTAL_STEPS })}</p>
       <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
         <div
@@ -610,6 +611,17 @@ export default function SellPage() {
                 </select>
               </Field>
 
+              <Field label={`${t("locationUrl")} (${t("optional")})`}>
+                <input
+                  type="url"
+                  value={locationUrl}
+                  onChange={(e) => setLocationUrl(e.target.value)}
+                  placeholder={t("locationUrlPlaceholder")}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
+                />
+                <p className="mt-1 text-xs text-gray-400">{t("locationUrlHint")}</p>
+              </Field>
+
               <Field label={t("description")}>
                 <textarea
                   value={description}
@@ -737,6 +749,7 @@ export default function SellPage() {
               <ReviewRow label={t("listingTitle")} value={title} />
               <ReviewRow label={t("price")} value={`₹${price}${priceUnit ? ` / ${priceUnit}` : ""}`} />
               {city && <ReviewRow label={t("city")} value={city} />}
+              {locationUrl && <ReviewRow label={t("locationUrl")} value={locationUrl} />}
               <ReviewRow label={t("description")} value={description} />
               {descriptionHi && <ReviewRow label={t("descriptionHi")} value={descriptionHi} />}
             </dl>

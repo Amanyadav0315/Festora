@@ -74,6 +74,7 @@ export interface ListingDTO {
   priceUnit?: string;
   images: string[];
   city?: string;
+  locationUrl?: string;
   isActive: boolean;
   createdAt: string;
 }

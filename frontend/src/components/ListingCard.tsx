@@ -1,6 +1,10 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { ListingDTO } from "@festora/types";
 import { ImageCarousel } from "@/components/ImageCarousel";
+import { SellerAvatar } from "@/components/SellerAvatar";
 
 function formatPrice(price: number, priceUnit?: string) {
   const formatted = new Intl.NumberFormat("en-IN", {
@@ -12,6 +16,8 @@ function formatPrice(price: number, priceUnit?: string) {
 }
 
 export function ListingCard({ listing }: { listing: ListingDTO }) {
+  const router = useRouter();
+
   return (
     <Link
       href={`/listings/${listing.id}`}
@@ -30,14 +36,18 @@ export function ListingCard({ listing }: { listing: ListingDTO }) {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              window.location.href = `/u/${listing.ownerId}`;
+              router.push(`/u/${listing.ownerId}`);
             }}
-            className="mt-1 block truncate text-xs text-gray-500 hover:text-orange-600 hover:underline"
+            className="relative z-10 mt-1 flex items-center gap-1.5 text-xs text-gray-500 hover:text-orange-600"
           >
-            {listing.storeName}
+            <SellerAvatar name={listing.storeName} />
+            <span className="truncate hover:underline">{listing.storeName}</span>
           </span>
         ) : (
-          <p className="mt-1 truncate text-xs text-gray-500">{listing.storeName}</p>
+          <p className="mt-1 flex items-center gap-1.5 truncate text-xs text-gray-500">
+            <SellerAvatar name={listing.storeName} />
+            {listing.storeName}
+          </p>
         )}
         {listing.city && <p className="text-xs text-gray-400">{listing.city}</p>}
       </div>

@@ -3,6 +3,7 @@ import { getLocale } from "next-intl/server";
 import type { ListingDTO } from "@festora/types";
 import { serverFetch } from "@/lib/server-api";
 import { ImageCarousel } from "@/components/ImageCarousel";
+import { SellerAvatar } from "@/components/SellerAvatar";
 
 export default async function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -22,9 +23,12 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-6 sm:py-8">
-      <div className="overflow-hidden rounded-lg">
-        <ImageCarousel images={listing.images} alt={listing.title} />
-      </div>
+      <ImageCarousel
+        images={listing.images}
+        alt={listing.title}
+        aspect="aspect-[4/3] max-h-[420px]"
+        showThumbnails
+      />
       <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
         <span className="rounded-full bg-gray-100 px-2.5 py-1 font-medium text-gray-600">
           {listing.condition === "new" ? "New" : "Used"}
@@ -48,17 +52,53 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
           ))}
         </div>
       )}
-      <p className="mt-4 text-sm text-gray-500">
-        Sold by{" "}
-        {listing.ownerId ? (
-          <Link href={`/u/${listing.ownerId}`} className="font-medium text-orange-600 hover:underline">
-            {listing.storeName}
-          </Link>
-        ) : (
-          listing.storeName
-        )}
-        {listing.city ? ` · ${listing.city}` : ""}
-      </p>
+      {listing.locationUrl && (
+        <a
+          href={listing.locationUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2.5 text-sm font-medium text-gray-700 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700"
+        >
+          <PinIcon />
+          View location on map
+          <span className="ml-auto text-gray-400">↗</span>
+        </a>
+      )}
+
+      {listing.ownerId ? (
+        <Link
+          href={`/u/${listing.ownerId}`}
+          className="mt-4 flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-3 transition hover:border-orange-300 hover:bg-orange-50"
+        >
+          <SellerAvatar name={listing.storeName} size="md" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-gray-900">{listing.storeName}</p>
+            <p className="text-xs text-gray-500">{listing.city ? listing.city : "View seller profile"}</p>
+          </div>
+          <span className="shrink-0 text-sm font-medium text-orange-600">View profile ›</span>
+        </Link>
+      ) : (
+        <div className="mt-4 flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-3">
+          <SellerAvatar name={listing.storeName} size="md" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-gray-900">{listing.storeName}</p>
+            {listing.city && <p className="text-xs text-gray-500">{listing.city}</p>}
+          </div>
+        </div>
+      )}
     </main>
+  );
+}
+
+function PinIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 21s-7-5.686-7-11a7 7 0 1 1 14 0c0 5.314-7 11-7 11z"
+      />
+      <circle cx="12" cy="10" r="2.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
