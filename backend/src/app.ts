@@ -11,6 +11,7 @@ import { storeRouter } from "./modules/stores/store.routes";
 import { listingRouter } from "./modules/listings/listing.routes";
 import { socialRouter } from "./modules/social/social.routes";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler";
+import { auditLog } from "./middleware/auditLog";
 
 export function createApp() {
   const app = express();
@@ -19,6 +20,7 @@ export function createApp() {
   app.use(express.json());
   app.use(cookieParser());
   app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
+  app.use(auditLog);
 
   app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 

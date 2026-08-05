@@ -9,6 +9,7 @@ import { AUTH_CHANGED_EVENT, getUser } from "@/lib/auth-client";
 import { INDIA_CITIES } from "@/lib/cities";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ProfileMenu } from "@/components/ProfileMenu";
+import { BrowseDropdown } from "@/components/BrowseDropdown";
 
 const LOCATION_KEY = "festora_location";
 const HIDDEN_PREFIXES = ["/welcome", "/onboarding"];
@@ -129,6 +130,8 @@ export function Navbar() {
         <nav className="hidden shrink-0 items-center gap-4 text-sm lg:flex">
           <LanguageSwitcher />
 
+          <BrowseDropdown />
+
           <Link
             href="/browse?purpose=rent"
             className="flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3.5 py-1.5 font-semibold text-orange-700 hover:border-orange-300 hover:bg-orange-100"
@@ -212,6 +215,7 @@ export function Navbar() {
             </div>
 
             <div className="ml-auto flex shrink-0 items-center gap-1">
+              <BrowseDropdown compact />
               <LanguageSwitcher compact />
 
               <Link

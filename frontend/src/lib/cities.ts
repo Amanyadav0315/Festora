@@ -194,3 +194,16 @@ const ALL_LOCATIONS = Array.from(new Set(Object.values(DISTRICTS_BY_STATE).flat(
 );
 
 export const INDIA_CITIES = ["All India", ...ALL_LOCATIONS];
+
+const STATE_BY_CITY: Record<string, string> = {};
+for (const [state, cities] of Object.entries(DISTRICTS_BY_STATE)) {
+  for (const city of cities) STATE_BY_CITY[city] = state;
+}
+
+// Cities within the same state are treated as "nearby" for search purposes — there's no
+// lat/long geocoding in this local-first build, so state grouping is the practical proxy.
+export function getNearbyCities(city: string): string[] {
+  const state = STATE_BY_CITY[city];
+  if (!state) return [city];
+  return DISTRICTS_BY_STATE[state];
+}

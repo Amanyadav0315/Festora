@@ -45,7 +45,9 @@ export const listListingsQuerySchema = z.object({
   subcategorySlug: z.string().optional(),
   condition: z.enum(["new", "old"]).optional(),
   purpose: z.enum(["sell", "rent"]).optional(),
+  // Comma-separated list of cities: the searched city plus its "nearby" (same-state) cities.
   city: z.string().optional(),
+  cities: z.string().optional(),
   q: z.string().optional(),
   storeId: z.string().optional(),
   includeInactive: z

@@ -42,7 +42,7 @@ export function CategoryGrid({
               className="flex flex-col items-center gap-2 rounded-xl p-2 text-center transition-colors hover:bg-gray-100 sm:p-3"
             >
               <span className="block w-full overflow-hidden rounded-2xl shadow-sm">
-                <CategoryImage slug={sub.slug} name={displayName} imageUrl={sub.imageUrl} className="aspect-square w-full" />
+                <CategoryImage name={displayName} imageUrl={sub.imageUrl} className="aspect-square w-full" />
               </span>
               <span className="text-xs font-medium text-gray-700">{displayName}</span>
             </Link>

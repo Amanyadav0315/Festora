@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ASSET_BASE_URL } from "@/lib/api";
 
 function resolveImageUrl(src: string) {
@@ -29,12 +29,19 @@ export function ImageCarousel({
     setActive(index);
   }
 
-  function handleWheel(e: React.WheelEvent<HTMLDivElement>) {
+  // Attached as a native listener (not React's onWheel) because React registers
+  // wheel handlers as passive by default, which throws when calling preventDefault.
+  useEffect(() => {
     const track = trackRef.current;
-    if (!track || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
-    e.preventDefault();
-    track.scrollBy({ left: e.deltaY, behavior: "smooth" });
-  }
+    if (!track) return;
+    function handleWheel(e: WheelEvent) {
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+      e.preventDefault();
+      track!.scrollBy({ left: e.deltaY, behavior: "smooth" });
+    }
+    track.addEventListener("wheel", handleWheel, { passive: false });
+    return () => track.removeEventListener("wheel", handleWheel);
+  }, []);
 
   function goTo(index: number) {
     const track = trackRef.current;
@@ -48,7 +55,6 @@ export function ImageCarousel({
         <div
           ref={trackRef}
           onScroll={handleScroll}
-          onWheel={handleWheel}
           className={`flex w-full snap-x snap-mandatory overflow-x-auto scroll-smooth ${aspect}`}
           style={{ scrollbarWidth: "none" }}
         >

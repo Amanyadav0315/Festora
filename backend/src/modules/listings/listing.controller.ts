@@ -37,7 +37,19 @@ export const listingController = {
     if (query.subcategorySlug) filter.subcategorySlug = query.subcategorySlug;
     if (query.condition) filter.condition = query.condition;
     if (query.purpose) filter.purpose = query.purpose;
-    if (query.city) filter.city = new RegExp(`^${query.city}$`, "i");
+    if (query.cities) {
+      const cityList = query.cities
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean);
+      if (cityList.length > 0) {
+        filter.city = {
+          $in: cityList.map((c) => new RegExp(`^${c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i")),
+        };
+      }
+    } else if (query.city) {
+      filter.city = new RegExp(`^${query.city.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i");
+    }
     if (query.q) filter.$text = { $search: query.q };
     if (query.storeId) filter.storeId = query.storeId;
 
