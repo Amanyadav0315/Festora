@@ -10,6 +10,7 @@ import { isExpired } from "@/lib/api";
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", exact: true },
   { href: "/categories", label: "Categories" },
+  { href: "/reports", label: "Reports" },
 ];
 
 function SidebarLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {

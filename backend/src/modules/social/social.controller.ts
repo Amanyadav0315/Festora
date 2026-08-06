@@ -4,10 +4,23 @@ import { BlockModel } from "./block.model";
 import { ReportModel } from "./report.model";
 import { UserModel } from "../users/user.model";
 import { reportUserSchema } from "./social.schemas";
+import { reportImageUrl } from "../../middleware/upload";
 import { ApiError } from "../../middleware/errorHandler";
 
 function toSummary(u: any) {
   return { id: u._id.toString(), name: u.name };
+}
+
+function toReportDTO(r: any) {
+  return {
+    id: r._id.toString(),
+    reporter: r.reporterId && typeof r.reporterId === "object" ? toSummary(r.reporterId) : { id: r.reporterId.toString(), name: "Unknown" },
+    reported: r.reportedId && typeof r.reportedId === "object" ? toSummary(r.reportedId) : { id: r.reportedId.toString(), name: "Unknown" },
+    reason: r.reason,
+    screenshots: (r.screenshots ?? []).map((f: string) => f),
+    status: r.status,
+    createdAt: r.createdAt.toISOString(),
+  };
 }
 
 export const socialController = {
@@ -28,6 +41,13 @@ export const socialController = {
   async unfollow(req: Request, res: Response) {
     await FollowModel.deleteOne({ followerId: req.user!.sub, followingId: req.params.id });
     res.json({ following: false });
+  },
+
+  async removeFollower(req: Request, res: Response) {
+    // Removing a follower is the mirror of unfollow: delete the edge where :id follows me,
+    // rather than where I follow :id.
+    await FollowModel.deleteOne({ followerId: req.params.id, followingId: req.user!.sub });
+    res.json({ removed: true });
   },
 
   async followers(req: Request, res: Response) {
@@ -75,7 +95,37 @@ export const socialController = {
     const target = await UserModel.findById(targetId);
     if (!target) throw new ApiError(404, "User not found");
 
-    await ReportModel.create({ reporterId: req.user!.sub, reportedId: targetId, reason: input.reason });
+    const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+    const screenshots = files.map((f) => reportImageUrl(f.filename));
+
+    await ReportModel.create({
+      reporterId: req.user!.sub,
+      reportedId: targetId,
+      reason: input.reason,
+      screenshots,
+      conversationId: input.conversationId || undefined,
+    });
     res.status(201).json({ reported: true });
+  },
+
+  // GET /social/admin/reports?status=pending — admin-only review queue.
+  async listReports(req: Request, res: Response) {
+    const filter: Record<string, unknown> = {};
+    if (req.query.status === "pending" || req.query.status === "reviewed") filter.status = req.query.status;
+
+    const reports = await ReportModel.find(filter)
+      .sort({ createdAt: -1 })
+      .populate("reporterId", "name")
+      .populate("reportedId", "name");
+    res.json({ reports: reports.map(toReportDTO) });
+  },
+
+  // PATCH /social/admin/reports/:id — mark a report reviewed.
+  async reviewReport(req: Request, res: Response) {
+    const report = await ReportModel.findById(req.params.id);
+    if (!report) throw new ApiError(404, "Report not found");
+    report.status = "reviewed";
+    await report.save();
+    res.json({ reviewed: true });
   },
 };

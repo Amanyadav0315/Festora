@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import type { UserDTO } from "@festora/types";
 import { AUTH_CHANGED_EVENT, getUser } from "@/lib/auth-client";
 import { ProfileMenu } from "@/components/ProfileMenu";
+import { isChatThreadPath } from "@/lib/chatRoute";
 
 const HIDDEN_PREFIXES = ["/welcome", "/onboarding"];
 
@@ -97,7 +98,7 @@ export function MobileBottomNav() {
     }
   }
 
-  if (HIDDEN_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+  if (HIDDEN_PREFIXES.some((prefix) => pathname.startsWith(prefix)) || isChatThreadPath(pathname)) {
     return null;
   }
 

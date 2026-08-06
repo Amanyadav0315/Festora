@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import type { ListingDTO, PublicUserProfileDTO } from "@festora/types";
 import { apiFetch, ApiRequestError } from "@/lib/api";
 import { getAccessToken, getUser } from "@/lib/auth-client";
+import { getOrCreateConversation } from "@/lib/chat-client";
 import { ListingCard } from "@/components/ListingCard";
 import { OwnListingCard } from "@/components/OwnListingCard";
 
@@ -333,11 +334,22 @@ export function SocialProfile({
             <div className="shrink-0 p-5 pt-0">
               <button
                 type="button"
-                onClick={() => {
-                  setMsgOpen(false);
-                  router.push("/chats");
+                disabled={busy}
+                onClick={async () => {
+                  const token = getAccessToken();
+                  if (!token) return;
+                  setBusy(true);
+                  try {
+                    const conversationId = await getOrCreateConversation(profile.id, token);
+                    setMsgOpen(false);
+                    router.push(`/chats/${conversationId}`);
+                  } catch (err) {
+                    setError(err instanceof ApiRequestError ? err.message : t("somethingWrong"));
+                  } finally {
+                    setBusy(false);
+                  }
                 }}
-                className="w-full rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-700"
+                className="w-full rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-700 disabled:opacity-60"
               >
                 {t("continueToChat")}
               </button>

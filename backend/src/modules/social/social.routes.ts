@@ -1,14 +1,30 @@
 import { Router } from "express";
 import { socialController } from "./social.controller";
 import { asyncHandler } from "../../middleware/asyncHandler";
-import { requireAuth } from "../../middleware/auth";
+import { requireAuth, requireRole } from "../../middleware/auth";
+import { uploadReportImages } from "../../middleware/upload";
 
 export const socialRouter = Router();
 
 socialRouter.post("/follow/:id", requireAuth, asyncHandler(socialController.follow));
 socialRouter.delete("/follow/:id", requireAuth, asyncHandler(socialController.unfollow));
 socialRouter.get("/followers/:id", requireAuth, asyncHandler(socialController.followers));
+socialRouter.delete("/followers/:id", requireAuth, asyncHandler(socialController.removeFollower));
 socialRouter.get("/following/:id", requireAuth, asyncHandler(socialController.following));
 socialRouter.post("/block/:id", requireAuth, asyncHandler(socialController.block));
 socialRouter.delete("/block/:id", requireAuth, asyncHandler(socialController.unblock));
-socialRouter.post("/report/:id", requireAuth, asyncHandler(socialController.report));
+socialRouter.post(
+  "/report/:id",
+  requireAuth,
+  uploadReportImages.array("screenshots", 4),
+  asyncHandler(socialController.report)
+);
+
+// Admin-only review queue.
+socialRouter.get("/admin/reports", requireAuth, requireRole("admin"), asyncHandler(socialController.listReports));
+socialRouter.patch(
+  "/admin/reports/:id",
+  requireAuth,
+  requireRole("admin"),
+  asyncHandler(socialController.reviewReport)
+);

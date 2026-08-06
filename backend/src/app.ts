@@ -11,6 +11,7 @@ import { storeRouter } from "./modules/stores/store.routes";
 import { listingRouter } from "./modules/listings/listing.routes";
 import { socialRouter } from "./modules/social/social.routes";
 import { wishlistRouter } from "./modules/wishlist/wishlist.routes";
+import { chatRouter } from "./modules/chat/chat.routes";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler";
 import { auditLog } from "./middleware/auditLog";
 
@@ -33,6 +34,7 @@ export function createApp() {
   app.use("/api/listings", listingRouter);
   app.use("/api/social", socialRouter);
   app.use("/api/wishlist", wishlistRouter);
+  app.use("/api/chats", chatRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

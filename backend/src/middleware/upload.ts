@@ -47,3 +47,23 @@ export const uploadListingImages = multer({
 export function listingImageUrl(filename: string): string {
   return `/uploads/listings/${filename}`;
 }
+
+export const uploadChatImage = multer({
+  storage: makeStorage("chat"),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: imageFileFilter,
+});
+
+export function chatImageUrl(filename: string): string {
+  return `/uploads/chat/${filename}`;
+}
+
+export const uploadReportImages = multer({
+  storage: makeStorage("reports"),
+  limits: { fileSize: 5 * 1024 * 1024, files: 4 },
+  fileFilter: imageFileFilter,
+});
+
+export function reportImageUrl(filename: string): string {
+  return `/uploads/reports/${filename}`;
+}

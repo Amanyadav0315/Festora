@@ -68,6 +68,7 @@ export function UserListPage({ kind, title }: { kind: "followers" | "following";
   const [users, setUsers] = useState<UserSummary[] | null>(null);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     const currentUser = getUser();
@@ -88,6 +89,28 @@ export function UserListPage({ kind, title }: { kind: "followers" | "following";
     if (!q) return users;
     return users.filter((u) => u.name.toLowerCase().includes(q));
   }, [users, query]);
+
+  async function handleAction(u: UserSummary) {
+    const token = getAccessToken() ?? undefined;
+    if (!token) return;
+
+    const confirmed = window.confirm(
+      kind === "following" ? `Unfollow ${u.name}?` : `Remove ${u.name} from your followers?`
+    );
+    if (!confirmed) return;
+
+    setBusyId(u.id);
+    setError("");
+    try {
+      const path = kind === "following" ? `/social/follow/${u.id}` : `/social/followers/${u.id}`;
+      await apiFetch(path, { method: "DELETE", accessToken: token });
+      setUsers((prev) => prev && prev.filter((x) => x.id !== u.id));
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? err.message : "Something went wrong");
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   return (
     <main className="mx-auto max-w-2xl px-4 pb-12 sm:px-6">
@@ -117,7 +140,7 @@ export function UserListPage({ kind, title }: { kind: "followers" | "following";
         </div>
       )}
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
 
       {users === null && !error ? (
         <div className="divide-y divide-gray-100 rounded-xl border border-gray-100 bg-white px-3 shadow-sm">
@@ -146,12 +169,10 @@ export function UserListPage({ kind, title }: { kind: "followers" | "following";
           <ul className="divide-y divide-gray-100 rounded-xl border border-gray-100 bg-white px-3 shadow-sm">
             {filtered.map((u) => {
               const initial = u.name.trim().charAt(0).toUpperCase() || "U";
+              const busy = busyId === u.id;
               return (
-                <li key={u.id}>
-                  <Link
-                    href={`/u/${u.id}`}
-                    className="group flex items-center gap-3 py-3 transition-colors hover:bg-gray-50"
-                  >
+                <li key={u.id} className="flex items-center gap-3 py-2.5">
+                  <Link href={`/u/${u.id}`} className="group flex min-w-0 flex-1 items-center gap-3 py-0.5">
                     <div
                       className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-sm font-semibold text-white shadow-sm ${gradientFor(
                         u.name
@@ -162,6 +183,14 @@ export function UserListPage({ kind, title }: { kind: "followers" | "following";
                     <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-900">{u.name}</span>
                     <ChevronIcon className="h-4 w-4 shrink-0 text-gray-300 transition-transform group-hover:translate-x-0.5 group-hover:text-gray-400" />
                   </Link>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => handleAction(u)}
+                    className="shrink-0 rounded-full border border-gray-300 px-3.5 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                  >
+                    {busy ? "..." : kind === "following" ? "Unfollow" : "Remove"}
+                  </button>
                 </li>
               );
             })}

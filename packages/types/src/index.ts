@@ -110,6 +110,51 @@ export interface PublicUserProfileDTO {
   store?: StoreDTO;
 }
 
+export interface MessageReplyPreviewDTO {
+  id: string;
+  senderId: string;
+  text?: string;
+  imageUrl?: string;
+}
+
+export interface MessageDTO {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  text?: string;
+  imageUrl?: string;
+  replyTo?: MessageReplyPreviewDTO;
+  edited: boolean;
+  deletedForEveryone: boolean;
+  isMine: boolean;
+  createdAt: string;
+}
+
+export interface ConversationDTO {
+  id: string;
+  otherUser: { id: string; name: string };
+  lastMessageText?: string;
+  lastMessageAt: string;
+  unreadCount: number;
+}
+
+export interface ChatMediaItemDTO {
+  id: string;
+  imageUrl: string;
+  senderId: string;
+  createdAt: string;
+}
+
+export interface ReportDTO {
+  id: string;
+  reporter: { id: string; name: string };
+  reported: { id: string; name: string };
+  reason: string;
+  screenshots: string[];
+  status: "pending" | "reviewed";
+  createdAt: string;
+}
+
 export interface AuthTokensDTO {
   accessToken: string;
   refreshToken: string;

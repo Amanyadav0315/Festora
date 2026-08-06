@@ -10,6 +10,7 @@ import { INDIA_CITIES } from "@/lib/cities";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ProfileMenu } from "@/components/ProfileMenu";
 import { BrowseDropdown } from "@/components/BrowseDropdown";
+import { isChatThreadPath } from "@/lib/chatRoute";
 
 const LOCATION_KEY = "festora_location";
 const HIDDEN_PREFIXES = ["/welcome", "/onboarding"];
@@ -86,7 +87,7 @@ export function Navbar() {
     }
   }
 
-  if (HIDDEN_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+  if (HIDDEN_PREFIXES.some((prefix) => pathname.startsWith(prefix)) || isChatThreadPath(pathname)) {
     return null;
   }
 
