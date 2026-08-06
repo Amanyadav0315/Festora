@@ -7,4 +7,5 @@ export const userRouter = Router();
 
 userRouter.get("/me", requireAuth, asyncHandler(userController.me));
 userRouter.patch("/me", requireAuth, asyncHandler(userController.updateMe));
+userRouter.patch("/me/password", requireAuth, asyncHandler(userController.changePassword));
 userRouter.get("/:id", optionalAuth, asyncHandler(userController.publicProfile));

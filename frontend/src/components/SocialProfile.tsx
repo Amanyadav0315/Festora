@@ -221,6 +221,8 @@ export function SocialProfile({
             })}
           </p>
 
+          {profile.about && <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{profile.about}</p>}
+
           <div className="mt-3 flex items-center gap-5 text-sm">
             <span className="text-gray-700">
               <span className="font-semibold text-gray-900">{profile.postsCount}</span> {t("posts")}

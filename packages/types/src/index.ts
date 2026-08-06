@@ -9,6 +9,7 @@ export interface UserDTO {
   name: string;
   phone: string;
   email?: string;
+  about?: string;
   role: UserRole;
   createdAt: string;
 }
@@ -100,6 +101,7 @@ export interface FollowUserSummaryDTO {
 export interface PublicUserProfileDTO {
   id: string;
   name: string;
+  about?: string;
   createdAt: string;
   followersCount: number;
   followingCount: number;
@@ -150,6 +152,15 @@ export interface ReportDTO {
   reporter: { id: string; name: string };
   reported: { id: string; name: string };
   reason: string;
+  screenshots: string[];
+  status: "pending" | "reviewed";
+  createdAt: string;
+}
+
+export interface IssueReportDTO {
+  id: string;
+  reporter: { id: string; name: string };
+  message: string;
   screenshots: string[];
   status: "pending" | "reviewed";
   createdAt: string;

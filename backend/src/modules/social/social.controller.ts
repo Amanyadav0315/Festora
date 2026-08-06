@@ -11,11 +11,18 @@ function toSummary(u: any) {
   return { id: u._id.toString(), name: u.name };
 }
 
+// A populated ref can come back null if the referenced user was deleted after the edge was
+// created (a dangling follow/report record) — fall back to a placeholder instead of crashing.
+function toSummaryOrUnknown(u: any, rawId: unknown) {
+  if (u && typeof u === "object") return toSummary(u);
+  return { id: String(rawId), name: "Deleted user" };
+}
+
 function toReportDTO(r: any) {
   return {
     id: r._id.toString(),
-    reporter: r.reporterId && typeof r.reporterId === "object" ? toSummary(r.reporterId) : { id: r.reporterId.toString(), name: "Unknown" },
-    reported: r.reportedId && typeof r.reportedId === "object" ? toSummary(r.reportedId) : { id: r.reportedId.toString(), name: "Unknown" },
+    reporter: toSummaryOrUnknown(r.reporterId, r.reporterId?._id ?? r.reporterId),
+    reported: toSummaryOrUnknown(r.reportedId, r.reportedId?._id ?? r.reportedId),
     reason: r.reason,
     screenshots: (r.screenshots ?? []).map((f: string) => f),
     status: r.status,
@@ -54,13 +61,15 @@ export const socialController = {
     // Followers/following lists are private — only the account owner can view their own.
     if (req.params.id !== req.user!.sub) throw new ApiError(403, "You can only view your own followers");
     const follows = await FollowModel.find({ followingId: req.params.id }).populate("followerId", "name");
-    res.json({ users: follows.map((f) => toSummary(f.followerId)) });
+    // A follower account may have been deleted after the edge was created — skip those
+    // dangling rows instead of crashing on a null populated ref.
+    res.json({ users: follows.filter((f) => f.followerId).map((f) => toSummary(f.followerId)) });
   },
 
   async following(req: Request, res: Response) {
     if (req.params.id !== req.user!.sub) throw new ApiError(403, "You can only view who you follow");
     const follows = await FollowModel.find({ followerId: req.params.id }).populate("followingId", "name");
-    res.json({ users: follows.map((f) => toSummary(f.followingId)) });
+    res.json({ users: follows.filter((f) => f.followingId).map((f) => toSummary(f.followingId)) });
   },
 
   async block(req: Request, res: Response) {

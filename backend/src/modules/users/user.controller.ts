@@ -1,12 +1,16 @@
 import type { Request, Response } from "express";
+import bcrypt from "bcryptjs";
 import { userRepository } from "./user.repository";
+import { UserModel } from "./user.model";
 import { toUserDTO } from "./user.mapper";
 import { ApiError } from "../../middleware/errorHandler";
-import { updateProfileSchema } from "./user.schemas";
+import { updateProfileSchema, changePasswordSchema } from "./user.schemas";
 import { FollowModel } from "../social/follow.model";
 import { BlockModel } from "../social/block.model";
 import { StoreModel } from "../stores/store.model";
 import { ListingModel } from "../listings/listing.model";
+
+const SALT_ROUNDS = 10;
 
 function toStoreDTO(store: any) {
   return {
@@ -34,6 +38,19 @@ export const userController = {
     res.json({ user: toUserDTO(user) });
   },
 
+  async changePassword(req: Request, res: Response) {
+    const input = changePasswordSchema.parse(req.body);
+    const user = await UserModel.findById(req.user!.sub);
+    if (!user) throw new ApiError(404, "User not found");
+
+    const valid = await bcrypt.compare(input.currentPassword, user.passwordHash);
+    if (!valid) throw new ApiError(400, "Current password is incorrect");
+
+    user.passwordHash = await bcrypt.hash(input.newPassword, SALT_ROUNDS);
+    await user.save();
+    res.json({ updated: true });
+  },
+
   async publicProfile(req: Request, res: Response) {
     const target = await userRepository.findById(req.params.id);
     if (!target) throw new ApiError(404, "User not found");
@@ -53,6 +70,7 @@ export const userController = {
       profile: {
         id: target._id.toString(),
         name: target.name,
+        about: (target as any).about || undefined,
         createdAt: (target as any).createdAt.toISOString(),
         followersCount,
         followingCount,
