@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import type { ListingDTO, PublicUserProfileDTO } from "@festora/types";
-import { apiFetch } from "@/lib/api";
-import { getAccessToken, getUser } from "@/lib/auth-client";
+import { apiFetch, ApiRequestError } from "@/lib/api";
+import { clearSession, getAccessToken, getUser } from "@/lib/auth-client";
 import { BackHeader } from "@/components/BackHeader";
 import { SocialProfile } from "@/components/SocialProfile";
 
@@ -24,16 +24,28 @@ export default function AccountPage() {
 
     let cancelled = false;
     async function load() {
-      const token = getAccessToken() ?? undefined;
-      const { profile: p } = await apiFetch<{ profile: PublicUserProfileDTO }>(`/users/${currentUser!.id}`, {
-        accessToken: token,
-      });
-      if (cancelled) return;
-      setProfile(p);
+      try {
+        const token = getAccessToken() ?? undefined;
+        const { profile: p } = await apiFetch<{ profile: PublicUserProfileDTO }>(`/users/${currentUser!.id}`, {
+          accessToken: token,
+        });
+        if (cancelled) return;
+        setProfile(p);
 
-      if (p.store) {
-        const { listings: l } = await apiFetch<{ listings: ListingDTO[] }>(`/listings?storeId=${p.store.id}&limit=50`);
-        if (!cancelled) setListings(l);
+        if (p.store) {
+          const { listings: l } = await apiFetch<{ listings: ListingDTO[] }>(`/listings?storeId=${p.store.id}&limit=50`);
+          if (!cancelled) setListings(l);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        // The signed-in user no longer exists on the server (stale/expired session) —
+        // clear it and send them to log in again instead of crashing the page.
+        if (err instanceof ApiRequestError && (err.status === 404 || err.status === 401)) {
+          clearSession();
+          router.push("/login");
+          return;
+        }
+        throw err;
       }
     }
     load();

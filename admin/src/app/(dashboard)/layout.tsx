@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { UserDTO } from "@festora/types";
-import { clearSession, getUser } from "@/lib/auth-client";
+import { clearSession, getAccessToken, getUser } from "@/lib/auth-client";
+import { isExpired } from "@/lib/api";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", exact: true },
@@ -42,7 +43,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     const current = getUser();
-    if (!current) {
+    const token = getAccessToken();
+    // Presence alone isn't enough — the admin app has no refresh flow, so a token that has
+    // simply expired since yesterday must send the admin back to /login on page load, not
+    // silently render a dashboard where every action will fail.
+    if (!current || !token || isExpired(token)) {
+      clearSession();
       router.replace("/login");
       return;
     }

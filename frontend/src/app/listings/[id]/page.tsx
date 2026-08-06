@@ -4,6 +4,7 @@ import type { ListingDTO } from "@festora/types";
 import { serverFetch } from "@/lib/server-api";
 import { ImageCarousel } from "@/components/ImageCarousel";
 import { SellerAvatar } from "@/components/SellerAvatar";
+import { WishlistButton } from "@/components/WishlistButton";
 
 export default async function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -37,7 +38,13 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
           {listing.purpose === "rent" ? "For rent" : "For sale"}
         </span>
       </div>
-      <h1 className="mt-2 text-xl font-bold sm:text-2xl">{listing.title}</h1>
+      <div className="mt-2 flex items-start justify-between gap-3">
+        <h1 className="text-xl font-bold sm:text-2xl">{listing.title}</h1>
+        <WishlistButton
+          listingId={listing.id}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:text-rose-600"
+        />
+      </div>
       <p className="mt-1 text-lg font-semibold text-orange-600 sm:text-xl">
         ₹{listing.price.toLocaleString("en-IN")}
         {listing.priceUnit ? ` / ${listing.priceUnit.replace(/^per /, "")}` : ""}

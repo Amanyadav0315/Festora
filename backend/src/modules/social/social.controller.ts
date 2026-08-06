@@ -31,11 +31,14 @@ export const socialController = {
   },
 
   async followers(req: Request, res: Response) {
+    // Followers/following lists are private — only the account owner can view their own.
+    if (req.params.id !== req.user!.sub) throw new ApiError(403, "You can only view your own followers");
     const follows = await FollowModel.find({ followingId: req.params.id }).populate("followerId", "name");
     res.json({ users: follows.map((f) => toSummary(f.followerId)) });
   },
 
   async following(req: Request, res: Response) {
+    if (req.params.id !== req.user!.sub) throw new ApiError(403, "You can only view who you follow");
     const follows = await FollowModel.find({ followerId: req.params.id }).populate("followingId", "name");
     res.json({ users: follows.map((f) => toSummary(f.followingId)) });
   },

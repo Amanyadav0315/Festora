@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { ListingDTO } from "@festora/types";
 import { ImageCarousel } from "@/components/ImageCarousel";
 import { SellerAvatar } from "@/components/SellerAvatar";
+import { WishlistButton } from "@/components/WishlistButton";
 
 function formatPrice(price: number, priceUnit?: string) {
   const formatted = new Intl.NumberFormat("en-IN", {
@@ -23,8 +24,11 @@ export function ListingCard({ listing }: { listing: ListingDTO }) {
       href={`/listings/${listing.id}`}
       className="block overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-shadow hover:shadow-md"
     >
-      <div className="w-full overflow-hidden bg-gray-100">
+      <div className="relative w-full overflow-hidden bg-gray-100">
         <ImageCarousel images={listing.images} alt={listing.title} />
+        <div className="absolute left-2 top-2 z-10">
+          <WishlistButton listingId={listing.id} />
+        </div>
       </div>
       <div className="p-2 sm:p-3">
         <p className="text-sm font-semibold text-gray-900 sm:text-base">{formatPrice(listing.price, listing.priceUnit)}</p>

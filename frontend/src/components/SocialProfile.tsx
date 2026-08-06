@@ -224,12 +224,27 @@ export function SocialProfile({
             <span className="text-gray-700">
               <span className="font-semibold text-gray-900">{profile.postsCount}</span> {t("posts")}
             </span>
-            <span className="text-gray-700">
-              <span className="font-semibold text-gray-900">{profile.followersCount}</span> {t("followers")}
-            </span>
-            <span className="text-gray-700">
-              <span className="font-semibold text-gray-900">{profile.followingCount}</span> {t("following")}
-            </span>
+            {profile.isSelf ? (
+              <>
+                <Link href="/account/followers" className="text-gray-700 hover:underline">
+                  <span className="font-semibold text-gray-900">{profile.followersCount}</span> {t("followers")}
+                </Link>
+                <Link href="/account/following" className="text-gray-700 hover:underline">
+                  <span className="font-semibold text-gray-900">{profile.followingCount}</span> {t("following")}
+                </Link>
+              </>
+            ) : (
+              <>
+                {/* Followers/following lists are private to the account owner — other
+                    visitors only see the counts, not who's in them. */}
+                <span className="text-gray-700">
+                  <span className="font-semibold text-gray-900">{profile.followersCount}</span> {t("followers")}
+                </span>
+                <span className="text-gray-700">
+                  <span className="font-semibold text-gray-900">{profile.followingCount}</span> {t("following")}
+                </span>
+              </>
+            )}
           </div>
         </div>
       </div>

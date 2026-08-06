@@ -4,6 +4,7 @@ import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { SessionGuard } from "@/components/SessionGuard";
 
 export const metadata: Metadata = {
   title: "Festora",
@@ -18,6 +19,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale}>
       <body className="min-h-screen bg-gray-50 pb-16 text-gray-900 lg:pb-0">
         <NextIntlClientProvider locale={locale} messages={messages}>
+          <SessionGuard />
           <Navbar />
           {children}
           <MobileBottomNav />
