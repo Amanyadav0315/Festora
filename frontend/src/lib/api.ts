@@ -1,6 +1,7 @@
 import { ACCESS_TOKEN_KEY } from "./auth-client";
+import { resolveApiUrl } from "./api-url";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+const API_URL = resolveApiUrl();
 export const ASSET_BASE_URL = API_URL.replace(/\/api$/, "");
 
 export class ApiRequestError extends Error {
