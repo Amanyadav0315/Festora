@@ -1,4 +1,4 @@
-import type { ListingDTO, SubcategoryDTO } from "@festora/types";
+import type { ListingDTO, SubcategoryDTO } from "@eventsaman/types";
 import { getTranslations } from "next-intl/server";
 import { serverFetch } from "@/lib/server-api";
 import { CategoryGrid } from "@/components/CategoryGrid";

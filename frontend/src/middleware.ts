@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const ONBOARDED_COOKIE = "festora_onboarded";
+const ONBOARDED_COOKIE = "eventsaman_onboarded";
 const BYPASS_PREFIXES = ["/welcome", "/onboarding", "/_next", "/api"];
 
 export function middleware(request: NextRequest) {

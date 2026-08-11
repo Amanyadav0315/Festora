@@ -25,8 +25,8 @@ export function isExpired(token: string): boolean {
 // the dashboard rendered with a dead token that fails every action silently until noticed.
 function handleSessionExpired() {
   if (typeof window === "undefined") return;
-  localStorage.removeItem("festora_admin_access_token");
-  localStorage.removeItem("festora_admin_user");
+  localStorage.removeItem("eventsaman_admin_access_token");
+  localStorage.removeItem("eventsaman_admin_user");
   if (window.location.pathname !== "/login") {
     window.location.href = "/login";
   }

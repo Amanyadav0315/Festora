@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import type { UserDTO } from "@festora/types";
+import type { UserDTO } from "@eventsaman/types";
 import { apiFetch, ApiRequestError } from "@/lib/api";
 import { getAccessToken, getUser, saveUser } from "@/lib/auth-client";
 import { BackHeader } from "@/components/BackHeader";

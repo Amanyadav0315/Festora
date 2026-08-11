@@ -1,4 +1,4 @@
-import type { ListingDTO } from "@festora/types";
+import type { ListingDTO } from "@eventsaman/types";
 import { serverFetch } from "@/lib/server-api";
 import { ListingCard } from "@/components/ListingCard";
 import { getNearbyCities } from "@/lib/cities";

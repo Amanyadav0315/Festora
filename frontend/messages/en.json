@@ -1,6 +1,6 @@
 {
   "common": {
-    "brand": "Festora",
+    "brand": "Event Saman",
     "english": "English",
     "hindi": "Hindi"
   },
@@ -47,7 +47,7 @@
     "welcomeBack": "Welcome back",
     "loginSubtitle": "Log in to manage your bookings and listings.",
     "createAccount": "Create your account",
-    "signupSubtitle": "Join Festora to book and sell event services near you.",
+    "signupSubtitle": "Join Event Saman to book and sell event services near you.",
     "noAccount": "Don't have an account?",
     "haveAccount": "Already have an account?",
     "showPassword": "Show password",
@@ -117,7 +117,7 @@
     "postAnother": "Post another listing"
   },
   "onboarding": {
-    "welcomeTitle": "Welcome to Festora",
+    "welcomeTitle": "Welcome to Event Saman",
     "welcomeSubtitle": "Find and book the best tent houses, DJs, photographers, banquet halls, caterers and resorts near you.",
     "startNow": "Start now",
     "authTitle": "Log in or create an account",
@@ -179,7 +179,7 @@
     "safetyTitle": "Tips for a safe deal",
     "safetyTip1": "Don't enter UPI PIN/OTP, scan unknown QR codes, or click unsafe links.",
     "safetyTip2": "Never give money or product in advance.",
-    "safetyTip3": "Report suspicious users to Festora.",
+    "safetyTip3": "Report suspicious users to Event Saman.",
     "safetyTip4": "Don't share personal details like photos or IDs.",
     "safetyTip5": "Be cautious during buyer-seller meetings.",
     "continueToChat": "Continue to chat",

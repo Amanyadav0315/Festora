@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { MAX_MAIN_CATEGORIES } from "@festora/types";
+import { MAX_MAIN_CATEGORIES } from "@eventsaman/types";
 import { CategoryModel } from "./category.model";
 import { SubcategoryModel } from "./subcategory.model";
 import { StoreModel } from "../stores/store.model";

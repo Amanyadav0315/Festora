@@ -8,7 +8,7 @@ import { SessionGuard } from "@/components/SessionGuard";
 import { AppShell } from "@/components/AppShell";
 
 export const metadata: Metadata = {
-  title: "Festora",
+  title: "Event Saman",
   description: "Marketplace for event and celebration services in India",
 };
 

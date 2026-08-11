@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import type { ListingDTO, PublicUserProfileDTO } from "@festora/types";
+import type { ListingDTO, PublicUserProfileDTO } from "@eventsaman/types";
 import { apiFetch } from "@/lib/api";
 import { getAccessToken } from "@/lib/auth-client";
 import { BackHeader } from "@/components/BackHeader";

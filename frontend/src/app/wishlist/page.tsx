@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { ListingDTO } from "@festora/types";
+import type { ListingDTO } from "@eventsaman/types";
 import { getAccessToken, getUser } from "@/lib/auth-client";
 import { apiFetch, ApiRequestError } from "@/lib/api";
 import { WISHLIST_CHANGED_EVENT } from "@/lib/wishlist-client";

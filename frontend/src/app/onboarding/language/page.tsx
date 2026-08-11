@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { LOCALE_COOKIE, type Locale } from "@/i18n/locales";
 
-const ONBOARDED_COOKIE = "festora_onboarded";
+const ONBOARDED_COOKIE = "eventsaman_onboarded";
 
 export default function OnboardingLanguagePage() {
   const router = useRouter();

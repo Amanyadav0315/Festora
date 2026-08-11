@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import type { UserDTO } from "@festora/types";
+import type { UserDTO } from "@eventsaman/types";
 
 export function ProfileMenu({ user, size = "md" }: { user: UserDTO; size?: "sm" | "md" }) {
   const router = useRouter();

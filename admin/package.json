@@ -1,5 +1,5 @@
 {
-  "name": "@festora/admin",
+  "name": "@eventsaman/admin",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -9,8 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@festora/types": "workspace:*",
-    "@festora/ui": "workspace:*",
+    "@eventsaman/types": "workspace:*",
+    "@eventsaman/ui": "workspace:*",
     "next": "^15.0.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

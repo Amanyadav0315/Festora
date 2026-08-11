@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ["@festora/ui", "@festora/types"],
+  transpilePackages: ["@eventsaman/ui", "@eventsaman/types"],
 };
 
 export default nextConfig;

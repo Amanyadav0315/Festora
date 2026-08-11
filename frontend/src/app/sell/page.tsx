@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import type { CategoryDTO, ListingCondition, ListingDTO, ListingPurpose, SubcategoryDTO } from "@festora/types";
+import type { CategoryDTO, ListingCondition, ListingDTO, ListingPurpose, SubcategoryDTO } from "@eventsaman/types";
 import {
   MAX_LISTING_CATEGORIES,
   MAX_LISTING_KEYWORDS,
@@ -11,13 +11,13 @@ import {
   MAX_LISTING_IMAGES,
   MIN_LISTING_IMAGES,
   MIN_LISTING_KEYWORDS,
-} from "@festora/types";
+} from "@eventsaman/types";
 import { ASSET_BASE_URL, apiFetch, apiUpload, ApiRequestError } from "@/lib/api";
 import { getAccessToken, getUser } from "@/lib/auth-client";
 import { INDIA_CITIES } from "@/lib/cities";
 
 const TOTAL_STEPS = 6;
-const DRAFT_KEY = "festora_sell_draft";
+const DRAFT_KEY = "eventsaman_sell_draft";
 
 interface Draft {
   condition: ListingCondition | null;

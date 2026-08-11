@@ -1,10 +1,10 @@
 "use client";
 
-import type { UserDTO } from "@festora/types";
+import type { UserDTO } from "@eventsaman/types";
 
-export const ACCESS_TOKEN_KEY = "festora_access_token";
-const USER_KEY = "festora_user";
-export const AUTH_CHANGED_EVENT = "festora_auth_changed";
+export const ACCESS_TOKEN_KEY = "eventsaman_access_token";
+const USER_KEY = "eventsaman_user";
+export const AUTH_CHANGED_EVENT = "eventsaman_auth_changed";
 
 export function saveAccessToken(token: string) {
   localStorage.setItem(ACCESS_TOKEN_KEY, token);

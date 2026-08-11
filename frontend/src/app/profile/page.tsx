@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import type { UserDTO } from "@festora/types";
+import type { UserDTO } from "@eventsaman/types";
 import { clearSession, getUser } from "@/lib/auth-client";
 import { LOCALE_COOKIE, type Locale } from "@/i18n/locales";
 import { BackHeader } from "@/components/BackHeader";

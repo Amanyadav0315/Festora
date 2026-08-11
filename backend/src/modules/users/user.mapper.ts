@@ -1,4 +1,4 @@
-import type { UserDTO } from "@festora/types";
+import type { UserDTO } from "@eventsaman/types";
 import type { UserDocument } from "./user.model";
 
 export function toUserDTO(user: UserDocument): UserDTO {

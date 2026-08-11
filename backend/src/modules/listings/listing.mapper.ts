@@ -1,4 +1,4 @@
-import type { ListingDTO } from "@festora/types";
+import type { ListingDTO } from "@eventsaman/types";
 
 export function toListingDTO(listing: any): ListingDTO {
   const store = listing.storeId;

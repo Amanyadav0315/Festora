@@ -4,7 +4,7 @@ export default function AdminDashboardPage() {
   return (
     <div>
       <h1 className="text-xl font-bold sm:text-2xl">Dashboard</h1>
-      <p className="mt-1 text-sm text-gray-500">Manage the categories shown across Festora.</p>
+      <p className="mt-1 text-sm text-gray-500">Manage the categories shown across Event Saman.</p>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Link

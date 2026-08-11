@@ -3,7 +3,7 @@ import { authService } from "./auth.service";
 import { signupSchema, loginSchema } from "./auth.schemas";
 import { ApiError } from "../../middleware/errorHandler";
 
-const REFRESH_COOKIE = "festora_refresh_token";
+const REFRESH_COOKIE = "eventsaman_refresh_token";
 const ADMIN_REFRESH_COOKIE_MAX_AGE = 24 * 60 * 60 * 1000;
 const USER_REFRESH_COOKIE_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
 

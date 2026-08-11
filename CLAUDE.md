@@ -1,4 +1,4 @@
-# Festora
+# Event Saman
 
 Niche marketplace for event/celebration services in India.
 
@@ -40,7 +40,7 @@ If a task seems to need one of these, stop and ask the user first.
   `*.schemas.ts` (zod validation), and optionally `*.mapper.ts` (DB doc -> DTO).
 - `packages/types` — shared TypeScript types/DTOs, consumed by both apps.
 - `packages/ui` — shared React components.
-- Database: MongoDB via Mongoose. Local via `docker-compose.yml` (`festora-mongo` on
+- Database: MongoDB via Mongoose. Local via `docker-compose.yml` (`eventsaman-mongo` on
   port 27017) or swap `MONGO_URI` for an Atlas free-tier connection string.
 - Auth: email/password with JWT access token (returned in response body, stored in
   localStorage client-side) + refresh token (httpOnly cookie, scoped to `/api/auth`).
@@ -55,19 +55,33 @@ If a task seems to need one of these, stop and ask the user first.
 
 New domains should follow the existing modules (`auth`, `users`, `categories`, `stores`, `listings`)
 as templates: routes -> controller -> service (if there's real logic) -> repository -> model,
-DTOs shaped via `*.mapper.ts` using types from `@festora/types`. Validate all inputs with zod
+DTOs shaped via `*.mapper.ts` using types from `@eventsaman/types`. Validate all inputs with zod
 schemas in `*.schemas.ts`.
 
 ## Running locally
 
 ```
-docker compose up -d          # start MongoDB
+docker compose up -d          # start local MongoDB (eventsaman-mongo container)
 pnpm install
 cp backend/.env.example backend/.env
 cp frontend/.env.local.example frontend/.env.local
-pnpm --filter @festora/api seed   # seed categories, subcategories, admin account
+cp admin/.env.local.example admin/.env.local
+pnpm --filter @eventsaman/api seed   # seed categories, subcategories, admin account
 pnpm dev                          # runs backend (:4000) + frontend (:3000) + admin (:3001) via turbo
 ```
+
+Local dev always targets local Mongo (`mongodb://localhost:27017/eventsaman`) and
+`http://localhost:4000/api` — never the production Atlas cluster. `.env` / `.env.local` are
+gitignored and machine-specific; don't commit real secrets or the Atlas password into them.
+
+## Production deployment (eventsaman.com)
+
+Production config lives in `backend/.env.production.example`, `frontend/.env.production.example`,
+and `admin/.env.production.example` — copy each to the matching `.env`/`.env.local` **only on the
+AWS server**, filling in the real Atlas password and freshly generated JWT secrets (never reuse the
+dev secrets). Production points at the `eventsamancluster` MongoDB Atlas cluster and the
+`api.eventsaman.com` / `eventsaman.com` / `admin.eventsaman.com` domains, fronted by Nginx on a
+single EC2 instance (see deployment notes discussed with the user for the t3.micro + swap + PM2 setup).
 
 ## Phased delivery
 

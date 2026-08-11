@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import type { ChatMediaItemDTO } from "@festora/types";
+import type { ChatMediaItemDTO } from "@eventsaman/types";
 import { getAccessToken, getUser } from "@/lib/auth-client";
 import { apiFetch, ApiRequestError, ASSET_BASE_URL } from "@/lib/api";
 import { BackHeader } from "@/components/BackHeader";

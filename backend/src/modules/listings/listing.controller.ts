@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { MAX_LISTING_IMAGES, MIN_LISTING_IMAGES } from "@festora/types";
+import { MAX_LISTING_IMAGES, MIN_LISTING_IMAGES } from "@eventsaman/types";
 import { ListingModel } from "./listing.model";
 import { StoreModel } from "../stores/store.model";
 import { CategoryModel } from "../categories/category.model";

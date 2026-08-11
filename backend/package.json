@@ -1,5 +1,5 @@
 {
-  "name": "@festora/api",
+  "name": "@eventsaman/api",
   "version": "0.0.1",
   "private": true,
   "main": "dist/server.js",
@@ -10,7 +10,7 @@
     "seed": "tsx src/seed.ts"
   },
   "dependencies": {
-    "@festora/types": "workspace:*",
+    "@eventsaman/types": "workspace:*",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",

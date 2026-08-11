@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import type { ListingDTO } from "@festora/types";
+import type { ListingDTO } from "@eventsaman/types";
 import { apiFetch, ApiRequestError } from "@/lib/api";
 import { getAccessToken } from "@/lib/auth-client";
 import { ImageCarousel } from "@/components/ImageCarousel";

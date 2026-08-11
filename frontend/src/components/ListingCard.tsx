@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { ListingDTO } from "@festora/types";
+import type { ListingDTO } from "@eventsaman/types";
 import { ImageCarousel } from "@/components/ImageCarousel";
 import { SellerAvatar } from "@/components/SellerAvatar";
 import { WishlistButton } from "@/components/WishlistButton";

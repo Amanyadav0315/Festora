@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import type { ListingDTO, PublicUserProfileDTO } from "@festora/types";
+import type { ListingDTO, PublicUserProfileDTO } from "@eventsaman/types";
 import { apiFetch, ApiRequestError } from "@/lib/api";
 import { getAccessToken, getUser } from "@/lib/auth-client";
 import { getOrCreateConversation } from "@/lib/chat-client";

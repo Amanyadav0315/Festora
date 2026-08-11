@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import type { UserDTO } from "@festora/types";
+import type { UserDTO } from "@eventsaman/types";
 import { AUTH_CHANGED_EVENT, getUser } from "@/lib/auth-client";
 import { ProfileMenu } from "@/components/ProfileMenu";
 import { isChatThreadPath } from "@/lib/chatRoute";

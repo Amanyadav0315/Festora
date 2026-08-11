@@ -9,8 +9,8 @@ import { UserModel } from "./modules/users/user.model";
 import { StoreModel } from "./modules/stores/store.model";
 import { ListingModel } from "./modules/listings/listing.model";
 
-const ADMIN_EMAIL = "adm@festora.com";
-const ADMIN_PASSWORD = "Pass@admfestora";
+const ADMIN_EMAIL = "adm@eventsaman.com";
+const ADMIN_PASSWORD = "Pass@EventSaman1";
 const ADMIN_PHONE = "9800000000";
 
 async function seed() {
@@ -33,7 +33,7 @@ async function seed() {
     { email: ADMIN_EMAIL },
     {
       $set: {
-        name: "Festora Admin",
+        name: "Event Saman Admin",
         phone: ADMIN_PHONE,
         email: ADMIN_EMAIL,
         passwordHash: adminPasswordHash,
@@ -44,9 +44,9 @@ async function seed() {
   );
   console.log(`[seed] upserted admin account: ${ADMIN_EMAIL}`);
 
-  // One-time cleanup: earlier seeds inserted demo vendors/stores/listings under @festora.demo
+  // One-time cleanup: earlier seeds inserted demo vendors/stores/listings under @eventsaman.demo
   // emails. Remove them so the site only shows real user-created content.
-  const demoUsers = await UserModel.find({ email: /@festora\.demo$/ });
+  const demoUsers = await UserModel.find({ email: /@eventsaman\.demo$/ });
   if (demoUsers.length > 0) {
     const demoUserIds = demoUsers.map((u) => u._id);
     const demoStores = await StoreModel.find({ ownerId: { $in: demoUserIds } });

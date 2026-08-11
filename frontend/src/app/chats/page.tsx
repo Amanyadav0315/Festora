@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import type { ConversationDTO } from "@festora/types";
+import type { ConversationDTO } from "@eventsaman/types";
 import { getAccessToken, getUser } from "@/lib/auth-client";
 import { apiFetch, ApiRequestError } from "@/lib/api";
 import { BackHeader } from "@/components/BackHeader";

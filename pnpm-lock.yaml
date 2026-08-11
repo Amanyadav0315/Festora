@@ -14,10 +14,10 @@ importers:
 
   admin:
     dependencies:
-      '@festora/types':
+      '@eventsaman/types':
         specifier: workspace:*
         version: link:../packages/types
-      '@festora/ui':
+      '@eventsaman/ui':
         specifier: workspace:*
         version: link:../packages/ui
       next:
@@ -54,7 +54,7 @@ importers:
 
   backend:
     dependencies:
-      '@festora/types':
+      '@eventsaman/types':
         specifier: workspace:*
         version: link:../packages/types
       bcryptjs:
@@ -115,10 +115,10 @@ importers:
 
   frontend:
     dependencies:
-      '@festora/types':
+      '@eventsaman/types':
         specifier: workspace:*
         version: link:../packages/types
-      '@festora/ui':
+      '@eventsaman/ui':
         specifier: workspace:*
         version: link:../packages/ui
       next:
@@ -156,7 +156,11 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
-  packages/types: {}
+  packages/types:
+    devDependencies:
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
 
   packages/ui:
     dependencies:

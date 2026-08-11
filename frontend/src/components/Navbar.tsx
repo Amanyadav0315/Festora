@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import type { UserDTO } from "@festora/types";
+import type { UserDTO } from "@eventsaman/types";
 import { AUTH_CHANGED_EVENT, getUser } from "@/lib/auth-client";
 import { INDIA_CITIES } from "@/lib/cities";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -12,7 +12,7 @@ import { ProfileMenu } from "@/components/ProfileMenu";
 import { BrowseDropdown } from "@/components/BrowseDropdown";
 import { isChatThreadPath } from "@/lib/chatRoute";
 
-const LOCATION_KEY = "festora_location";
+const LOCATION_KEY = "eventsaman_location";
 const HIDDEN_PREFIXES = ["/welcome", "/onboarding"];
 
 function WishlistIcon({ className }: { className?: string }) {

@@ -1,24 +1,24 @@
-import jwt from "jsonwebtoken";
+import jwt, { type SignOptions, type Secret } from "jsonwebtoken";
 import { env } from "../../config/env";
-import type { UserRole } from "@festora/types";
+import type { UserRole } from "@eventsaman/types";
 
 export interface TokenSubject {
   id: string;
   role: UserRole;
 }
 
-function ttlForRole(role: UserRole) {
-  return role === "admin" ? env.adminTokenTtl : env.userTokenTtl;
+function ttlForRole(role: UserRole): SignOptions["expiresIn"] {
+  return (role === "admin" ? env.adminTokenTtl : env.userTokenTtl) as SignOptions["expiresIn"];
 }
 
 export const tokenService = {
   signAccessToken(user: TokenSubject) {
-    return jwt.sign({ sub: user.id, role: user.role }, env.jwtAccessSecret, {
+    return jwt.sign({ sub: user.id, role: user.role }, env.jwtAccessSecret as Secret, {
       expiresIn: ttlForRole(user.role),
     });
   },
   signRefreshToken(user: TokenSubject) {
-    return jwt.sign({ sub: user.id, role: user.role }, env.jwtRefreshSecret, {
+    return jwt.sign({ sub: user.id, role: user.role }, env.jwtRefreshSecret as Secret, {
       expiresIn: ttlForRole(user.role),
     });
   },

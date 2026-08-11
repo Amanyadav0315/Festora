@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Festora Admin",
-  description: "Admin panel for managing Festora",
+  title: "Event Saman Admin",
+  description: "Admin panel for managing Event Saman",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

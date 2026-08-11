@@ -1,4 +1,4 @@
-import type { MessageDTO } from "@festora/types";
+import type { MessageDTO } from "@eventsaman/types";
 
 export function toMessageDTO(msg: any, viewerId: string): MessageDTO {
   const deletedForEveryone = !!msg.deletedForEveryone;

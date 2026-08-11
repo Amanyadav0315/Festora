@@ -1,9 +1,9 @@
 "use client";
 
-import type { UserDTO } from "@festora/types";
+import type { UserDTO } from "@eventsaman/types";
 
-const ACCESS_TOKEN_KEY = "festora_admin_access_token";
-const USER_KEY = "festora_admin_user";
+const ACCESS_TOKEN_KEY = "eventsaman_admin_access_token";
+const USER_KEY = "eventsaman_admin_user";
 
 export function saveAccessToken(token: string) {
   localStorage.setItem(ACCESS_TOKEN_KEY, token);

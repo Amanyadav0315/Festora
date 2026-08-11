@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
-import type { SubcategoryDTO } from "@festora/types";
+import type { SubcategoryDTO } from "@eventsaman/types";
 import { CategoryImage } from "@/components/CategoryImage";
 
 export function CategoryGrid({

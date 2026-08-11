@@ -8,7 +8,7 @@ function required(name: string): string {
 
 export const env = {
   port: Number(process.env.PORT ?? 4000),
-  mongoUri: process.env.MONGO_URI ?? "mongodb://localhost:27017/festora",
+  mongoUri: process.env.MONGO_URI ?? "mongodb://localhost:27017/eventsaman",
   jwtAccessSecret: required("JWT_ACCESS_SECRET"),
   jwtRefreshSecret: required("JWT_REFRESH_SECRET"),
   adminTokenTtl: process.env.ADMIN_TOKEN_TTL ?? "24h",

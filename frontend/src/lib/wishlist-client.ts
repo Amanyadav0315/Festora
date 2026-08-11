@@ -1,6 +1,6 @@
 import { apiFetch } from "./api";
 
-export const WISHLIST_CHANGED_EVENT = "festora_wishlist_changed";
+export const WISHLIST_CHANGED_EVENT = "eventsaman_wishlist_changed";
 
 let cachedIds: Set<string> | null = null;
 let loadPromise: Promise<Set<string>> | null = null;

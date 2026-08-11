@@ -1,4 +1,4 @@
-import type { CategorySlug } from "@festora/types";
+import type { CategorySlug } from "@eventsaman/types";
 
 interface SeedSubcategory {
   name: string;

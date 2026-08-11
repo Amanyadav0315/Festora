@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import type { MessageDTO } from "@festora/types";
+import type { MessageDTO } from "@eventsaman/types";
 import { getAccessToken, getUser } from "@/lib/auth-client";
 import { apiFetch, apiUpload, ApiRequestError, ASSET_BASE_URL } from "@/lib/api";
 import { ReportUserModal } from "@/components/ReportUserModal";

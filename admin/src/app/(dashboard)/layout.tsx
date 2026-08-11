@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import type { UserDTO } from "@festora/types";
+import type { UserDTO } from "@eventsaman/types";
 import { clearSession, getAccessToken, getUser } from "@/lib/auth-client";
 import { isExpired } from "@/lib/api";
 
@@ -87,7 +87,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <span className="text-lg font-extrabold text-orange-600">Festora Admin</span>
+        <span className="text-lg font-extrabold text-orange-600">Event Saman Admin</span>
         <button onClick={handleLogout} className="ml-auto text-sm font-medium text-gray-500 hover:text-orange-600">
           Log out
         </button>
@@ -98,7 +98,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="absolute inset-0 bg-black/30" onClick={() => setDrawerOpen(false)} aria-hidden="true" />
           <div className="absolute inset-y-0 left-0 w-64 max-w-[80%] bg-white p-4 shadow-lg">
             <div className="mb-4 flex items-center justify-between">
-              <span className="text-lg font-extrabold text-orange-600">Festora Admin</span>
+              <span className="text-lg font-extrabold text-orange-600">Event Saman Admin</span>
               <button
                 onClick={() => setDrawerOpen(false)}
                 aria-label="Close menu"
@@ -117,7 +117,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="mx-auto flex max-w-7xl">
         <aside className="hidden w-60 shrink-0 border-r border-gray-200 bg-white px-4 py-6 lg:block">
           <div className="mb-6 flex flex-col gap-1">
-            <span className="text-xl font-extrabold text-orange-600">Festora Admin</span>
+            <span className="text-xl font-extrabold text-orange-600">Event Saman Admin</span>
             {user && <span className="text-xs text-gray-500">{user.name}</span>}
           </div>
           <SidebarLinks pathname={pathname} />

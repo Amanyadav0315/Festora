@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { ReportDTO, IssueReportDTO } from "@festora/types";
+import type { ReportDTO, IssueReportDTO } from "@eventsaman/types";
 import { apiFetch, ApiRequestError, ASSET_BASE_URL } from "@/lib/api";
 import { getAccessToken } from "@/lib/auth-client";
 

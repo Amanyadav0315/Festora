@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { CategoryDTO, SubcategoryDTO } from "@festora/types";
-import { MAX_MAIN_CATEGORIES } from "@festora/types";
+import type { CategoryDTO, SubcategoryDTO } from "@eventsaman/types";
+import { MAX_MAIN_CATEGORIES } from "@eventsaman/types";
 import { apiFetch, apiUpload, ApiRequestError, ASSET_BASE_URL } from "@/lib/api";
 import { getAccessToken } from "@/lib/auth-client";
 import { ImageField } from "@/components/admin/ImageField";
