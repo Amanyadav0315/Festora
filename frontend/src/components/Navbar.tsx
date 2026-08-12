@@ -11,6 +11,7 @@ import { ProfileMenu } from "@/components/ProfileMenu";
 import { BrowseDropdown } from "@/components/BrowseDropdown";
 import { LocationPicker } from "@/components/LocationPicker";
 import { isChatThreadPath } from "@/lib/chatRoute";
+import { useUnreadChatCount } from "@/lib/useUnreadChatCount";
 
 const LOCATION_KEY = "eventsaman_location";
 // Mirrors LOCATION_KEY into a cookie (readable by server components like the homepage) and
@@ -18,6 +19,9 @@ const LOCATION_KEY = "eventsaman_location";
 // already-mounted client component can react to a location change immediately.
 export const LOCATION_CHANGED_EVENT = "eventsaman:location-changed";
 const HIDDEN_PREFIXES = ["/welcome", "/onboarding"];
+// The full search/location/chats header is only meant for the Home page and the Rent/Browse
+// page — every other page (profile, account, chats, etc.) should not show it.
+const VISIBLE_PREFIXES = ["/", "/browse"];
 
 function WishlistIcon({ className }: { className?: string }) {
   return (
@@ -61,6 +65,7 @@ export function Navbar() {
   const [user, setUser] = useState<UserDTO | null>(null);
   const [location, setLocation] = useState<string>("All India");
   const [search, setSearch] = useState("");
+  const unreadChatCount = useUnreadChatCount();
 
   useEffect(() => {
     setUser(getUser());
@@ -109,12 +114,20 @@ export function Navbar() {
     }
   }
 
+  const isVisiblePage = pathname === "/" || VISIBLE_PREFIXES.some((prefix) => prefix !== "/" && pathname.startsWith(prefix));
+
+  // Onboarding/welcome and chat-thread screens are full-screen layouts that never show this
+  // header — unmount entirely there, same as before.
   if (HIDDEN_PREFIXES.some((prefix) => pathname.startsWith(prefix)) || isChatThreadPath(pathname)) {
     return null;
   }
 
+  // Everywhere else, keep the header mounted and just toggle its visibility with `hidden` instead
+  // of unmounting it (returning null). Mounting/unmounting this element on every route change was
+  // causing mobile browsers to recompute the layout viewport mid-navigation, which showed up as
+  // the page snapping to a zoomed-in state when coming back to Home/Rent from another page.
   return (
-    <header className="sticky top-0 z-30 border-b border-gray-200 bg-white">
+    <header className={`sticky top-0 z-30 border-b border-gray-200 bg-white ${isVisiblePage ? "" : "hidden"}`}>
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
         <Link href="/" className="hidden shrink-0 text-xl font-extrabold text-orange-600 lg:block">
           {tCommon("brand")}
@@ -155,9 +168,14 @@ export function Navbar() {
           <Link
             href="/chats"
             aria-label={t("chats")}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100"
+            className="relative flex h-9 w-9 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100"
           >
             <ChatIcon className="h-5 w-5" />
+            {unreadChatCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-orange-600 px-1 text-[10px] font-semibold text-white">
+                {unreadChatCount > 9 ? "9+" : unreadChatCount}
+              </span>
+            )}
           </Link>
 
           <Link
@@ -201,9 +219,14 @@ export function Navbar() {
               <Link
                 href="/chats"
                 aria-label={t("chats")}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100"
+                className="relative flex h-9 w-9 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100"
               >
                 <ChatIcon className="h-5 w-5" />
+                {unreadChatCount > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-orange-600 px-1 text-[10px] font-semibold text-white">
+                    {unreadChatCount > 9 ? "9+" : unreadChatCount}
+                  </span>
+                )}
               </Link>
             </div>
           </div>

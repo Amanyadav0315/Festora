@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import type { ListingDTO, PublicUserProfileDTO } from "@eventsaman/types";
@@ -61,7 +61,9 @@ export default function AccountPage() {
       <div className="mx-auto max-w-2xl px-4 pt-2 sm:px-6">
         <BackHeader title={t("yourProfile")} backHref="/profile" />
       </div>
-      <SocialProfile profile={profile} listings={listings} />
+      <Suspense fallback={null}>
+        <SocialProfile profile={profile} listings={listings} />
+      </Suspense>
     </>
   );
 }

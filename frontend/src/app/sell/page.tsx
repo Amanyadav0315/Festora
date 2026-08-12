@@ -14,7 +14,7 @@ import {
 } from "@eventsaman/types";
 import { ASSET_BASE_URL, apiFetch, apiUpload, ApiRequestError } from "@/lib/api";
 import { getAccessToken, getUser } from "@/lib/auth-client";
-import { INDIA_CITIES } from "@/lib/cities";
+import { CityAutocomplete } from "@/components/CityAutocomplete";
 
 const TOTAL_STEPS = 6;
 const DRAFT_KEY = "eventsaman_sell_draft";
@@ -597,18 +597,7 @@ export default function SellPage() {
               </div>
 
               <Field label={t("city")}>
-                <select
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
-                >
-                  <option value="">—</option>
-                  {INDIA_CITIES.filter((c) => c !== "All India").map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
+                <CityAutocomplete value={city} onChange={setCity} placeholder="Search city" />
               </Field>
 
               <Field label={`${t("locationUrl")} (${t("optional")})`}>

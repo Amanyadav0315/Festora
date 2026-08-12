@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import type { ListingDTO, PublicUserProfileDTO, UserDTO } from "@eventsaman/types";
 import { apiFetch, apiUpload, ApiRequestError } from "@/lib/api";
@@ -58,6 +58,7 @@ export function SocialProfile({
   listings: ListingDTO[];
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const t = useTranslations("socialProfile");
   const locale = useLocale();
   const SAFETY_TIPS = [t("safetyTip1"), t("safetyTip2"), t("safetyTip3"), t("safetyTip4"), t("safetyTip5")];
@@ -79,6 +80,15 @@ export function SocialProfile({
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [avatarSuccess, setAvatarSuccess] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  // Lets the "Upload/Change photo" row in the Edit Profile menu (/account/edit) deep-link
+  // straight into the file picker instead of duplicating the upload trigger on this page.
+  useEffect(() => {
+    if (profile.isSelf && searchParams.get("openAvatarUpload") === "1") {
+      avatarInputRef.current?.click();
+      router.replace("/account");
+    }
+  }, [profile.isSelf, searchParams, router]);
 
   function handleAvatarFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -235,12 +245,15 @@ export function SocialProfile({
               <button
                 type="button"
                 onClick={() => avatarInputRef.current?.click()}
-                aria-label="Upload profile photo"
+                aria-label={profile.avatarUrl ? "Change profile photo" : "Upload profile photo"}
                 className="group relative block rounded-full"
               >
                 <UserAvatar name={profile.name} avatarUrl={profile.avatarUrl} size="lg" />
                 <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 opacity-0 transition group-hover:bg-black/30 group-hover:opacity-100">
                   <CameraIcon className="h-6 w-6 text-white" />
+                </span>
+                <span className="absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-orange-600 text-white shadow-sm">
+                  <CameraIcon className="h-3.5 w-3.5" />
                 </span>
               </button>
               <input
@@ -250,13 +263,6 @@ export function SocialProfile({
                 onChange={handleAvatarFileChange}
                 className="hidden"
               />
-              <button
-                type="button"
-                onClick={() => avatarInputRef.current?.click()}
-                className="mt-1.5 block text-xs font-medium text-orange-600 hover:underline"
-              >
-                {profile.avatarUrl ? "Change photo" : "Upload profile photo"}
-              </button>
             </>
           ) : (
             <UserAvatar name={profile.name} avatarUrl={profile.avatarUrl} size="lg" />

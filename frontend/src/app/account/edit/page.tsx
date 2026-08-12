@@ -21,6 +21,7 @@ function MenuIcon({ path, className }: { path: string; className?: string }) {
 }
 
 const ICON_PATHS = {
+  photo: "M4 8h2.5l1.3-2h8.4l1.3 2H20a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1zM12 13.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z",
   name: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20c1.4-3.5 4.4-5.5 7.5-5.5s6.1 2 7.5 5.5",
   about: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 8h.01M11 12h1v5h1",
   password:
@@ -50,6 +51,11 @@ export default function EditProfileMenuPage() {
       <BackHeader title={t("editProfileTitle")} backHref="/account" />
 
       <div className="mt-4 divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+        <MenuRow
+          href="/account?openAvatarUpload=1"
+          iconPath={ICON_PATHS.photo}
+          label={t("uploadPhotoOption")}
+        />
         <MenuRow href="/account/edit/name" iconPath={ICON_PATHS.name} label={t("editNameOption")} />
         <MenuRow href="/account/edit/about" iconPath={ICON_PATHS.about} label={t("aboutOption")} />
         <MenuRow href="/account/edit/password" iconPath={ICON_PATHS.password} label={t("changePasswordOption")} />
