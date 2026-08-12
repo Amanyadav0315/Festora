@@ -171,11 +171,16 @@ export function Navbar() {
             className="relative flex h-9 w-9 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100"
           >
             <ChatIcon className="h-5 w-5" />
-            {unreadChatCount > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-orange-600 px-1 text-[10px] font-semibold text-white">
-                {unreadChatCount > 9 ? "9+" : unreadChatCount}
-              </span>
-            )}
+            {/* Always mounted (never conditionally added/removed) — toggling only `invisible`
+                keeps the sticky header's DOM stable once the async unread count resolves, so it
+                doesn't retrigger the mobile layout-viewport/zoom glitch on refresh. */}
+            <span
+              className={`absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-orange-600 px-1 text-[10px] font-semibold text-white ${
+                unreadChatCount > 0 ? "" : "invisible"
+              }`}
+            >
+              {unreadChatCount > 9 ? "9+" : unreadChatCount}
+            </span>
           </Link>
 
           <Link
@@ -222,11 +227,13 @@ export function Navbar() {
                 className="relative flex h-9 w-9 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100"
               >
                 <ChatIcon className="h-5 w-5" />
-                {unreadChatCount > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-orange-600 px-1 text-[10px] font-semibold text-white">
-                    {unreadChatCount > 9 ? "9+" : unreadChatCount}
-                  </span>
-                )}
+                <span
+                  className={`absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-orange-600 px-1 text-[10px] font-semibold text-white ${
+                    unreadChatCount > 0 ? "" : "invisible"
+                  }`}
+                >
+                  {unreadChatCount > 9 ? "9+" : unreadChatCount}
+                </span>
               </Link>
             </div>
           </div>
