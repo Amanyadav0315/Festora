@@ -1,15 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import type { ListingDTO, PublicUserProfileDTO } from "@eventsaman/types";
-import { apiFetch, ApiRequestError } from "@/lib/api";
-import { getAccessToken, getUser } from "@/lib/auth-client";
+import type { ListingDTO, PublicUserProfileDTO, UserDTO } from "@eventsaman/types";
+import { apiFetch, apiUpload, ApiRequestError } from "@/lib/api";
+import { getAccessToken, getUser, saveUser } from "@/lib/auth-client";
 import { getOrCreateConversation } from "@/lib/chat-client";
 import { ListingCard } from "@/components/ListingCard";
 import { OwnListingCard } from "@/components/OwnListingCard";
+import { UserAvatar } from "@/components/UserAvatar";
+
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+const ACCEPTED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 function DotsIcon({ className }: { className?: string }) {
   return (
@@ -17,6 +21,19 @@ function DotsIcon({ className }: { className?: string }) {
       <circle cx="12" cy="5" r="1.8" />
       <circle cx="12" cy="12" r="1.8" />
       <circle cx="12" cy="19" r="1.8" />
+    </svg>
+  );
+}
+
+function CameraIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={1.8}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M4 8h2.5l1.3-2h8.4l1.3 2H20a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"
+      />
+      <circle cx="12" cy="13.5" r="3.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -57,7 +74,59 @@ export function SocialProfile({
   const [reportReason, setReportReason] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const initials = profile.name.trim().charAt(0).toUpperCase() || "U";
+  const [avatarPreview, setAvatarPreview] = useState<{ file: File; url: string } | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [avatarSuccess, setAvatarSuccess] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  function handleAvatarFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file later
+    if (!file) return;
+
+    setAvatarError(null);
+    setAvatarSuccess(false);
+    if (!ACCEPTED_AVATAR_TYPES.includes(file.type)) {
+      setAvatarError("Please choose a JPEG, PNG, WEBP, or GIF image.");
+      return;
+    }
+    if (file.size > MAX_AVATAR_BYTES) {
+      setAvatarError("Image is too large — please choose one under 5 MB.");
+      return;
+    }
+    setAvatarPreview({ file, url: URL.createObjectURL(file) });
+  }
+
+  function cancelAvatarPreview() {
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview.url);
+    setAvatarPreview(null);
+  }
+
+  async function saveAvatar() {
+    if (!avatarPreview) return;
+    const token = getAccessToken();
+    if (!token) return;
+
+    setAvatarUploading(true);
+    setAvatarError(null);
+    try {
+      const formData = new FormData();
+      formData.append("avatar", avatarPreview.file);
+      const { user } = await apiUpload<{ user: UserDTO }>("/users/me/avatar", formData, {
+        method: "PATCH",
+        accessToken: token,
+      });
+      setProfile((p) => ({ ...p, avatarUrl: user.avatarUrl }));
+      saveUser(user); // syncs localStorage + fires AUTH_CHANGED_EVENT so navbar/bottom nav update too
+      setAvatarSuccess(true);
+      cancelAvatarPreview();
+    } catch (err) {
+      setAvatarError(err instanceof ApiRequestError ? err.message : t("somethingWrong"));
+    } finally {
+      setAvatarUploading(false);
+    }
+  }
 
   function requireLogin() {
     if (!getUser()) {
@@ -160,8 +229,38 @@ export function SocialProfile({
   return (
     <main className="mx-auto max-w-2xl px-4 pb-12 sm:px-6 sm:pb-16">
       <div className="mt-4 flex items-start gap-4">
-        <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-2 border-orange-500 bg-orange-100 text-2xl font-semibold text-orange-700">
-          {initials}
+        <div className="shrink-0">
+          {profile.isSelf ? (
+            <>
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                aria-label="Upload profile photo"
+                className="group relative block rounded-full"
+              >
+                <UserAvatar name={profile.name} avatarUrl={profile.avatarUrl} size="lg" />
+                <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 opacity-0 transition group-hover:bg-black/30 group-hover:opacity-100">
+                  <CameraIcon className="h-6 w-6 text-white" />
+                </span>
+              </button>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept={ACCEPTED_AVATAR_TYPES.join(",")}
+                onChange={handleAvatarFileChange}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                className="mt-1.5 block text-xs font-medium text-orange-600 hover:underline"
+              >
+                {profile.avatarUrl ? "Change photo" : "Upload profile photo"}
+              </button>
+            </>
+          ) : (
+            <UserAvatar name={profile.name} avatarUrl={profile.avatarUrl} size="lg" />
+          )}
         </div>
 
         <div className="min-w-0 flex-1">
@@ -253,6 +352,8 @@ export function SocialProfile({
       </div>
 
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+      {avatarSuccess && <p className="mt-3 text-sm text-green-600">Profile photo updated.</p>}
+      {avatarError && !avatarPreview && <p className="mt-3 text-sm text-red-600">{avatarError}</p>}
 
       <div className="mt-5 flex gap-3">
         {profile.isSelf ? (
@@ -403,6 +504,39 @@ export function SocialProfile({
                 {t("cancel")}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {avatarPreview && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
+          <div className="w-full max-w-sm rounded-t-2xl bg-white p-5 sm:rounded-2xl">
+            <h3 className="text-base font-semibold text-gray-900">Update profile photo</h3>
+            <div className="mt-4 flex justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={avatarPreview.url}
+                alt="Preview"
+                className="h-32 w-32 rounded-full border-2 border-orange-500 object-cover"
+              />
+            </div>
+            {avatarError && <p className="mt-3 text-center text-sm text-red-600">{avatarError}</p>}
+            <button
+              type="button"
+              disabled={avatarUploading}
+              onClick={saveAvatar}
+              className="mt-4 w-full rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-700 disabled:opacity-60"
+            >
+              {avatarUploading ? "Saving..." : "Save photo"}
+            </button>
+            <button
+              type="button"
+              disabled={avatarUploading}
+              onClick={cancelAvatarPreview}
+              className="mt-2 w-full rounded-lg px-4 py-2.5 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-60"
+            >
+              {t("cancel")}
+            </button>
           </div>
         </div>
       )}

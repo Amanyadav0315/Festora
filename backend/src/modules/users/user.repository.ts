@@ -20,6 +20,9 @@ export const userRepository = {
   updateProfile(id: string, data: { name?: string; email?: string; about?: string }) {
     return UserModel.findByIdAndUpdate(id, { $set: data }, { new: true });
   },
+  updateAvatar(id: string, avatarUrl: string) {
+    return UserModel.findByIdAndUpdate(id, { $set: { avatarUrl } }, { new: true });
+  },
   create(data: { name: string; phone: string; email?: string; passwordHash: string; role?: "user" | "admin" }) {
     return UserModel.create(data);
   },

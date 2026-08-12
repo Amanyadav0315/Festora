@@ -8,6 +8,7 @@ const userSchema = new Schema(
     passwordHash: { type: String, required: true },
     role: { type: String, enum: ["user", "admin"], default: "user", required: true },
     about: { type: String, trim: true, maxlength: 200, default: "" },
+    avatarUrl: { type: String },
   },
   { timestamps: true }
 );

@@ -5,6 +5,7 @@ import { UserModel } from "./user.model";
 import { toUserDTO } from "./user.mapper";
 import { ApiError } from "../../middleware/errorHandler";
 import { updateProfileSchema, changePasswordSchema } from "./user.schemas";
+import { avatarImageUrl } from "../../middleware/upload";
 import { FollowModel } from "../social/follow.model";
 import { BlockModel } from "../social/block.model";
 import { StoreModel } from "../stores/store.model";
@@ -34,6 +35,13 @@ export const userController = {
   async updateMe(req: Request, res: Response) {
     const input = updateProfileSchema.parse(req.body);
     const user = await userRepository.updateProfile(req.user!.sub, input);
+    if (!user) throw new ApiError(404, "User not found");
+    res.json({ user: toUserDTO(user) });
+  },
+
+  async updateAvatar(req: Request, res: Response) {
+    if (!req.file) throw new ApiError(400, "No image uploaded");
+    const user = await userRepository.updateAvatar(req.user!.sub, avatarImageUrl(req.file.filename));
     if (!user) throw new ApiError(404, "User not found");
     res.json({ user: toUserDTO(user) });
   },
@@ -71,6 +79,7 @@ export const userController = {
         id: target._id.toString(),
         name: target.name,
         about: (target as any).about || undefined,
+        avatarUrl: (target as any).avatarUrl || undefined,
         createdAt: (target as any).createdAt.toISOString(),
         followersCount,
         followingCount,

@@ -8,6 +8,7 @@ import type { UserDTO } from "@eventsaman/types";
 import { clearSession, getUser } from "@/lib/auth-client";
 import { LOCALE_COOKIE, type Locale } from "@/i18n/locales";
 import { BackHeader } from "@/components/BackHeader";
+import { UserAvatar } from "@/components/UserAvatar";
 
 function ChevronIcon({ className }: { className?: string }) {
   return (
@@ -113,16 +114,12 @@ export default function ProfilePage() {
 
   if (!user) return null;
 
-  const initials = user.name.trim().charAt(0).toUpperCase() || "U";
-
   return (
     <main className="mx-auto max-w-md px-4 pb-10 sm:px-6 sm:pb-16">
       <BackHeader title={t("profileTitle")} backHref="/" />
 
       <div className="mt-2 flex items-center gap-3.5 rounded-xl border border-gray-100 bg-white px-4 py-4 shadow-sm">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-orange-500 bg-orange-100 text-lg font-semibold text-orange-700">
-          {initials}
-        </div>
+        <UserAvatar name={user.name} avatarUrl={user.avatarUrl} size="md" />
         <div className="min-w-0">
           <p className="truncate text-base font-semibold text-gray-900">{user.name}</p>
           <p className="truncate text-sm text-gray-500">{user.phone}</p>

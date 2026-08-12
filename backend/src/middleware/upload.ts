@@ -38,6 +38,16 @@ export function categoryImageUrl(filename: string): string {
   return `/uploads/categories/${filename}`;
 }
 
+export const uploadAvatar = multer({
+  storage: makeStorage("avatars"),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: imageFileFilter,
+});
+
+export function avatarImageUrl(filename: string): string {
+  return `/uploads/avatars/${filename}`;
+}
+
 export const uploadListingImages = multer({
   storage: makeStorage("listings"),
   limits: { fileSize: 5 * 1024 * 1024, files: 6 },

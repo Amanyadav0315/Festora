@@ -9,6 +9,7 @@ export function toUserDTO(user: UserDocument): UserDTO {
     email: user.email ?? undefined,
     role: user.role as UserDTO["role"],
     about: (user as any).about || undefined,
+    avatarUrl: (user as any).avatarUrl || undefined,
     createdAt: (user as any).createdAt.toISOString(),
   };
 }

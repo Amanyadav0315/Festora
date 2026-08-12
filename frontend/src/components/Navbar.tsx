@@ -6,13 +6,17 @@ import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import type { UserDTO } from "@eventsaman/types";
 import { AUTH_CHANGED_EVENT, getUser } from "@/lib/auth-client";
-import { INDIA_CITIES } from "@/lib/cities";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ProfileMenu } from "@/components/ProfileMenu";
 import { BrowseDropdown } from "@/components/BrowseDropdown";
+import { LocationPicker } from "@/components/LocationPicker";
 import { isChatThreadPath } from "@/lib/chatRoute";
 
 const LOCATION_KEY = "eventsaman_location";
+// Mirrors LOCATION_KEY into a cookie (readable by server components like the homepage) and
+// broadcasts a same-tab event (localStorage's "storage" event only fires in OTHER tabs) so any
+// already-mounted client component can react to a location change immediately.
+export const LOCATION_CHANGED_EVENT = "eventsaman:location-changed";
 const HIDDEN_PREFIXES = ["/welcome", "/onboarding"];
 
 function WishlistIcon({ className }: { className?: string }) {
@@ -60,7 +64,13 @@ export function Navbar() {
 
   useEffect(() => {
     setUser(getUser());
-    setLocation(localStorage.getItem(LOCATION_KEY) ?? "All India");
+    const stored = localStorage.getItem(LOCATION_KEY) ?? "All India";
+    setLocation(stored);
+    // Backfills the cookie for sessions that saved a location before this cookie existed, so
+    // server-rendered pages (homepage) pick it up on the very next request.
+    if (!document.cookie.includes(`${LOCATION_KEY}=`)) {
+      document.cookie = `${LOCATION_KEY}=${encodeURIComponent(stored)};path=/;max-age=31536000`;
+    }
 
     const onAuthChanged = () => setUser(getUser());
     window.addEventListener(AUTH_CHANGED_EVENT, onAuthChanged);
@@ -70,6 +80,18 @@ export function Navbar() {
   function handleLocationChange(value: string) {
     setLocation(value);
     localStorage.setItem(LOCATION_KEY, value);
+    // 1 year, readable site-wide so server components (e.g. the homepage) can filter by it too.
+    document.cookie = `${LOCATION_KEY}=${encodeURIComponent(value)};path=/;max-age=31536000`;
+    window.dispatchEvent(new CustomEvent(LOCATION_CHANGED_EVENT, { detail: value }));
+
+    // If the user is already viewing search/browse results, apply the new location immediately
+    // instead of leaving them on stale results until they search again.
+    if (pathname === "/browse") {
+      const params = new URLSearchParams(window.location.search);
+      if (value === "All India") params.delete("city");
+      else params.set("city", value);
+      router.push(`/browse?${params.toString()}`);
+    }
   }
 
   function handleSearch(e: React.FormEvent) {
@@ -98,18 +120,7 @@ export function Navbar() {
           {tCommon("brand")}
         </Link>
 
-        <select
-          value={location}
-          onChange={(e) => handleLocationChange(e.target.value)}
-          className="hidden shrink-0 rounded-md border border-gray-300 bg-white px-2 py-2 text-sm text-gray-700 lg:block"
-          aria-label="Select location"
-        >
-          {INDIA_CITIES.map((city) => (
-            <option key={city} value={city}>
-              {city}
-            </option>
-          ))}
-        </select>
+        <LocationPicker value={location} onChange={handleLocationChange} className="hidden shrink-0 lg:block" />
 
         <form onSubmit={handleSearch} className="hidden flex-1 items-center lg:flex">
           <input
@@ -181,39 +192,7 @@ export function Navbar() {
               {tCommon("brand")}
             </Link>
 
-            <div className="relative shrink-0">
-              <svg
-                viewBox="0 0 24 24"
-                className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s-7-6.1-7-11a7 7 0 1 1 14 0c0 4.9-7 11-7 11z" />
-                <circle cx="12" cy="10" r="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <select
-                value={location}
-                onChange={(e) => handleLocationChange(e.target.value)}
-                className="appearance-none rounded-full border-none bg-gray-100 py-1.5 pl-7 pr-6 text-xs font-medium text-gray-700"
-                aria-label="Select location"
-              >
-                {INDIA_CITIES.map((city) => (
-                  <option key={city} value={city}>
-                    {city}
-                  </option>
-                ))}
-              </select>
-              <svg
-                viewBox="0 0 24 24"
-                className="pointer-events-none absolute right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
-              </svg>
-            </div>
+            <LocationPicker value={location} onChange={handleLocationChange} compact className="shrink-0" />
 
             <div className="ml-auto flex shrink-0 items-center gap-1">
               <BrowseDropdown compact />

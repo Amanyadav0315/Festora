@@ -10,6 +10,7 @@ export interface UserDTO {
   phone: string;
   email?: string;
   about?: string;
+  avatarUrl?: string;
   role: UserRole;
   createdAt: string;
 }
@@ -102,6 +103,7 @@ export interface PublicUserProfileDTO {
   id: string;
   name: string;
   about?: string;
+  avatarUrl?: string;
   createdAt: string;
   followersCount: number;
   followingCount: number;

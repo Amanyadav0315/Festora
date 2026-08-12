@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
@@ -10,6 +10,15 @@ import { AppShell } from "@/components/AppShell";
 export const metadata: Metadata = {
   title: "Event Saman",
   description: "Marketplace for event and celebration services in India",
+};
+
+// Without this, mobile browsers render at a fake ~980px desktop viewport and scale the page
+// down to fit — which is what makes the site look "zoomed in" on load and only match its
+// mobile (lg:hidden) layout after the user manually pinch-zooms.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
