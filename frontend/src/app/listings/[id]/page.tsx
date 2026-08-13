@@ -83,7 +83,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               href={`/u/${listing.ownerId}`}
               className="mt-4 flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-3 transition hover:border-orange-300 hover:bg-orange-50"
             >
-              <SellerAvatar name={listing.storeName} size="md" />
+              <SellerAvatar name={listing.storeName} avatarUrl={listing.ownerAvatarUrl} size="md" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-gray-900">{listing.storeName}</p>
                 <p className="text-xs text-gray-500">{listing.city ? listing.city : "View seller profile"}</p>
@@ -92,7 +92,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             </Link>
           ) : (
             <div className="mt-4 flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-3">
-              <SellerAvatar name={listing.storeName} size="md" />
+              <SellerAvatar name={listing.storeName} avatarUrl={listing.ownerAvatarUrl} size="md" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-gray-900">{listing.storeName}</p>
                 {listing.city && <p className="text-xs text-gray-500">{listing.city}</p>}

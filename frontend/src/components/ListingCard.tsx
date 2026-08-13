@@ -29,6 +29,9 @@ export function ListingCard({ listing }: { listing: ListingDTO }) {
         <div className="absolute left-2 top-2 z-10">
           <WishlistButton listingId={listing.id} />
         </div>
+        <span className="absolute right-2 top-2 z-10 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-orange-600 shadow-sm">
+          {listing.purpose === "rent" ? "For rent" : "For sale"}
+        </span>
       </div>
       <div className="p-2 sm:p-3">
         <p className="text-sm font-semibold text-gray-900 sm:text-base">{formatPrice(listing.price, listing.priceUnit)}</p>
@@ -44,12 +47,12 @@ export function ListingCard({ listing }: { listing: ListingDTO }) {
             }}
             className="relative z-10 mt-1 flex items-center gap-1.5 text-xs text-gray-500 hover:text-orange-600"
           >
-            <SellerAvatar name={listing.storeName} />
+            <SellerAvatar name={listing.storeName} avatarUrl={listing.ownerAvatarUrl} />
             <span className="truncate hover:underline">{listing.storeName}</span>
           </span>
         ) : (
           <p className="mt-1 flex items-center gap-1.5 truncate text-xs text-gray-500">
-            <SellerAvatar name={listing.storeName} />
+            <SellerAvatar name={listing.storeName} avatarUrl={listing.ownerAvatarUrl} />
             {listing.storeName}
           </p>
         )}

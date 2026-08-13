@@ -64,6 +64,7 @@ export interface ListingDTO {
   storeId: string;
   storeName: string;
   ownerId?: string;
+  ownerAvatarUrl?: string;
   categorySlugs: CategorySlug[];
   subcategorySlug?: string;
   condition: ListingCondition;

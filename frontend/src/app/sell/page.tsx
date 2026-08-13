@@ -895,8 +895,8 @@ function ChoiceModal({
   onTertiary?: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
-      <div className="w-full max-w-sm rounded-t-2xl bg-white p-5 sm:rounded-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+      <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
         <h3 className="text-base font-semibold text-gray-900">{title}</h3>
         <p className="mt-1.5 text-sm text-gray-500">{subtitle}</p>
 

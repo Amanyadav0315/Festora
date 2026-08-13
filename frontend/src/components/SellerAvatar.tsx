@@ -1,3 +1,5 @@
+import { ASSET_BASE_URL } from "@/lib/api";
+
 const AVATAR_COLORS = [
   "bg-orange-500",
   "bg-rose-500",
@@ -13,9 +15,32 @@ function colorFor(name: string) {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
-export function SellerAvatar({ name, size = "sm" }: { name: string; size?: "sm" | "md" }) {
+function resolveAvatarUrl(src: string) {
+  return src.startsWith("http") ? src : `${ASSET_BASE_URL}${src}`;
+}
+
+export function SellerAvatar({
+  name,
+  avatarUrl,
+  size = "sm",
+}: {
+  name: string;
+  avatarUrl?: string;
+  size?: "sm" | "md";
+}) {
   const initial = name.trim().charAt(0).toUpperCase() || "?";
   const dims = size === "sm" ? "h-5 w-5 text-[10px]" : "h-9 w-9 text-sm";
+
+  if (avatarUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={resolveAvatarUrl(avatarUrl)}
+        alt={`${name}'s profile photo`}
+        className={`shrink-0 rounded-full object-cover ${dims}`}
+      />
+    );
+  }
 
   return (
     <span

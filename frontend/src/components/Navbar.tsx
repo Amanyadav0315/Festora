@@ -208,10 +208,13 @@ export function Navbar() {
           </Link>
         </nav>
 
-        {/* Mobile / tablet app-style header */}
-        <div className="flex w-full flex-col gap-2.5 lg:hidden">
+        {/* Mobile / tablet app-style header — wider, OLX-inspired layout: a top identity row
+            (brand + location + quick controls), then a full-width search bar with the wishlist
+            and chat actions built directly into that same row instead of living in a separate,
+            visually disconnected icon strip. */}
+        <div className="-mx-4 w-full bg-orange-600 px-4 py-2.5 lg:hidden">
           <div className="flex items-center gap-3">
-            <Link href="/" className="shrink-0 text-lg font-extrabold text-orange-600">
+            <Link href="/" className="shrink-0 text-xl font-extrabold tracking-tight text-white">
               {tCommon("brand")}
             </Link>
 
@@ -220,26 +223,11 @@ export function Navbar() {
             <div className="ml-auto flex shrink-0 items-center gap-1">
               <BrowseDropdown compact />
               <LanguageSwitcher compact />
-
-              <Link
-                href="/chats"
-                aria-label={t("chats")}
-                className="relative flex h-9 w-9 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100"
-              >
-                <ChatIcon className="h-5 w-5" />
-                <span
-                  className={`absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-orange-600 px-1 text-[10px] font-semibold text-white ${
-                    unreadChatCount > 0 ? "" : "invisible"
-                  }`}
-                >
-                  {unreadChatCount > 9 ? "9+" : unreadChatCount}
-                </span>
-              </Link>
             </div>
           </div>
 
-          <form onSubmit={handleSearch} className="flex items-center">
-            <div className="relative w-full">
+          <form onSubmit={handleSearch} className="mt-2.5 flex items-center gap-2">
+            <div className="relative min-w-0 flex-1">
               <svg
                 viewBox="0 0 24 24"
                 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
@@ -255,9 +243,32 @@ export function Navbar() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder='Search "Wedding DJ"'
-                className="w-full rounded-full border border-gray-200 bg-gray-50 py-2 pl-9 pr-4 text-sm focus:border-orange-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-orange-400"
+                className="w-full rounded-lg border-0 bg-white py-2.5 pl-9 pr-4 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
             </div>
+
+            <Link
+              href="/wishlist"
+              aria-label={t("wishlist")}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-gray-600 shadow-sm hover:bg-orange-50"
+            >
+              <WishlistIcon className="h-5 w-5" />
+            </Link>
+
+            <Link
+              href="/chats"
+              aria-label={t("chats")}
+              className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-gray-600 shadow-sm hover:bg-orange-50"
+            >
+              <ChatIcon className="h-5 w-5" />
+              <span
+                className={`absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-orange-600 px-1 text-[10px] font-semibold text-white ring-2 ring-white ${
+                  unreadChatCount > 0 ? "" : "invisible"
+                }`}
+              >
+                {unreadChatCount > 9 ? "9+" : unreadChatCount}
+              </span>
+            </Link>
           </form>
         </div>
       </div>

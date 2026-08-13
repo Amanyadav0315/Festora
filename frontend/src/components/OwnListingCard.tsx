@@ -77,7 +77,10 @@ export function OwnListingCard({
             {formatPrice(listing.price, listing.priceUnit)}
           </p>
           <p className="mt-1 truncate text-xs text-gray-700 sm:text-sm">{listing.title}</p>
-          {listing.city && <p className="text-xs text-gray-400">{listing.city}</p>}
+          <span className="mt-1 inline-block rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-medium text-orange-600">
+            {listing.purpose === "rent" ? "For rent" : "For sale"}
+          </span>
+          {listing.city && <p className="mt-1 text-xs text-gray-400">{listing.city}</p>}
         </div>
       </Link>
 
