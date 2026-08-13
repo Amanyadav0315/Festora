@@ -63,7 +63,7 @@ export const listingController = {
     const listings = await ListingModel.find(filter)
       .sort({ createdAt: -1 })
       .limit(query.limit)
-      .populate({ path: "storeId", select: "name ownerId", populate: { path: "ownerId", select: "avatarUrl" } });
+      .populate({ path: "storeId", populate: { path: "ownerId", select: "avatarUrl" } });
 
     res.json({ listings: listings.map(toListingDTO) });
   },
@@ -93,12 +93,12 @@ export const listingController = {
     const images = files.map((f) => listingImageUrl(f.filename));
 
     const listing = await ListingModel.create({ ...input, images, storeId: store._id });
-    const populated = await listing.populate({ path: "storeId", select: "name ownerId", populate: { path: "ownerId", select: "avatarUrl" } });
+    const populated = await listing.populate({ path: "storeId", populate: { path: "ownerId", select: "avatarUrl" } });
     res.status(201).json({ listing: toListingDTO(populated) });
   },
 
   async getOne(req: Request, res: Response) {
-    const listing = await ListingModel.findById(req.params.id).populate({ path: "storeId", select: "name ownerId", populate: { path: "ownerId", select: "avatarUrl" } });
+    const listing = await ListingModel.findById(req.params.id).populate({ path: "storeId", populate: { path: "ownerId", select: "avatarUrl" } });
     if (!listing) throw new ApiError(404, "Listing not found");
     res.json({ listing: toListingDTO(listing) });
   },
@@ -125,7 +125,7 @@ export const listingController = {
     const { existingImages: _existingImages, ...rest } = input;
     Object.assign(listing, rest, { images });
     await listing.save();
-    const populated = await listing.populate({ path: "storeId", select: "name ownerId", populate: { path: "ownerId", select: "avatarUrl" } });
+    const populated = await listing.populate({ path: "storeId", populate: { path: "ownerId", select: "avatarUrl" } });
     res.json({ listing: toListingDTO(populated) });
   },
 

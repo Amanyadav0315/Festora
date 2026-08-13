@@ -64,6 +64,9 @@ export function SocialProfile({
   const SAFETY_TIPS = [t("safetyTip1"), t("safetyTip2"), t("safetyTip3"), t("safetyTip4"), t("safetyTip5")];
   const [profile, setProfile] = useState(initialProfile);
   const [ownListings, setOwnListings] = useState(listings);
+  // Tracks which single listing card's "more options" menu is open, so opening one always closes
+  // any other that was left open — cards no longer manage this independently.
+  const [openMenuListingId, setOpenMenuListingId] = useState<string | null>(null);
 
   useEffect(() => {
     setOwnListings(listings);
@@ -414,6 +417,8 @@ export function SocialProfile({
                   onToggled={(updated) =>
                     setOwnListings((prev) => prev.map((l) => (l.id === updated.id ? updated : l)))
                   }
+                  menuOpen={openMenuListingId === listing.id}
+                  onMenuOpenChange={(open) => setOpenMenuListingId(open ? listing.id : null)}
                 />
               ) : (
                 <ListingCard key={listing.id} listing={listing} />

@@ -22,14 +22,19 @@ export function OwnListingCard({
   listing,
   onDeleted,
   onToggled,
+  menuOpen,
+  onMenuOpenChange,
 }: {
   listing: ListingDTO;
   onDeleted: (id: string) => void;
   onToggled: (listing: ListingDTO) => void;
+  // Menu-open state is controlled by the parent grid so opening one card's menu closes any other
+  // card's menu that was left open, instead of each card tracking its own state independently.
+  menuOpen: boolean;
+  onMenuOpenChange: (open: boolean) => void;
 }) {
   const router = useRouter();
   const t = useTranslations("socialProfile");
-  const [menuOpen, setMenuOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -48,7 +53,7 @@ export function OwnListingCard({
       setError(err instanceof ApiRequestError ? err.message : t("somethingWrong"));
     } finally {
       setBusy(false);
-      setMenuOpen(false);
+      onMenuOpenChange(false);
     }
   }
 
@@ -95,7 +100,7 @@ export function OwnListingCard({
           type="button"
           onClick={(e) => {
             e.preventDefault();
-            setMenuOpen((v) => !v);
+            onMenuOpenChange(!menuOpen);
           }}
           aria-label={t("moreOptions")}
           disabled={busy}
