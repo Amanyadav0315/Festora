@@ -49,7 +49,7 @@ export interface StoreDTO {
   createdAt: string;
 }
 
-export const MIN_LISTING_KEYWORDS = 3;
+export const MIN_LISTING_KEYWORDS = 1;
 export const MAX_LISTING_KEYWORDS = 10;
 export const MAX_LISTING_CATEGORIES = 3;
 export const MAX_LISTING_DESCRIPTION_LENGTH = 200;

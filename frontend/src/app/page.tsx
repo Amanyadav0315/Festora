@@ -15,7 +15,8 @@ export default async function HomePage() {
 
   // Same "nearby = same state" expansion /browse uses, so the active location (set via the
   // navbar's LocationPicker) prioritizes relevant listings here too, not only on search results.
-  const listingsQuery = new URLSearchParams({ limit: "12" });
+  // Home only shows "for sale" listings — rentals belong on the dedicated Rent page (/browse?purpose=rent).
+  const listingsQuery = new URLSearchParams({ limit: "12", purpose: "sell" });
   if (location && location !== "All India") {
     listingsQuery.set("cities", getNearbyCities(location).join(","));
   }
