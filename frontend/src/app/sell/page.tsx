@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import type { CategoryDTO, ListingCondition, ListingDTO, ListingPurpose, SubcategoryDTO } from "@eventsaman/types";
@@ -77,6 +77,12 @@ export default function SellPage() {
   const [error, setError] = useState("");
   const [created, setCreated] = useState<ListingDTO | null>(null);
 
+  // Draft prompt shown on a fresh /sell visit when a previously saved draft exists — lets the
+  // user choose to resume it or start blank, instead of silently restoring it every time.
+  const [pendingDraft, setPendingDraft] = useState<Draft | null>(null);
+  // Leave-without-posting prompt shown when the user tries to navigate back with unsaved changes.
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+
   useEffect(() => {
     if (!getUser()) {
       router.replace("/login");
@@ -117,31 +123,61 @@ export default function SellPage() {
       return;
     }
 
+    // A saved draft exists — ask the user whether to resume it or start a new listing,
+    // instead of silently restoring it every time they open /sell.
     const raw = localStorage.getItem(DRAFT_KEY);
     if (!raw) return;
     try {
-      const draft = JSON.parse(raw) as Draft;
-      setCondition(draft.condition);
-      setPurpose(draft.purpose);
-      setCategorySlugs(draft.categorySlugs);
-      setSubcategorySlug(draft.subcategorySlug);
-      setKeywords(draft.keywords);
-      setTitle(draft.title);
-      setPrice(draft.price);
-      setPriceUnit(draft.priceUnit);
-      setCity(draft.city);
-      setLocationUrl(draft.locationUrl ?? "");
-      setDescription(draft.description);
-      setDescriptionHi(draft.descriptionHi);
+      setPendingDraft(JSON.parse(raw) as Draft);
     } catch {
       localStorage.removeItem(DRAFT_KEY);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkedAuth, sourceId]);
 
-  // Autosave a draft for brand-new listings only (not edit/duplicate flows).
-  useEffect(() => {
-    if (!checkedAuth || sourceId || created) return;
+  function applyDraft(draft: Draft) {
+    setCondition(draft.condition);
+    setPurpose(draft.purpose);
+    setCategorySlugs(draft.categorySlugs);
+    setSubcategorySlug(draft.subcategorySlug);
+    setKeywords(draft.keywords);
+    setTitle(draft.title);
+    setPrice(draft.price);
+    setPriceUnit(draft.priceUnit);
+    setCity(draft.city);
+    setLocationUrl(draft.locationUrl ?? "");
+    setDescription(draft.description);
+    setDescriptionHi(draft.descriptionHi);
+  }
+
+  function useSavedDraft() {
+    if (pendingDraft) applyDraft(pendingDraft);
+    setPendingDraft(null);
+  }
+
+  function discardSavedDraft() {
+    localStorage.removeItem(DRAFT_KEY);
+    setPendingDraft(null);
+  }
+
+  // True once the user has filled in anything worth not losing — drives both the "unsaved
+  // changes" back-navigation prompt and whether there's anything to save as a draft.
+  const isDirty =
+    condition !== null ||
+    purpose !== null ||
+    categorySlugs.length > 0 ||
+    subcategorySlug !== null ||
+    keywords.length > 0 ||
+    title.trim() !== "" ||
+    price.trim() !== "" ||
+    priceUnit.trim() !== "" ||
+    city !== "" ||
+    locationUrl.trim() !== "" ||
+    description.trim() !== "" ||
+    descriptionHi.trim() !== "" ||
+    newImages.length > 0;
+
+  function saveDraftToStorage() {
     const draft: Draft = {
       condition,
       purpose,
@@ -157,23 +193,50 @@ export default function SellPage() {
       descriptionHi,
     };
     localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-  }, [
-    checkedAuth,
-    sourceId,
-    created,
-    condition,
-    purpose,
-    categorySlugs,
-    subcategorySlug,
-    keywords,
-    title,
-    price,
-    priceUnit,
-    city,
-    locationUrl,
-    description,
-    descriptionHi,
-  ]);
+  }
+
+  // Intercepts the browser/hardware back action while there are unsaved changes, instead of
+  // letting it navigate away silently. Only active for brand-new listings (not edit/duplicate,
+  // and not after a successful post) and only once the user has actually typed/selected something.
+  // A dummy history entry is pushed (and re-pushed on every back attempt) so the real
+  // navigation only happens once the user explicitly picks Discard or Save draft; backGuardCount
+  // tracks how many dummy entries stacked up so we can skip past all of them in one go.
+  const backGuardStarted = useRef(false);
+  const backGuardCount = useRef(0);
+
+  useEffect(() => {
+    if (!checkedAuth || sourceId || created || pendingDraft || !isDirty || backGuardStarted.current) return;
+    backGuardStarted.current = true;
+
+    window.history.pushState(null, "", window.location.href);
+    backGuardCount.current += 1;
+    function onPopState() {
+      window.history.pushState(null, "", window.location.href);
+      backGuardCount.current += 1;
+      setShowLeaveModal(true);
+    }
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [checkedAuth, sourceId, created, pendingDraft, isDirty]);
+
+  function leavePastGuard() {
+    const steps = backGuardCount.current;
+    backGuardCount.current = 0;
+    if (steps > 0) window.history.go(-steps);
+    else router.back();
+  }
+
+  function discardAndLeave() {
+    localStorage.removeItem(DRAFT_KEY);
+    setShowLeaveModal(false);
+    leavePastGuard();
+  }
+
+  function saveDraftAndLeave() {
+    saveDraftToStorage();
+    setShowLeaveModal(false);
+    leavePastGuard();
+  }
 
   // Fetch a rough average price for similar listings once enough context is known.
   useEffect(() => {
@@ -371,6 +434,30 @@ export default function SellPage() {
 
   return (
     <main className="mx-auto max-w-lg px-4 py-6 sm:py-10">
+      {pendingDraft && (
+        <ChoiceModal
+          title={t("draftFoundTitle")}
+          subtitle={t("draftFoundSubtitle")}
+          primaryLabel={t("useDraft")}
+          onPrimary={useSavedDraft}
+          secondaryLabel={t("postNew")}
+          onSecondary={discardSavedDraft}
+        />
+      )}
+
+      {showLeaveModal && (
+        <ChoiceModal
+          title={t("leaveTitle")}
+          subtitle={t("leaveSubtitle")}
+          primaryLabel={t("saveDraft")}
+          onPrimary={saveDraftAndLeave}
+          secondaryLabel={t("discard")}
+          onSecondary={discardAndLeave}
+          tertiaryLabel={t("stayHere")}
+          onTertiary={() => setShowLeaveModal(false)}
+        />
+      )}
+
       <h1 className="text-lg font-bold sm:text-xl">{t("title")}</h1>
       <p className="mt-1 text-xs text-gray-500">{t("step", { current: step, total: TOTAL_STEPS })}</p>
       <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
@@ -778,7 +865,66 @@ export default function SellPage() {
           </button>
         )}
       </div>
+
+      {step < TOTAL_STEPS && !canGoNext() && (
+        <p className="mt-2 text-center text-xs font-medium text-red-500">{t("fillRequiredHint")}</p>
+      )}
     </main>
+  );
+}
+
+// Two/three-option confirmation dialog used for the "leave without posting" and "resume draft"
+// prompts — kept generic so both reuse the same modal chrome instead of duplicating markup.
+function ChoiceModal({
+  title,
+  subtitle,
+  primaryLabel,
+  onPrimary,
+  secondaryLabel,
+  onSecondary,
+  tertiaryLabel,
+  onTertiary,
+}: {
+  title: string;
+  subtitle: string;
+  primaryLabel: string;
+  onPrimary: () => void;
+  secondaryLabel: string;
+  onSecondary: () => void;
+  tertiaryLabel?: string;
+  onTertiary?: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
+      <div className="w-full max-w-sm rounded-t-2xl bg-white p-5 sm:rounded-2xl">
+        <h3 className="text-base font-semibold text-gray-900">{title}</h3>
+        <p className="mt-1.5 text-sm text-gray-500">{subtitle}</p>
+
+        <button
+          type="button"
+          onClick={onPrimary}
+          className="mt-4 w-full rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-700"
+        >
+          {primaryLabel}
+        </button>
+        <button
+          type="button"
+          onClick={onSecondary}
+          className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+        >
+          {secondaryLabel}
+        </button>
+        {tertiaryLabel && onTertiary && (
+          <button
+            type="button"
+            onClick={onTertiary}
+            className="mt-2 w-full rounded-lg px-4 py-2.5 text-sm font-medium text-gray-500 hover:bg-gray-50"
+          >
+            {tertiaryLabel}
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 

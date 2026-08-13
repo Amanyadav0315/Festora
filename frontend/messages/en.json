@@ -114,7 +114,17 @@
     "success": "Your listing is live!",
     "successSubtitle": "Buyers can now find and contact you about this listing.",
     "viewListing": "View listing",
-    "postAnother": "Post another listing"
+    "postAnother": "Post another listing",
+    "fillRequiredHint": "Please fill in the required fields above to continue.",
+    "leaveTitle": "Leave without posting?",
+    "leaveSubtitle": "You can save what you've filled in as a draft, or discard it.",
+    "discard": "Discard",
+    "saveDraft": "Save draft",
+    "stayHere": "Keep editing",
+    "draftFoundTitle": "You have a saved draft",
+    "draftFoundSubtitle": "Continue where you left off, or start a fresh listing.",
+    "useDraft": "Use draft",
+    "postNew": "Post new"
   },
   "onboarding": {
     "welcomeTitle": "Welcome to Event Saman",
