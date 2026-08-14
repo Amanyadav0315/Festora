@@ -33,7 +33,7 @@ async function loadOwnedListing(listingId: string, userId: string) {
 export const listingController = {
   async list(req: Request, res: Response) {
     const query = listListingsQuerySchema.parse(req.query);
-    const filter: Record<string, unknown> = {};
+    const filter: Record<string, unknown> = { adminDeletedAt: null };
 
     if (query.categorySlug) filter.categorySlugs = query.categorySlug;
     if (query.subcategorySlug) filter.subcategorySlug = query.subcategorySlug;
@@ -101,7 +101,7 @@ export const listingController = {
 
   async getOne(req: Request, res: Response) {
     const listing = await ListingModel.findById(req.params.id).populate({ path: "storeId", populate: { path: "ownerId", select: "avatarUrl" } });
-    if (!listing) throw new ApiError(404, "Listing not found");
+    if (!listing || listing.adminDeletedAt) throw new ApiError(404, "Listing not found");
     res.json({ listing: toListingDTO(listing) });
   },
 

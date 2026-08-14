@@ -174,6 +174,42 @@ export interface IssueReportDTO {
   createdAt: string;
 }
 
+export type AdminDateRangeFilter = "24h" | "week" | "month" | "year" | "all";
+
+export interface AdminUserListItemDTO {
+  id: string;
+  name: string;
+  businessName: string;
+  phone: string;
+  email?: string;
+  city?: string;
+  role: UserRole;
+  postsCount: number;
+  createdAt: string;
+}
+
+export interface AdminUserDetailDTO extends AdminUserListItemDTO {
+  about?: string;
+  avatarUrl?: string;
+  showPhonePublicly: boolean;
+}
+
+export interface DeletedUserDTO extends AdminUserListItemDTO {
+  deletedAt: string;
+  deletedReason: string;
+  deletedByName?: string;
+}
+
+export interface DeletedPostDTO extends ListingDTO {
+  deletedAt: string;
+  deletedReason: string;
+  deletedByName?: string;
+  ownerName?: string;
+  ownerBusinessName?: string;
+  ownerPhone?: string;
+  ownerEmail?: string;
+}
+
 export interface AuthTokensDTO {
   accessToken: string;
   refreshToken: string;

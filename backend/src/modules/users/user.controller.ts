@@ -96,7 +96,7 @@ export const userController = {
 
   async publicProfile(req: Request, res: Response) {
     const target = await userRepository.findById(req.params.id);
-    if (!target) throw new ApiError(404, "User not found");
+    if (!target || (target as any).adminDeletedAt) throw new ApiError(404, "User not found");
 
     const viewerId = req.user?.sub;
     const store = await StoreModel.findOne({ ownerId: target._id });

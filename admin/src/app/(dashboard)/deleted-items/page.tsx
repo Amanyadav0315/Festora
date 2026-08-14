@@ -1,0 +1,469 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import type { DeletedUserDTO, DeletedPostDTO } from "@eventsaman/types";
+import { apiFetch, ApiRequestError, ASSET_BASE_URL } from "@/lib/api";
+import { getAccessToken } from "@/lib/auth-client";
+import { ConfirmModal } from "@/components/admin/ConfirmModal";
+
+function imgSrc(src: string) {
+  return src.startsWith("http") ? src : `${ASSET_BASE_URL}${src}`;
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+type Tab = "users" | "posts";
+
+function useDebounced<T>(value: T, delayMs: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delayMs);
+    return () => clearTimeout(id);
+  }, [value, delayMs]);
+  return debounced;
+}
+
+function DateFilters({
+  from,
+  to,
+  onFrom,
+  onTo,
+}: {
+  from: string;
+  to: string;
+  onFrom: (v: string) => void;
+  onTo: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-sm">
+      <label className="flex items-center gap-1.5 text-gray-600">
+        From
+        <input
+          type="date"
+          value={from}
+          onChange={(e) => onFrom(e.target.value)}
+          className="rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+        />
+      </label>
+      <label className="flex items-center gap-1.5 text-gray-600">
+        To
+        <input
+          type="date"
+          value={to}
+          onChange={(e) => onTo(e.target.value)}
+          className="rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+        />
+      </label>
+      {(from || to) && (
+        <button
+          onClick={() => {
+            onFrom("");
+            onTo("");
+          }}
+          className="text-xs font-medium text-gray-400 hover:text-gray-600"
+        >
+          Clear dates
+        </button>
+      )}
+    </div>
+  );
+}
+
+const PAGE_SIZE = 20;
+
+function DeletedUsersTab() {
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounced(search, 350);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [page, setPage] = useState(1);
+  const [users, setUsers] = useState<DeletedUserDTO[] | null>(null);
+  const [total, setTotal] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [restoreTarget, setRestoreTarget] = useState<DeletedUserDTO | null>(null);
+  const [purgeTarget, setPurgeTarget] = useState<DeletedUserDTO | null>(null);
+
+  useEffect(() => setPage(1), [debouncedSearch, from, to]);
+
+  useEffect(() => {
+    const token = getAccessToken();
+    setUsers(null);
+    const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) });
+    if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
+    if (from) params.set("from", from);
+    if (to) params.set("to", to);
+    apiFetch<{ users: DeletedUserDTO[]; total: number }>(`/admin/deleted-users?${params}`, {
+      accessToken: token ?? undefined,
+    })
+      .then((body) => {
+        setUsers(body.users);
+        setTotal(body.total);
+      })
+      .catch((err) => setError(err instanceof ApiRequestError ? err.message : "Something went wrong"));
+  }, [page, debouncedSearch, from, to]);
+
+  async function restore() {
+    if (!restoreTarget) return;
+    const token = getAccessToken();
+    setBusyId(restoreTarget.id);
+    try {
+      await apiFetch(`/admin/users/${restoreTarget.id}/restore`, { method: "PATCH", accessToken: token ?? undefined });
+      setUsers((prev) => (prev ? prev.filter((u) => u.id !== restoreTarget.id) : prev));
+      setRestoreTarget(null);
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? err.message : "Something went wrong");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function purge() {
+    if (!purgeTarget) return;
+    const token = getAccessToken();
+    setBusyId(purgeTarget.id);
+    try {
+      await apiFetch(`/admin/users/${purgeTarget.id}/permanent`, { method: "DELETE", accessToken: token ?? undefined });
+      setUsers((prev) => (prev ? prev.filter((u) => u.id !== purgeTarget.id) : prev));
+      setPurgeTarget(null);
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? err.message : "Something went wrong");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  return (
+    <>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search name, business, phone, or email"
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm sm:w-72"
+        />
+        <DateFilters from={from} to={to} onFrom={setFrom} onTo={setTo} />
+      </div>
+
+      {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+
+      {users === null ? (
+        <p className="text-sm text-gray-500">Loading...</p>
+      ) : users.length === 0 ? (
+        <div className="rounded-xl border border-gray-100 bg-white px-4 py-14 text-center shadow-sm">
+          <p className="text-sm text-gray-500">No deleted users.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {users.map((u) => (
+            <div key={u.id} className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-semibold text-gray-900">{u.name}</p>
+                  <p className="text-sm text-orange-600">{u.businessName}</p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    📞 {u.phone} {u.email ? `· ✉️ ${u.email}` : ""}
+                  </p>
+                </div>
+                <div className="text-right text-xs text-gray-400">
+                  <p>Deleted {formatDate(u.deletedAt)}</p>
+                  {u.deletedByName && <p>by {u.deletedByName}</p>}
+                </div>
+              </div>
+              <p className="mt-3 rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
+                <span className="font-medium text-gray-500">Reason: </span>
+                {u.deletedReason || "—"}
+              </p>
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={() => setRestoreTarget(u)}
+                  disabled={busyId === u.id}
+                  className="rounded-md bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700 disabled:opacity-60"
+                >
+                  Restore
+                </button>
+                <button
+                  onClick={() => setPurgeTarget(u)}
+                  disabled={busyId === u.id}
+                  className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60"
+                >
+                  Delete permanently
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between text-sm">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            className="rounded-md border border-gray-300 px-3 py-1.5 font-medium text-gray-700 disabled:opacity-40"
+          >
+            Previous
+          </button>
+          <span className="text-gray-500">
+            Page {page} of {totalPages} · {total} deleted users
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
+            className="rounded-md border border-gray-300 px-3 py-1.5 font-medium text-gray-700 disabled:opacity-40"
+          >
+            Next
+          </button>
+        </div>
+      )}
+
+      {restoreTarget && (
+        <ConfirmModal
+          title={`Restore ${restoreTarget.name}?`}
+          description="Their account and any posts hidden along with it will become active again."
+          confirmLabel="Restore"
+          danger={false}
+          busy={busyId === restoreTarget.id}
+          onCancel={() => setRestoreTarget(null)}
+          onConfirm={restore}
+        />
+      )}
+
+      {purgeTarget && (
+        <ConfirmModal
+          title={`Permanently delete ${purgeTarget.name}?`}
+          description="This cannot be undone. Their account, store, and all posts will be erased for good."
+          confirmLabel="Delete permanently"
+          busy={busyId === purgeTarget.id}
+          onCancel={() => setPurgeTarget(null)}
+          onConfirm={purge}
+        />
+      )}
+    </>
+  );
+}
+
+function DeletedPostsTab() {
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounced(search, 350);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [page, setPage] = useState(1);
+  const [posts, setPosts] = useState<DeletedPostDTO[] | null>(null);
+  const [total, setTotal] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [restoreTarget, setRestoreTarget] = useState<DeletedPostDTO | null>(null);
+  const [purgeTarget, setPurgeTarget] = useState<DeletedPostDTO | null>(null);
+
+  useEffect(() => setPage(1), [debouncedSearch, from, to]);
+
+  useEffect(() => {
+    const token = getAccessToken();
+    setPosts(null);
+    const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) });
+    if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
+    if (from) params.set("from", from);
+    if (to) params.set("to", to);
+    apiFetch<{ posts: DeletedPostDTO[]; total: number }>(`/admin/deleted-posts?${params}`, {
+      accessToken: token ?? undefined,
+    })
+      .then((body) => {
+        setPosts(body.posts);
+        setTotal(body.total);
+      })
+      .catch((err) => setError(err instanceof ApiRequestError ? err.message : "Something went wrong"));
+  }, [page, debouncedSearch, from, to]);
+
+  async function restore() {
+    if (!restoreTarget) return;
+    const token = getAccessToken();
+    setBusyId(restoreTarget.id);
+    try {
+      await apiFetch(`/admin/posts/${restoreTarget.id}/restore`, { method: "PATCH", accessToken: token ?? undefined });
+      setPosts((prev) => (prev ? prev.filter((p) => p.id !== restoreTarget.id) : prev));
+      setRestoreTarget(null);
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? err.message : "Something went wrong");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function purge() {
+    if (!purgeTarget) return;
+    const token = getAccessToken();
+    setBusyId(purgeTarget.id);
+    try {
+      await apiFetch(`/admin/posts/${purgeTarget.id}/permanent`, { method: "DELETE", accessToken: token ?? undefined });
+      setPosts((prev) => (prev ? prev.filter((p) => p.id !== purgeTarget.id) : prev));
+      setPurgeTarget(null);
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? err.message : "Something went wrong");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  return (
+    <>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by owner's email or phone"
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm sm:w-72"
+        />
+        <DateFilters from={from} to={to} onFrom={setFrom} onTo={setTo} />
+      </div>
+
+      {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+
+      {posts === null ? (
+        <p className="text-sm text-gray-500">Loading...</p>
+      ) : posts.length === 0 ? (
+        <div className="rounded-xl border border-gray-100 bg-white px-4 py-14 text-center shadow-sm">
+          <p className="text-sm text-gray-500">No deleted posts.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {posts.map((p) => (
+            <div key={p.id} className="flex flex-col gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:flex-row">
+              <div className="h-28 w-full shrink-0 overflow-hidden rounded-lg bg-gray-100 sm:w-36">
+                {p.images[0] && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={imgSrc(p.images[0])} alt={p.title} className="h-full w-full object-cover" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-gray-900">{p.title}</p>
+                    <p className="text-xs text-gray-500">
+                      Owner: {p.ownerName || "Unknown"} ({p.ownerBusinessName || "—"}) · 📞 {p.ownerPhone || "—"}
+                      {p.ownerEmail ? ` · ✉️ ${p.ownerEmail}` : ""}
+                    </p>
+                  </div>
+                  <div className="text-right text-xs text-gray-400">
+                    <p>Deleted {formatDate(p.deletedAt)}</p>
+                    {p.deletedByName && <p>by {p.deletedByName}</p>}
+                  </div>
+                </div>
+                <p className="mt-2 rounded-lg bg-gray-50 p-2.5 text-sm text-gray-700">
+                  <span className="font-medium text-gray-500">Reason: </span>
+                  {p.deletedReason || "—"}
+                </p>
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={() => setRestoreTarget(p)}
+                    disabled={busyId === p.id}
+                    className="rounded-md bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700 disabled:opacity-60"
+                  >
+                    Restore
+                  </button>
+                  <button
+                    onClick={() => setPurgeTarget(p)}
+                    disabled={busyId === p.id}
+                    className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60"
+                  >
+                    Delete permanently
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between text-sm">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            className="rounded-md border border-gray-300 px-3 py-1.5 font-medium text-gray-700 disabled:opacity-40"
+          >
+            Previous
+          </button>
+          <span className="text-gray-500">
+            Page {page} of {totalPages} · {total} deleted posts
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
+            className="rounded-md border border-gray-300 px-3 py-1.5 font-medium text-gray-700 disabled:opacity-40"
+          >
+            Next
+          </button>
+        </div>
+      )}
+
+      {restoreTarget && (
+        <ConfirmModal
+          title={`Restore "${restoreTarget.title}"?`}
+          description="This post will become active and visible again (unless its owner's account is still deleted)."
+          confirmLabel="Restore"
+          danger={false}
+          busy={busyId === restoreTarget.id}
+          onCancel={() => setRestoreTarget(null)}
+          onConfirm={restore}
+        />
+      )}
+
+      {purgeTarget && (
+        <ConfirmModal
+          title={`Permanently delete "${purgeTarget.title}"?`}
+          description="This cannot be undone."
+          confirmLabel="Delete permanently"
+          busy={busyId === purgeTarget.id}
+          onCancel={() => setPurgeTarget(null)}
+          onConfirm={purge}
+        />
+      )}
+    </>
+  );
+}
+
+export default function DeletedItemsPage() {
+  const [tab, setTab] = useState<Tab>("users");
+
+  return (
+    <div>
+      <div className="mb-5 flex items-center justify-between">
+        <h1 className="text-xl font-bold text-gray-900">Deleted Items</h1>
+        <div className="flex gap-1 rounded-lg border border-gray-200 bg-white p-1 text-sm">
+          <button
+            onClick={() => setTab("users")}
+            className={`rounded-md px-3 py-1.5 font-medium ${
+              tab === "users" ? "bg-orange-600 text-white" : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            Users
+          </button>
+          <button
+            onClick={() => setTab("posts")}
+            className={`rounded-md px-3 py-1.5 font-medium ${
+              tab === "posts" ? "bg-orange-600 text-white" : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            Posts
+          </button>
+        </div>
+      </div>
+
+      {tab === "users" ? <DeletedUsersTab /> : <DeletedPostsTab />}
+    </div>
+  );
+}

@@ -38,6 +38,10 @@ export const authService = {
     const valid = await bcrypt.compare(input.password, user.passwordHash);
     if (!valid) throw new ApiError(401, "Invalid credentials");
 
+    // Admin-deleted accounts don't get the self-service auto-restore-on-login behavior below —
+    // only an admin can bring them back, from the admin panel's Deleted Items screen.
+    if ((user as any).adminDeletedAt) throw new ApiError(401, "Invalid credentials");
+
     if (user.deletionRequestedAt) {
       if (isDeletionExpired(user.deletionRequestedAt)) {
         // Grace period already elapsed — this account is effectively gone even if the

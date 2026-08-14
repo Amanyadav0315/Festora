@@ -10,7 +10,9 @@ import { apiFetch, isExpired } from "@/lib/api";
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", exact: true },
   { href: "/categories", label: "Categories" },
+  { href: "/users", label: "Users" },
   { href: "/reports", label: "Reports", badgeKey: "reports" as const },
+  { href: "/deleted-items", label: "Deleted Items" },
 ];
 
 // How often the sidebar re-checks for new pending reports/issues, in ms.

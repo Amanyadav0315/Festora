@@ -21,6 +21,16 @@ const listingSchema = new Schema(
     city: { type: String },
     locationUrl: { type: String },
     isActive: { type: Boolean, default: true },
+    // Admin-driven soft delete — hides the listing from all public browsing/search without
+    // losing the data. Shows up in the admin panel's Deleted Items > Posts screen, from where
+    // it can be restored or purged for good.
+    adminDeletedAt: { type: Date, default: null },
+    adminDeletedReason: { type: String },
+    adminDeletedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    // True when this listing was auto-soft-deleted as a side effect of its owner's account
+    // being admin-deleted (rather than deleted directly) — lets restoring the user also
+    // restore exactly these listings, without touching ones an admin deleted independently.
+    adminDeleteCascade: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

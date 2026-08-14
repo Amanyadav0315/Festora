@@ -22,6 +22,12 @@ const userSchema = new Schema(
     // the 60-day grace period elapses clears this (auto-restores the account); the background
     // sweep in accountDeletion.service.ts permanently purges accounts whose grace period expired.
     deletionRequestedAt: { type: Date, default: null },
+    // Admin-driven soft delete — distinct from the self-service deletion above. An admin-deleted
+    // account cannot log back in to auto-restore itself; only an admin can restore it (or purge
+    // it for good) from the admin panel's Deleted Items > Users screen.
+    adminDeletedAt: { type: Date, default: null },
+    adminDeletedReason: { type: String },
+    adminDeletedBy: { type: Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }
 );
