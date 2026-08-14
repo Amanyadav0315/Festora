@@ -8,7 +8,7 @@ const listingSchema = new Schema(
     condition: { type: String, enum: ["new", "old"], required: true },
     purpose: { type: String, enum: ["sell", "rent"], required: true },
     title: { type: String, required: true, trim: true },
-    keywords: { type: [String], required: true, validate: (v: string[]) => v.length >= 3 && v.length <= 10 },
+    keywords: { type: [String], required: true, validate: (v: string[]) => v.length >= 1 && v.length <= 10 },
     description: { type: String, required: true, maxlength: 200 },
     descriptionHi: { type: String, maxlength: 200 },
     price: { type: Number, required: true, min: 0 },

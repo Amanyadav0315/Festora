@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
 import { MulterError } from "multer";
+import mongoose from "mongoose";
 
 export class ApiError extends Error {
   status: number;
@@ -27,6 +28,16 @@ export function errorHandler(err: unknown, req: Request, res: Response, next: Ne
     for (const issue of err.issues) {
       const key = issue.path.join(".") || "_";
       if (!errors[key]) errors[key] = issue.message;
+    }
+    return res.status(400).json({ message: "Invalid input", errors });
+  }
+  if (err instanceof mongoose.Error.ValidationError) {
+    // A schema-level (not zod-level) rejection — e.g. our own model `validate` functions.
+    // Should be rare (zod is meant to catch these first) but if the two schemas ever drift,
+    // surface a clean 400 instead of an opaque 500 with a raw Mongoose error message.
+    const errors: Record<string, string> = {};
+    for (const [key, e] of Object.entries(err.errors)) {
+      errors[key] = e.message;
     }
     return res.status(400).json({ message: "Invalid input", errors });
   }
