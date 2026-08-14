@@ -165,7 +165,14 @@
     "reportIssueSubmit": "रिपोर्ट सबमिट करें",
     "reportIssueSubmitting": "सबमिट हो रहा है...",
     "reportIssueThanks": "धन्यवाद — हमारी टीम इसकी समीक्षा करेगी और ज़रूरत होने पर संपर्क करेगी।",
-    "somethingWrong": "कुछ गलत हो गया"
+    "somethingWrong": "कुछ गलत हो गया",
+    "deleteAccountOption": "अकाउंट डिलीट करें",
+    "deleteAccountTitle": "क्या आप अपना अकाउंट डिलीट करना चाहते हैं?",
+    "deleteAccountExplain": "आपका अकाउंट और डेटा तुरंत निष्क्रिय कर दिया जाएगा। अगर आप 60 दिनों के अंदर दोबारा लॉगिन करते हैं, तो आपका अकाउंट पूरी तरह बहाल हो जाएगा। अगर आप 60 दिनों में लॉगिन नहीं करते, तो आपका अकाउंट और डेटा स्थायी रूप से डिलीट कर दिया जाएगा।",
+    "deleteAccountPasswordLabel": "पुष्टि के लिए अपना पासवर्ड डालें",
+    "deleteAccountCancel": "रद्द करें",
+    "deleteAccountConfirm": "अकाउंट डिलीट करें",
+    "deleteAccountDeleting": "डिलीट हो रहा है..."
   },
   "socialProfile": {
     "memberSince": "सदस्य बने {date}",
@@ -212,7 +219,7 @@
     "saving": "सहेजा जा रहा है...",
     "uploadPhotoOption": "फ़ोटो अपलोड/बदलें",
     "editNameOption": "नाम संपादित करें",
-    "aboutOption": "अबाउट",
+    "aboutOption": "बायो जोड़ें",
     "aboutPlaceholder": "अपने बारे में कुछ बताएं...",
     "aboutCharsLeft": "{count} अक्षर शेष",
     "changePasswordOption": "पासवर्ड बदलें",

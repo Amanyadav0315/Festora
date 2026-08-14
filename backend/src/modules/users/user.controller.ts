@@ -4,7 +4,7 @@ import { userRepository } from "./user.repository";
 import { UserModel } from "./user.model";
 import { toUserDTO } from "./user.mapper";
 import { ApiError } from "../../middleware/errorHandler";
-import { updateProfileSchema, changePasswordSchema } from "./user.schemas";
+import { updateProfileSchema, changePasswordSchema, deleteAccountSchema } from "./user.schemas";
 import { avatarImageUrl } from "../../middleware/upload";
 import { FollowModel } from "../social/follow.model";
 import { BlockModel } from "../social/block.model";
@@ -12,6 +12,10 @@ import { StoreModel } from "../stores/store.model";
 import { ListingModel } from "../listings/listing.model";
 
 const SALT_ROUNDS = 10;
+// Must match the cookie name/path auth.controller.ts issues the refresh token under, so
+// deleting the account also ends the current session immediately.
+const REFRESH_COOKIE = "eventsaman_refresh_token";
+const REFRESH_COOKIE_PATH = "/api/auth";
 
 function toStoreDTO(store: any) {
   return {
@@ -57,6 +61,25 @@ export const userController = {
     user.passwordHash = await bcrypt.hash(input.newPassword, SALT_ROUNDS);
     await user.save();
     res.json({ updated: true });
+  },
+
+  async deleteMe(req: Request, res: Response) {
+    const input = deleteAccountSchema.parse(req.body);
+    const user = await UserModel.findById(req.user!.sub);
+    if (!user) throw new ApiError(404, "User not found");
+
+    const valid = await bcrypt.compare(input.password, user.passwordHash);
+    if (!valid) throw new ApiError(400, "Incorrect password");
+
+    // Soft delete only: the account and its data are kept for 60 days. Logging back in
+    // during that window restores it automatically (see auth.service.ts); after 60 days
+    // the background sweep purges it permanently (accountDeletion.service.ts).
+    user.deletionRequestedAt = new Date();
+    await user.save();
+
+    // End the current session right away, same as logout.
+    res.clearCookie(REFRESH_COOKIE, { path: REFRESH_COOKIE_PATH });
+    res.status(204).send();
   },
 
   async publicProfile(req: Request, res: Response) {

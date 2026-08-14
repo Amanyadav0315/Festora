@@ -374,7 +374,18 @@ export default function SellPage() {
       localStorage.removeItem(DRAFT_KEY);
       setCreated(result.listing);
     } catch (err) {
-      setError(err instanceof ApiRequestError ? err.message : t("somethingWrong"));
+      // Only ever show the backend's message for the specific "client did something we can
+      // explain" statuses (bad input, not found, conflict, rate-limited) — those messages are
+      // curated, user-facing text set deliberately by the controller (see ApiError usages in
+      // listing.controller.ts). Anything else — 5xx server failures, unexpected statuses, or a
+      // plain network error that never reached the API at all — falls back to the generic,
+      // translated message so no raw backend/server detail ever reaches the screen.
+      const SAFE_TO_SHOW_STATUSES = [400, 404, 409, 422, 429];
+      setError(
+        err instanceof ApiRequestError && SAFE_TO_SHOW_STATUSES.includes(err.status)
+          ? err.message
+          : t("somethingWrong")
+      );
     } finally {
       setSubmitting(false);
     }

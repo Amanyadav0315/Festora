@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import multer from "multer";
+import { ApiError } from "./errorHandler";
 
 const UPLOAD_ROOT = path.join(__dirname, "..", "..", "uploads");
 
@@ -22,7 +23,9 @@ const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif
 
 function imageFileFilter(_req: unknown, file: Express.Multer.File, cb: multer.FileFilterCallback) {
   if (!IMAGE_TYPES.has(file.mimetype)) {
-    cb(new Error("Only JPEG, PNG, WEBP, or GIF images are allowed"));
+    // ApiError (not a plain Error) so this reaches the client as its own clean 400 message
+    // instead of falling through to the generic "something went wrong" 500 response.
+    cb(new ApiError(400, "Only JPEG, PNG, WEBP, or GIF images are allowed"));
     return;
   }
   cb(null, true);

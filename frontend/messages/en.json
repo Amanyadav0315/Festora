@@ -165,7 +165,14 @@
     "reportIssueSubmit": "Submit report",
     "reportIssueSubmitting": "Submitting...",
     "reportIssueThanks": "Thanks — our team will review this and reach out if needed.",
-    "somethingWrong": "Something went wrong"
+    "somethingWrong": "Something went wrong",
+    "deleteAccountOption": "Delete Account",
+    "deleteAccountTitle": "Delete your account?",
+    "deleteAccountExplain": "Your account and data will be deactivated right away. If you log back in within 60 days, your account is fully restored. If you don't log in within 60 days, your account and data are permanently deleted.",
+    "deleteAccountPasswordLabel": "Enter your password to confirm",
+    "deleteAccountCancel": "Cancel",
+    "deleteAccountConfirm": "Delete account",
+    "deleteAccountDeleting": "Deleting..."
   },
   "socialProfile": {
     "memberSince": "Member since {date}",
@@ -212,7 +219,7 @@
     "saving": "Saving...",
     "uploadPhotoOption": "Upload/Change Photo",
     "editNameOption": "Edit Name",
-    "aboutOption": "About",
+    "aboutOption": "Add Bio",
     "aboutPlaceholder": "Tell others a bit about yourself...",
     "aboutCharsLeft": "{count} characters left",
     "changePasswordOption": "Change password",

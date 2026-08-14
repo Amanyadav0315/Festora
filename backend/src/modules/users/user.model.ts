@@ -9,6 +9,10 @@ const userSchema = new Schema(
     role: { type: String, enum: ["user", "admin"], default: "user", required: true },
     about: { type: String, trim: true, maxlength: 200, default: "" },
     avatarUrl: { type: String },
+    // Soft-delete marker: set when the user requests account deletion. Logging back in before
+    // the 60-day grace period elapses clears this (auto-restores the account); the background
+    // sweep in accountDeletion.service.ts permanently purges accounts whose grace period expired.
+    deletionRequestedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );
