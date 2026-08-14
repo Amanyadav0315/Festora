@@ -51,7 +51,18 @@
     "noAccount": "Don't have an account?",
     "haveAccount": "Already have an account?",
     "showPassword": "Show password",
-    "hidePassword": "Hide password"
+    "hidePassword": "Hide password",
+    "businessName": "Business name",
+    "businessNameHint": "This business name will be displayed on your product postings.",
+    "continue": "Continue",
+    "agreementTitle": "One last step",
+    "agreementSubtitle": "Please review and accept both to create your account.",
+    "agreePrivacyPrefix": "I agree to the",
+    "privacyPolicyLink": "Privacy Policy",
+    "agreeTermsPrefix": "I agree to the",
+    "termsLink": "Terms & Conditions",
+    "createAccountButton": "Create account",
+    "backToEdit": "Back to edit details"
   },
   "sell": {
     "title": "Post a listing",
@@ -158,6 +169,10 @@
     "reportIssue": "Report an issue",
     "privacyPolicy": "Privacy Policy",
     "privacyPolicyTitle": "Privacy Policy",
+    "termsConditions": "Terms & Conditions",
+    "termsConditionsTitle": "Terms & Conditions",
+    "showPhoneOption": "Display phone number on profile",
+    "showPhoneHint": "If enabled, your phone number is shown publicly on your profile for anyone to see.",
     "reportIssueLabel": "What's wrong?",
     "reportIssuePlaceholder": "Describe the issue you're facing...",
     "reportIssueScreenshots": "Screenshots (optional, up to {count})",
@@ -176,6 +191,7 @@
   },
   "socialProfile": {
     "memberSince": "Member since {date}",
+    "phoneLabel": "Phone",
     "posts": "Posts",
     "followers": "Followers",
     "following": "Following",

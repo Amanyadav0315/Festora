@@ -274,7 +274,12 @@ export function SocialProfile({
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
-            <h1 className="truncate text-xl font-bold text-gray-900">{profile.name}</h1>
+            <div className="min-w-0">
+              <h1 className="truncate text-xl font-bold text-gray-900">{profile.name}</h1>
+              {profile.businessName && profile.businessName !== profile.name && (
+                <p className="truncate text-sm font-medium text-orange-600">{profile.businessName}</p>
+              )}
+            </div>
             {!profile.isSelf && (
               <div className="relative shrink-0">
                 <button
@@ -328,6 +333,13 @@ export function SocialProfile({
               }),
             })}
           </p>
+
+          {profile.phone && (
+            <p className="mt-1 text-sm text-gray-600">
+              <span className="text-gray-400">{t("phoneLabel")}: </span>
+              {profile.phone}
+            </p>
+          )}
 
           {profile.about && <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{profile.about}</p>}
 

@@ -4,37 +4,35 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { apiFetch, ApiRequestError } from "@/lib/api";
-import { saveAccessToken, saveUser, type AuthResponse } from "@/lib/auth-client";
 import { AuthField } from "@/components/auth/AuthField";
 
 export default function SignupPage() {
   const router = useRouter();
   const t = useTranslations("auth");
   const [name, setName] = useState("");
+  const [businessName, setBusinessName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: FormEvent) {
+  function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    setLoading(true);
+    // The account isn't created yet — the actual /auth/signup call happens only after the
+    // user accepts both the Privacy Policy and Terms & Conditions on the next step. Stash
+    // the collected fields in sessionStorage (not localStorage — this is transient) so the
+    // confirm page can pick them up; the password never touches localStorage this way.
     try {
-      const res = await apiFetch<AuthResponse>("/auth/signup", {
-        method: "POST",
-        body: JSON.stringify({ name, phone, email: email || undefined, password }),
-      });
-      saveAccessToken(res.accessToken);
-      saveUser(res.user);
-      router.push("/");
-    } catch (err) {
-      setError(err instanceof ApiRequestError ? err.message : t("somethingWrong"));
-    } finally {
-      setLoading(false);
+      sessionStorage.setItem(
+        "eventsaman_pending_signup",
+        JSON.stringify({ name, businessName, phone, email: email || undefined, password })
+      );
+    } catch {
+      // sessionStorage unavailable (e.g. private mode) — fall through, confirm page will
+      // detect the missing data and send the user back here.
     }
+    router.push("/signup/confirm");
   }
 
   return (
@@ -58,6 +56,17 @@ export default function SignupPage() {
               onChange={(e) => setName(e.target.value)}
               required
             />
+            <div>
+              <AuthField
+                label={`${t("businessName")} *`}
+                icon="user"
+                autoComplete="organization"
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
+                required
+              />
+              <p className="mt-1 text-xs text-gray-500">{t("businessNameHint")}</p>
+            </div>
             <AuthField
               label={`${t("phone")} *`}
               icon="phone"
@@ -97,16 +106,9 @@ export default function SignupPage() {
 
             <button
               type="submit"
-              disabled={loading}
               className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading && (
-                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4Z" />
-                </svg>
-              )}
-              {loading ? t("signingUp") : t("signup")}
+              {t("continue")}
             </button>
           </form>
         </div>

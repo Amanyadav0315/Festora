@@ -4,7 +4,12 @@ import { userRepository } from "./user.repository";
 import { UserModel } from "./user.model";
 import { toUserDTO } from "./user.mapper";
 import { ApiError } from "../../middleware/errorHandler";
-import { updateProfileSchema, changePasswordSchema, deleteAccountSchema } from "./user.schemas";
+import {
+  updateProfileSchema,
+  changePasswordSchema,
+  deleteAccountSchema,
+  updatePhoneVisibilitySchema,
+} from "./user.schemas";
 import { avatarImageUrl } from "../../middleware/upload";
 import { FollowModel } from "../social/follow.model";
 import { BlockModel } from "../social/block.model";
@@ -63,6 +68,13 @@ export const userController = {
     res.json({ updated: true });
   },
 
+  async updatePhoneVisibility(req: Request, res: Response) {
+    const input = updatePhoneVisibilitySchema.parse(req.body);
+    const user = await userRepository.updatePhoneVisibility(req.user!.sub, input.showPhonePublicly);
+    if (!user) throw new ApiError(404, "User not found");
+    res.json({ user: toUserDTO(user) });
+  },
+
   async deleteMe(req: Request, res: Response) {
     const input = deleteAccountSchema.parse(req.body);
     const user = await UserModel.findById(req.user!.sub);
@@ -101,8 +113,12 @@ export const userController = {
       profile: {
         id: target._id.toString(),
         name: target.name,
+        businessName: (target as any).businessName || target.name,
         about: (target as any).about || undefined,
         avatarUrl: (target as any).avatarUrl || undefined,
+        // Only ever included when the account owner has explicitly opted in — never leak a
+        // phone number to other users by default.
+        phone: (target as any).showPhonePublicly ? target.phone : undefined,
         createdAt: (target as any).createdAt.toISOString(),
         followersCount,
         followingCount,

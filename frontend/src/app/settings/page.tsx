@@ -1,21 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import type { UserDTO } from "@eventsaman/types";
 import { apiFetch, ApiRequestError } from "@/lib/api";
-import { clearSession, getAccessToken } from "@/lib/auth-client";
+import { clearSession, getAccessToken, getUser, saveUser } from "@/lib/auth-client";
 import { BackHeader } from "@/components/BackHeader";
 
 export default function SettingsPage() {
   const router = useRouter();
   const t = useTranslations("profileMenu");
+  const [user, setUser] = useState<UserDTO | null>(null);
+  const [phoneVisSaving, setPhoneVisSaving] = useState(false);
+  const [phoneVisError, setPhoneVisError] = useState<string | null>(null);
   // Two-step flow: a plain "are you sure?" confirmation first, then the password step that
   // actually performs the delete. Keeps the destructive action behind two deliberate taps.
   const [step, setStep] = useState<"closed" | "confirm" | "password">("closed");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
+
+  async function togglePhoneVisibility() {
+    if (!user) return;
+    const next = !user.showPhonePublicly;
+    setPhoneVisError(null);
+    setPhoneVisSaving(true);
+    try {
+      const token = getAccessToken() ?? undefined;
+      const res = await apiFetch<{ user: UserDTO }>("/users/me/phone-visibility", {
+        method: "PATCH",
+        accessToken: token,
+        body: JSON.stringify({ showPhonePublicly: next }),
+      });
+      setUser(res.user);
+      saveUser(res.user);
+    } catch (err) {
+      setPhoneVisError(err instanceof ApiRequestError ? err.message : t("somethingWrong"));
+    } finally {
+      setPhoneVisSaving(false);
+    }
+  }
 
   function closeModal() {
     setStep("closed");
@@ -50,6 +79,41 @@ export default function SettingsPage() {
   return (
     <main className="mx-auto max-w-sm px-4 pb-10 sm:px-6 sm:pb-16">
       <BackHeader title={t("settingsTitle")} backHref="/profile" />
+
+      <div className="mt-4 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+        <div className="flex items-center gap-3.5 px-4 py-3.5">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-50 text-orange-600">
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8}>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"
+              />
+            </svg>
+          </span>
+          <div className="flex-1">
+            <p className="text-[15px] font-medium text-gray-800">{t("showPhoneOption")}</p>
+            <p className="mt-0.5 text-xs text-gray-500">{t("showPhoneHint")}</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={Boolean(user?.showPhonePublicly)}
+            onClick={togglePhoneVisibility}
+            disabled={!user || phoneVisSaving}
+            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-60 ${
+              user?.showPhonePublicly ? "bg-orange-600" : "bg-gray-300"
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                user?.showPhonePublicly ? "translate-x-[22px]" : "translate-x-0.5"
+              }`}
+            />
+          </button>
+        </div>
+        {phoneVisError && <p className="px-4 pb-3 text-xs text-red-600">{phoneVisError}</p>}
+      </div>
 
       <div className="mt-4 overflow-hidden rounded-xl border border-red-100 bg-white shadow-sm">
         <button

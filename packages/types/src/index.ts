@@ -7,11 +7,13 @@ export type CategorySlug = string;
 export interface UserDTO {
   id: string;
   name: string;
+  businessName: string;
   phone: string;
   email?: string;
   about?: string;
   avatarUrl?: string;
   role: UserRole;
+  showPhonePublicly: boolean;
   createdAt: string;
 }
 
@@ -103,8 +105,11 @@ export interface FollowUserSummaryDTO {
 export interface PublicUserProfileDTO {
   id: string;
   name: string;
+  businessName: string;
   about?: string;
   avatarUrl?: string;
+  // Only present when the profile owner has opted in via Settings > Display phone number.
+  phone?: string;
   createdAt: string;
   followersCount: number;
   followingCount: number;

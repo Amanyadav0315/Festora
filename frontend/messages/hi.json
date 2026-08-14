@@ -51,7 +51,18 @@
     "noAccount": "खाता नहीं है?",
     "haveAccount": "पहले से खाता है?",
     "showPassword": "पासवर्ड दिखाएं",
-    "hidePassword": "पासवर्ड छुपाएं"
+    "hidePassword": "पासवर्ड छुपाएं",
+    "businessName": "व्यवसाय का नाम",
+    "businessNameHint": "यह व्यवसाय का नाम आपकी प्रोडक्ट पोस्टिंग पर दिखाया जाएगा।",
+    "continue": "जारी रखें",
+    "agreementTitle": "आखिरी चरण",
+    "agreementSubtitle": "खाता बनाने के लिए कृपया दोनों को पढ़ें और स्वीकार करें।",
+    "agreePrivacyPrefix": "मैं सहमत हूं",
+    "privacyPolicyLink": "गोपनीयता नीति",
+    "agreeTermsPrefix": "मैं सहमत हूं",
+    "termsLink": "नियम व शर्तें",
+    "createAccountButton": "खाता बनाएं",
+    "backToEdit": "विवरण संपादित करने वापस जाएं"
   },
   "sell": {
     "title": "लिस्टिंग पोस्ट करें",
@@ -158,6 +169,10 @@
     "reportIssue": "समस्या की रिपोर्ट करें",
     "privacyPolicy": "गोपनीयता नीति",
     "privacyPolicyTitle": "गोपनीयता नीति",
+    "termsConditions": "नियम व शर्तें",
+    "termsConditionsTitle": "नियम व शर्तें",
+    "showPhoneOption": "प्रोफ़ाइल पर फ़ोन नंबर दिखाएं",
+    "showPhoneHint": "चालू करने पर, आपका फ़ोन नंबर आपकी प्रोफ़ाइल पर सभी को सार्वजनिक रूप से दिखेगा।",
     "reportIssueLabel": "क्या समस्या है?",
     "reportIssuePlaceholder": "आपको आ रही समस्या का वर्णन करें...",
     "reportIssueScreenshots": "स्क्रीनशॉट (वैकल्पिक, अधिकतम {count})",
@@ -176,6 +191,7 @@
   },
   "socialProfile": {
     "memberSince": "सदस्य बने {date}",
+    "phoneLabel": "फ़ोन",
     "posts": "पोस्ट",
     "followers": "फ़ॉलोअर्स",
     "following": "फ़ॉलोइंग",

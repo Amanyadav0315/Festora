@@ -16,7 +16,9 @@ async function getOrCreateStore(userId: string, categorySlugs: string[]) {
   if (existing) return existing;
 
   const user = await UserModel.findById(userId);
-  const name = user ? `${user.name}'s Store` : "My Store";
+  // Storefronts are labeled with the seller's declared business name (collected at signup),
+  // not their personal name — that's what buyers see on every listing.
+  const name = (user as any)?.businessName || (user ? `${user.name}'s Store` : "My Store");
   return StoreModel.create({ ownerId: userId, name, categories: categorySlugs });
 }
 

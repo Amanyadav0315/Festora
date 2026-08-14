@@ -23,7 +23,18 @@ export const userRepository = {
   updateAvatar(id: string, avatarUrl: string) {
     return UserModel.findByIdAndUpdate(id, { $set: { avatarUrl } }, { new: true });
   },
-  create(data: { name: string; phone: string; email?: string; passwordHash: string; role?: "user" | "admin" }) {
+  updatePhoneVisibility(id: string, showPhonePublicly: boolean) {
+    return UserModel.findByIdAndUpdate(id, { $set: { showPhonePublicly } }, { new: true });
+  },
+  create(data: {
+    name: string;
+    businessName: string;
+    phone: string;
+    email?: string;
+    passwordHash: string;
+    role?: "user" | "admin";
+    termsAcceptedAt?: Date;
+  }) {
     return UserModel.create(data);
   },
 };

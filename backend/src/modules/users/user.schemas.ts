@@ -20,3 +20,9 @@ export const deleteAccountSchema = z.object({
 });
 
 export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;
+
+export const updatePhoneVisibilitySchema = z.object({
+  showPhonePublicly: z.boolean(),
+});
+
+export type UpdatePhoneVisibilityInput = z.infer<typeof updatePhoneVisibilitySchema>;

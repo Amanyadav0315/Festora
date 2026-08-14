@@ -23,6 +23,7 @@ function MenuIcon({ path, className }: { path: string; className?: string }) {
 const ICON_PATHS = {
   report: "M12 9v4m0 4h.01M10.29 3.86l-8.18 14.18A2 2 0 0 0 3.82 21h16.36a2 2 0 0 0 1.71-2.96L13.71 3.86a2 2 0 0 0-3.42 0z",
   privacy: "M12 2l8 3.5v5c0 5-3.4 8.9-8 10.5-4.6-1.6-8-5.5-8-10.5v-5L12 2z",
+  terms: "M9 12h6m-6 4h6M9 8h1M6 3h12a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z",
 };
 
 function MenuRow({ href, iconPath, label }: { href: string; iconPath: string; label: string }) {
@@ -50,6 +51,7 @@ export default function HelpPage() {
       <div className="mt-4 divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
         <MenuRow href="/help/report" iconPath={ICON_PATHS.report} label={t("reportIssue")} />
         <MenuRow href="/help/privacy" iconPath={ICON_PATHS.privacy} label={t("privacyPolicy")} />
+        <MenuRow href="/help/terms" iconPath={ICON_PATHS.terms} label={t("termsConditions")} />
       </div>
     </main>
   );

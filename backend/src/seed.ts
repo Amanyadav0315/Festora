@@ -34,6 +34,7 @@ async function seed() {
     {
       $set: {
         name: "Event Saman Admin",
+        businessName: "Event Saman Admin",
         phone: ADMIN_PHONE,
         email: ADMIN_EMAIL,
         passwordHash: adminPasswordHash,

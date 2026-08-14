@@ -21,9 +21,11 @@ export const authService = {
     const passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS);
     const user = await userRepository.create({
       name: input.name,
+      businessName: input.businessName,
       phone: input.phone,
       email: input.email,
       passwordHash,
+      termsAcceptedAt: new Date(),
     });
 
     return buildAuthResult(user);
