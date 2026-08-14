@@ -14,9 +14,21 @@ supportRouter.post(
 );
 
 supportRouter.get("/admin/issues", requireAuth, requireRole("admin"), asyncHandler(supportController.listIssues));
+supportRouter.get(
+  "/admin/issues-count",
+  requireAuth,
+  requireRole("admin"),
+  asyncHandler(supportController.countPendingIssues)
+);
 supportRouter.patch(
   "/admin/issues/:id",
   requireAuth,
   requireRole("admin"),
   asyncHandler(supportController.reviewIssue)
+);
+supportRouter.delete(
+  "/admin/issues/:id",
+  requireAuth,
+  requireRole("admin"),
+  asyncHandler(supportController.deleteIssue)
 );

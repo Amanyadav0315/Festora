@@ -71,7 +71,7 @@ export default function SettingsPage() {
       </div>
 
       {step === "confirm" && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-4 pb-6 sm:items-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
             <h2 className="text-base font-semibold text-gray-900">{t("deleteAccountTitle")}</h2>
             <p className="mt-2 text-sm text-gray-600">{t("deleteAccountExplain")}</p>
@@ -97,7 +97,7 @@ export default function SettingsPage() {
       )}
 
       {step === "password" && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-4 pb-6 sm:items-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
             <h2 className="text-base font-semibold text-gray-900">{t("deleteAccountTitle")}</h2>
             <p className="mt-2 text-sm text-gray-600">{t("deleteAccountExplain")}</p>

@@ -64,6 +64,20 @@ function UserReportsTab() {
     }
   }
 
+  async function deleteReport(id: string) {
+    if (!confirm("Delete this report? This can't be undone.")) return;
+    const token = getAccessToken();
+    setBusyId(id);
+    try {
+      await apiFetch(`/social/admin/reports/${id}`, { method: "DELETE", accessToken: token ?? undefined });
+      setReports((prev) => (prev ? prev.filter((r) => r.id !== id) : prev));
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? err.message : "Something went wrong");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   return (
     <>
       <div className="mb-4 flex justify-end">
@@ -121,15 +135,24 @@ function UserReportsTab() {
                 </div>
               )}
 
-              {r.status === "pending" && (
+              <div className="mt-3 flex gap-2">
+                {r.status === "pending" && (
+                  <button
+                    onClick={() => markReviewed(r.id)}
+                    disabled={busyId === r.id}
+                    className="rounded-md bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700 disabled:opacity-60"
+                  >
+                    Mark reviewed
+                  </button>
+                )}
                 <button
-                  onClick={() => markReviewed(r.id)}
+                  onClick={() => deleteReport(r.id)}
                   disabled={busyId === r.id}
-                  className="mt-3 rounded-md bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700 disabled:opacity-60"
+                  className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60"
                 >
-                  Mark reviewed
+                  Delete
                 </button>
-              )}
+              </div>
             </div>
           ))}
         </div>
@@ -170,6 +193,20 @@ function IssueReportsTab() {
     try {
       await apiFetch(`/support/admin/issues/${id}`, { method: "PATCH", accessToken: token ?? undefined });
       setIssues((prev) => (prev ? prev.map((i) => (i.id === id ? { ...i, status: "reviewed" } : i)) : prev));
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? err.message : "Something went wrong");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function deleteIssue(id: string) {
+    if (!confirm("Delete this issue report? This can't be undone.")) return;
+    const token = getAccessToken();
+    setBusyId(id);
+    try {
+      await apiFetch(`/support/admin/issues/${id}`, { method: "DELETE", accessToken: token ?? undefined });
+      setIssues((prev) => (prev ? prev.filter((i) => i.id !== id) : prev));
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : "Something went wrong");
     } finally {
@@ -233,15 +270,24 @@ function IssueReportsTab() {
                 </div>
               )}
 
-              {i.status === "pending" && (
+              <div className="mt-3 flex gap-2">
+                {i.status === "pending" && (
+                  <button
+                    onClick={() => markReviewed(i.id)}
+                    disabled={busyId === i.id}
+                    className="rounded-md bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700 disabled:opacity-60"
+                  >
+                    Mark reviewed
+                  </button>
+                )}
                 <button
-                  onClick={() => markReviewed(i.id)}
+                  onClick={() => deleteIssue(i.id)}
                   disabled={busyId === i.id}
-                  className="mt-3 rounded-md bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700 disabled:opacity-60"
+                  className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60"
                 >
-                  Mark reviewed
+                  Delete
                 </button>
-              )}
+              </div>
             </div>
           ))}
         </div>

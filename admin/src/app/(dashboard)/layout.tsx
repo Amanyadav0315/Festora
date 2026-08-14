@@ -5,29 +5,46 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { UserDTO } from "@eventsaman/types";
 import { clearSession, getAccessToken, getUser } from "@/lib/auth-client";
-import { isExpired } from "@/lib/api";
+import { apiFetch, isExpired } from "@/lib/api";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", exact: true },
   { href: "/categories", label: "Categories" },
-  { href: "/reports", label: "Reports" },
+  { href: "/reports", label: "Reports", badgeKey: "reports" as const },
 ];
 
-function SidebarLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+// How often the sidebar re-checks for new pending reports/issues, in ms.
+const REPORT_BADGE_POLL_MS = 30_000;
+
+function SidebarLinks({
+  pathname,
+  onNavigate,
+  reportBadgeCount,
+}: {
+  pathname: string;
+  onNavigate?: () => void;
+  reportBadgeCount: number;
+}) {
   return (
     <nav className="flex flex-col gap-1">
       {NAV_ITEMS.map((item) => {
         const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+        const badge = item.badgeKey === "reports" ? reportBadgeCount : 0;
         return (
           <Link
             key={item.href}
             href={item.href}
             onClick={onNavigate}
-            className={`rounded-md px-3 py-2 text-sm font-medium ${
+            className={`flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium ${
               active ? "bg-orange-50 text-orange-700" : "text-gray-600 hover:bg-gray-100"
             }`}
           >
-            {item.label}
+            <span>{item.label}</span>
+            {badge > 0 && (
+              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-600 px-1.5 text-[11px] font-bold text-white">
+                {badge > 99 ? "99+" : badge}
+              </span>
+            )}
           </Link>
         );
       })}
@@ -41,6 +58,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [status, setStatus] = useState<"checking" | "ok">("checking");
   const [user, setUser] = useState<UserDTO | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [reportBadgeCount, setReportBadgeCount] = useState(0);
 
   useEffect(() => {
     const current = getUser();
@@ -64,6 +82,36 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     setDrawerOpen(false);
   }, [pathname]);
+
+  // Sums pending user reports + pending app-issue reports into a single sidebar badge, so
+  // the admin can see at a glance that something's waiting for review without opening the
+  // Reports page. Polls rather than pushing, since there's no real-time/socket infra here.
+  useEffect(() => {
+    if (status !== "ok") return;
+
+    let cancelled = false;
+
+    async function refreshCount() {
+      const token = getAccessToken();
+      if (!token) return;
+      try {
+        const [reports, issues] = await Promise.all([
+          apiFetch<{ count: number }>("/social/admin/reports-count", { accessToken: token }),
+          apiFetch<{ count: number }>("/support/admin/issues-count", { accessToken: token }),
+        ]);
+        if (!cancelled) setReportBadgeCount(reports.count + issues.count);
+      } catch {
+        // Non-critical — the badge just won't update this cycle; the next poll retries.
+      }
+    }
+
+    refreshCount();
+    const interval = setInterval(refreshCount, REPORT_BADGE_POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [status, pathname]);
 
   function handleLogout() {
     clearSession();
@@ -109,7 +157,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </svg>
               </button>
             </div>
-            <SidebarLinks pathname={pathname} onNavigate={() => setDrawerOpen(false)} />
+            <SidebarLinks pathname={pathname} onNavigate={() => setDrawerOpen(false)} reportBadgeCount={reportBadgeCount} />
           </div>
         </div>
       )}
@@ -120,7 +168,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <span className="text-xl font-extrabold text-orange-600">Event Saman Admin</span>
             {user && <span className="text-xs text-gray-500">{user.name}</span>}
           </div>
-          <SidebarLinks pathname={pathname} />
+          <SidebarLinks pathname={pathname} reportBadgeCount={reportBadgeCount} />
           <button
             onClick={handleLogout}
             className="mt-6 w-full rounded-md border border-gray-300 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"

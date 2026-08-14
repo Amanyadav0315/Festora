@@ -137,4 +137,17 @@ export const socialController = {
     await report.save();
     res.json({ reviewed: true });
   },
+
+  // DELETE /social/admin/reports/:id — permanently remove a report from the review queue.
+  async deleteReport(req: Request, res: Response) {
+    const report = await ReportModel.findByIdAndDelete(req.params.id);
+    if (!report) throw new ApiError(404, "Report not found");
+    res.status(204).send();
+  },
+
+  // GET /social/admin/reports-count — pending count, used for the admin sidebar badge.
+  async countPendingReports(req: Request, res: Response) {
+    const count = await ReportModel.countDocuments({ status: "pending" });
+    res.json({ count });
+  },
 };

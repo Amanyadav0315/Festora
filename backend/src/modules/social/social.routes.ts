@@ -22,9 +22,21 @@ socialRouter.post(
 
 // Admin-only review queue.
 socialRouter.get("/admin/reports", requireAuth, requireRole("admin"), asyncHandler(socialController.listReports));
+socialRouter.get(
+  "/admin/reports-count",
+  requireAuth,
+  requireRole("admin"),
+  asyncHandler(socialController.countPendingReports)
+);
 socialRouter.patch(
   "/admin/reports/:id",
   requireAuth,
   requireRole("admin"),
   asyncHandler(socialController.reviewReport)
+);
+socialRouter.delete(
+  "/admin/reports/:id",
+  requireAuth,
+  requireRole("admin"),
+  asyncHandler(socialController.deleteReport)
 );

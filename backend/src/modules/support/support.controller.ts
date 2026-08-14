@@ -52,4 +52,17 @@ export const supportController = {
     await issue.save();
     res.json({ reviewed: true });
   },
+
+  // DELETE /support/admin/issues/:id — permanently remove an issue report from the queue.
+  async deleteIssue(req: Request, res: Response) {
+    const issue = await IssueReportModel.findByIdAndDelete(req.params.id);
+    if (!issue) throw new ApiError(404, "Issue report not found");
+    res.status(204).send();
+  },
+
+  // GET /support/admin/issues-count — pending count, used for the admin sidebar badge.
+  async countPendingIssues(req: Request, res: Response) {
+    const count = await IssueReportModel.countDocuments({ status: "pending" });
+    res.json({ count });
+  },
 };
