@@ -10,10 +10,18 @@ import { BackHeader } from "@/components/BackHeader";
 export default function SettingsPage() {
   const router = useRouter();
   const t = useTranslations("profileMenu");
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  // Two-step flow: a plain "are you sure?" confirmation first, then the password step that
+  // actually performs the delete. Keeps the destructive action behind two deliberate taps.
+  const [step, setStep] = useState<"closed" | "confirm" | "password">("closed");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  function closeModal() {
+    setStep("closed");
+    setPassword("");
+    setError(null);
+  }
 
   async function handleDelete(e: React.FormEvent) {
     e.preventDefault();
@@ -46,7 +54,7 @@ export default function SettingsPage() {
       <div className="mt-4 overflow-hidden rounded-xl border border-red-100 bg-white shadow-sm">
         <button
           type="button"
-          onClick={() => setConfirmOpen(true)}
+          onClick={() => setStep("confirm")}
           className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition-colors hover:bg-red-50 active:bg-red-100"
         >
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600">
@@ -62,7 +70,33 @@ export default function SettingsPage() {
         </button>
       </div>
 
-      {confirmOpen && (
+      {step === "confirm" && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-4 pb-6 sm:items-center">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+            <h2 className="text-base font-semibold text-gray-900">{t("deleteAccountTitle")}</h2>
+            <p className="mt-2 text-sm text-gray-600">{t("deleteAccountExplain")}</p>
+
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={closeModal}
+                className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                {t("deleteAccountCancel")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setStep("password")}
+                className="flex-1 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700"
+              >
+                {t("deleteAccountConfirm")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {step === "password" && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-4 pb-6 sm:items-center">
           <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
             <h2 className="text-base font-semibold text-gray-900">{t("deleteAccountTitle")}</h2>
@@ -76,6 +110,7 @@ export default function SettingsPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  autoFocus
                   className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400"
                 />
               </div>
@@ -85,11 +120,7 @@ export default function SettingsPage() {
               <div className="flex gap-2 pt-1">
                 <button
                   type="button"
-                  onClick={() => {
-                    setConfirmOpen(false);
-                    setPassword("");
-                    setError(null);
-                  }}
+                  onClick={closeModal}
                   className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                 >
                   {t("deleteAccountCancel")}
