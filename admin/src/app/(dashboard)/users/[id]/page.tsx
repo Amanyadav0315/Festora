@@ -42,6 +42,7 @@ export default function UserDetailPage() {
   const [deleteUserOpen, setDeleteUserOpen] = useState(false);
   const [deletePostTarget, setDeletePostTarget] = useState<ListingDTO | null>(null);
   const [busy, setBusy] = useState(false);
+  const [verifyBusy, setVerifyBusy] = useState(false);
 
   useEffect(() => {
     const token = getAccessToken();
@@ -75,6 +76,25 @@ export default function UserDetailPage() {
       setDeleteUserOpen(false);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function toggleVerified() {
+    if (!user) return;
+    const token = getAccessToken();
+    setVerifyBusy(true);
+    try {
+      const next = !user.isVerified;
+      await apiFetch(`/admin/users/${params.id}/verify`, {
+        method: "PATCH",
+        accessToken: token ?? undefined,
+        body: JSON.stringify({ isVerified: next }),
+      });
+      setUser((prev) => (prev ? { ...prev, isVerified: next } : prev));
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? err.message : "Something went wrong");
+    } finally {
+      setVerifyBusy(false);
     }
   }
 
@@ -135,6 +155,11 @@ export default function UserDetailPage() {
                     ADMIN
                   </span>
                 )}
+                {user.isVerified && (
+                  <span className="ml-2 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-700">
+                    VERIFIED
+                  </span>
+                )}
               </h1>
               <p className="text-sm text-orange-600">{user.businessName}</p>
               <p className="mt-0.5 text-xs text-gray-400">Joined {formatDate(user.createdAt)}</p>
@@ -142,12 +167,25 @@ export default function UserDetailPage() {
           </div>
 
           {user.role !== "admin" && (
-            <button
-              onClick={() => setDeleteUserOpen(true)}
-              className="rounded-md border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"
-            >
-              Delete user
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={toggleVerified}
+                disabled={verifyBusy}
+                className={`rounded-md border px-3 py-2 text-sm font-semibold disabled:opacity-60 ${
+                  user.isVerified
+                    ? "border-sky-200 text-sky-700 hover:bg-sky-50"
+                    : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                {user.isVerified ? "Remove verified badge" : "Mark as verified seller"}
+              </button>
+              <button
+                onClick={() => setDeleteUserOpen(true)}
+                className="rounded-md border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"
+              >
+                Delete user
+              </button>
+            </div>
           )}
         </div>
 

@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { href: "/users", label: "Users" },
   { href: "/reports", label: "Reports", badgeKey: "reports" as const },
   { href: "/deleted-items", label: "Deleted Items" },
+  { href: "/audit-log", label: "Audit Log" },
 ];
 
 // How often the sidebar re-checks for new pending reports/issues, in ms.

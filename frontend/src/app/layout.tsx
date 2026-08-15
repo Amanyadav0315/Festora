@@ -6,6 +6,7 @@ import { Navbar } from "@/components/Navbar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { SessionGuard } from "@/components/SessionGuard";
 import { AppShell } from "@/components/AppShell";
+import { CompareBar } from "@/components/CompareBar";
 
 export const metadata: Metadata = {
   title: "Event Saman",
@@ -32,6 +33,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <SessionGuard />
           <Navbar />
           <AppShell>{children}</AppShell>
+          <CompareBar />
           <MobileBottomNav />
         </NextIntlClientProvider>
       </body>

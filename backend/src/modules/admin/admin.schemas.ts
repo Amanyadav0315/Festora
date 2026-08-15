@@ -22,6 +22,20 @@ export const deletePostSchema = z.object({
   reason: z.string().trim().min(3, "Please provide a reason (min 3 characters)").max(300),
 });
 
+// Bulk moderation — admin selects several rows in the admin UI and applies one action to all
+// of them. Capped at 100 per request so a single request can't be used to mass-mutate the DB.
+export const bulkIdsSchema = z.object({
+  ids: z.array(z.string()).min(1).max(100),
+});
+
+export const bulkDeleteSchema = bulkIdsSchema.extend({
+  reason: z.string().trim().min(3, "Please provide a reason (min 3 characters)").max(300),
+});
+
+export const bulkVerifySchema = bulkIdsSchema.extend({
+  isVerified: z.boolean(),
+});
+
 export const deletedListQuerySchema = z.object({
   search: z.string().trim().optional(),
   from: z.string().optional(),

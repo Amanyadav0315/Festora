@@ -14,6 +14,7 @@ export function toUserDTO(user: UserDocument): UserDTO {
     about: (user as any).about || undefined,
     avatarUrl: (user as any).avatarUrl || undefined,
     showPhonePublicly: Boolean((user as any).showPhonePublicly),
+    isVerified: Boolean((user as any).isVerified),
     createdAt: (user as any).createdAt.toISOString(),
   };
 }

@@ -34,6 +34,12 @@ socialRouter.patch(
   requireRole("admin"),
   asyncHandler(socialController.reviewReport)
 );
+socialRouter.patch(
+  "/admin/reports/:id/resolve",
+  requireAuth,
+  requireRole("admin"),
+  asyncHandler(socialController.resolveReport)
+);
 socialRouter.delete(
   "/admin/reports/:id",
   requireAuth,

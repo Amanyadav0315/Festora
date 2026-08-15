@@ -7,6 +7,11 @@ const storeSchema = new Schema(
     description: { type: String },
     categories: [{ type: String }],
     city: { type: String },
+    // Dates (YYYY-MM-DD, no time component) the seller has marked themselves unavailable —
+    // purely informational for buyers deciding who to contact. This is NOT a booking/payment
+    // system: Event Saman does not confirm, hold, or guarantee any date: the buyer and seller
+    // still coordinate and finalize everything directly between themselves.
+    unavailableDates: { type: [String], default: [] },
   },
   { timestamps: true }
 );

@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import path from "node:path";
 import { env } from "./config/env";
@@ -14,17 +15,24 @@ import { wishlistRouter } from "./modules/wishlist/wishlist.routes";
 import { chatRouter } from "./modules/chat/chat.routes";
 import { supportRouter } from "./modules/support/support.routes";
 import { adminRouter } from "./modules/admin/admin.routes";
+import { reviewRouter } from "./modules/reviews/review.routes";
+import { notificationRouter } from "./modules/notifications/notification.routes";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler";
 import { auditLog } from "./middleware/auditLog";
+import { globalLimiter } from "./middleware/rateLimit";
 
 export function createApp() {
   const app = express();
 
+  // crossOriginResourcePolicy relaxed so uploaded images (served from /uploads) can still be
+  // embedded by the frontend/admin apps on their own origins.
+  app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
   app.use(cors({ origin: env.corsOrigins, credentials: true }));
   app.use(express.json());
   app.use(cookieParser());
   app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
   app.use(auditLog);
+  app.use("/api", globalLimiter);
 
   app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 
@@ -39,6 +47,8 @@ export function createApp() {
   app.use("/api/chats", chatRouter);
   app.use("/api/support", supportRouter);
   app.use("/api/admin", adminRouter);
+  app.use("/api/reviews", reviewRouter);
+  app.use("/api/notifications", notificationRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

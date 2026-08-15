@@ -16,6 +16,9 @@ const userSchema = new Schema(
     avatarUrl: { type: String },
     // Opt-in: when true, this user's phone number is included in their public profile response.
     showPhonePublicly: { type: Boolean, default: false },
+    // Admin-granted trust badge — shown on public profile/listings. Not self-service; only an
+    // admin can toggle it (see admin.controller.ts verifyUser).
+    isVerified: { type: Boolean, default: false },
     // Compliance record: when the user accepted the Privacy Policy + Terms & Conditions at signup.
     termsAcceptedAt: { type: Date },
     // Soft-delete marker: set when the user requests account deletion. Logging back in before

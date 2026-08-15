@@ -50,6 +50,9 @@ export const listListingsQuerySchema = z.object({
   cities: z.string().optional(),
   q: z.string().optional(),
   storeId: z.string().optional(),
+  minPrice: z.coerce.number().min(0).optional(),
+  maxPrice: z.coerce.number().min(0).optional(),
+  sort: z.enum(["newest", "priceLow", "priceHigh"]).default("newest"),
   includeInactive: z
     .union([z.boolean(), z.string()])
     .transform((v) => v === true || v === "true")

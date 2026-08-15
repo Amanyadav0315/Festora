@@ -92,10 +92,14 @@ function DeletedUsersTab() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [restoreTarget, setRestoreTarget] = useState<DeletedUserDTO | null>(null);
   const [purgeTarget, setPurgeTarget] = useState<DeletedUserDTO | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkRestoreOpen, setBulkRestoreOpen] = useState(false);
+  const [bulkPurgeOpen, setBulkPurgeOpen] = useState(false);
 
   useEffect(() => setPage(1), [debouncedSearch, from, to]);
 
-  useEffect(() => {
+  function reload() {
     const token = getAccessToken();
     setUsers(null);
     const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) });
@@ -108,9 +112,12 @@ function DeletedUsersTab() {
       .then((body) => {
         setUsers(body.users);
         setTotal(body.total);
+        setSelected(new Set());
       })
       .catch((err) => setError(err instanceof ApiRequestError ? err.message : "Something went wrong"));
-  }, [page, debouncedSearch, from, to]);
+  }
+
+  useEffect(reload, [page, debouncedSearch, from, to]);
 
   async function restore() {
     if (!restoreTarget) return;
@@ -142,6 +149,58 @@ function DeletedUsersTab() {
     }
   }
 
+  function toggleOne(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const allSelected = (users ?? []).length > 0 && (users ?? []).every((u) => selected.has(u.id));
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set((users ?? []).map((u) => u.id)));
+  }
+
+  async function bulkRestore() {
+    if (selected.size === 0 || bulkBusy) return;
+    const token = getAccessToken();
+    setBulkBusy(true);
+    try {
+      await apiFetch("/admin/users/bulk-restore", {
+        method: "PATCH",
+        accessToken: token ?? undefined,
+        body: JSON.stringify({ ids: Array.from(selected) }),
+      });
+      setBulkRestoreOpen(false);
+      reload();
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? err.message : "Something went wrong");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  async function bulkPurge() {
+    if (selected.size === 0 || bulkBusy) return;
+    const token = getAccessToken();
+    setBulkBusy(true);
+    try {
+      await apiFetch("/admin/users/bulk-permanent", {
+        method: "DELETE",
+        accessToken: token ?? undefined,
+        body: JSON.stringify({ ids: Array.from(selected) }),
+      });
+      setBulkPurgeOpen(false);
+      reload();
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? err.message : "Something went wrong");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
@@ -158,6 +217,34 @@ function DeletedUsersTab() {
 
       {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 
+      {users && users.length > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
+          <label className="flex items-center gap-1.5 text-gray-600">
+            <input type="checkbox" checked={allSelected} onChange={toggleAll} className="h-4 w-4 rounded border-gray-300" />
+            Select all
+          </label>
+          {selected.size > 0 && (
+            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-orange-200 bg-orange-50 px-3 py-1.5">
+              <span className="font-medium text-orange-800">{selected.size} selected</span>
+              <button
+                onClick={() => setBulkRestoreOpen(true)}
+                disabled={bulkBusy}
+                className="rounded-md bg-orange-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-orange-700 disabled:opacity-60"
+              >
+                Restore
+              </button>
+              <button
+                onClick={() => setBulkPurgeOpen(true)}
+                disabled={bulkBusy}
+                className="rounded-md border border-red-200 bg-white px-2.5 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60"
+              >
+                Delete permanently
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {users === null ? (
         <p className="text-sm text-gray-500">Loading...</p>
       ) : users.length === 0 ? (
@@ -167,39 +254,47 @@ function DeletedUsersTab() {
       ) : (
         <div className="space-y-3">
           {users.map((u) => (
-            <div key={u.id} className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-semibold text-gray-900">{u.name}</p>
-                  <p className="text-sm text-orange-600">{u.businessName}</p>
-                  <p className="mt-1 text-xs text-gray-500">
-                    📞 {u.phone} {u.email ? `· ✉️ ${u.email}` : ""}
-                  </p>
+            <div key={u.id} className="flex gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+              <input
+                type="checkbox"
+                checked={selected.has(u.id)}
+                onChange={() => toggleOne(u.id)}
+                className="mt-1 h-4 w-4 shrink-0 rounded border-gray-300"
+              />
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-gray-900">{u.name}</p>
+                    <p className="text-sm text-orange-600">{u.businessName}</p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      📞 {u.phone} {u.email ? `· ✉️ ${u.email}` : ""}
+                    </p>
+                  </div>
+                  <div className="text-right text-xs text-gray-400">
+                    <p>Deleted {formatDate(u.deletedAt)}</p>
+                    {u.deletedByName && <p>by {u.deletedByName}</p>}
+                  </div>
                 </div>
-                <div className="text-right text-xs text-gray-400">
-                  <p>Deleted {formatDate(u.deletedAt)}</p>
-                  {u.deletedByName && <p>by {u.deletedByName}</p>}
+                <p className="mt-3 rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
+                  <span className="font-medium text-gray-500">Reason: </span>
+                  {u.deletedReason || "—"}
+                </p>
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() => setRestoreTarget(u)}
+                    disabled={busyId === u.id}
+                    className="rounded-md bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700 disabled:opacity-60"
+                  >
+                    Restore
+                  </button>
+                  <button
+                    onClick={() => setPurgeTarget(u)}
+                    disabled={busyId === u.id}
+                    className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60"
+                  >
+                    Delete permanently
+                  </button>
                 </div>
-              </div>
-              <p className="mt-3 rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
-                <span className="font-medium text-gray-500">Reason: </span>
-                {u.deletedReason || "—"}
-              </p>
-              <div className="mt-3 flex gap-2">
-                <button
-                  onClick={() => setRestoreTarget(u)}
-                  disabled={busyId === u.id}
-                  className="rounded-md bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700 disabled:opacity-60"
-                >
-                  Restore
-                </button>
-                <button
-                  onClick={() => setPurgeTarget(u)}
-                  disabled={busyId === u.id}
-                  className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60"
-                >
-                  Delete permanently
-                </button>
               </div>
             </div>
           ))}
@@ -250,6 +345,29 @@ function DeletedUsersTab() {
           onConfirm={purge}
         />
       )}
+
+      {bulkRestoreOpen && (
+        <ConfirmModal
+          title={`Restore ${selected.size} user${selected.size > 1 ? "s" : ""}?`}
+          description="Their accounts and any posts hidden along with them will become active again."
+          confirmLabel="Restore"
+          danger={false}
+          busy={bulkBusy}
+          onCancel={() => setBulkRestoreOpen(false)}
+          onConfirm={bulkRestore}
+        />
+      )}
+
+      {bulkPurgeOpen && (
+        <ConfirmModal
+          title={`Permanently delete ${selected.size} user${selected.size > 1 ? "s" : ""}?`}
+          description="This cannot be undone. Their accounts, stores, and all posts will be erased for good."
+          confirmLabel="Delete permanently"
+          busy={bulkBusy}
+          onCancel={() => setBulkPurgeOpen(false)}
+          onConfirm={bulkPurge}
+        />
+      )}
     </>
   );
 }
@@ -266,10 +384,14 @@ function DeletedPostsTab() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [restoreTarget, setRestoreTarget] = useState<DeletedPostDTO | null>(null);
   const [purgeTarget, setPurgeTarget] = useState<DeletedPostDTO | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkRestoreOpen, setBulkRestoreOpen] = useState(false);
+  const [bulkPurgeOpen, setBulkPurgeOpen] = useState(false);
 
   useEffect(() => setPage(1), [debouncedSearch, from, to]);
 
-  useEffect(() => {
+  function reload() {
     const token = getAccessToken();
     setPosts(null);
     const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) });
@@ -282,9 +404,12 @@ function DeletedPostsTab() {
       .then((body) => {
         setPosts(body.posts);
         setTotal(body.total);
+        setSelected(new Set());
       })
       .catch((err) => setError(err instanceof ApiRequestError ? err.message : "Something went wrong"));
-  }, [page, debouncedSearch, from, to]);
+  }
+
+  useEffect(reload, [page, debouncedSearch, from, to]);
 
   async function restore() {
     if (!restoreTarget) return;
@@ -316,6 +441,58 @@ function DeletedPostsTab() {
     }
   }
 
+  function toggleOne(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const allSelected = (posts ?? []).length > 0 && (posts ?? []).every((p) => selected.has(p.id));
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set((posts ?? []).map((p) => p.id)));
+  }
+
+  async function bulkRestore() {
+    if (selected.size === 0 || bulkBusy) return;
+    const token = getAccessToken();
+    setBulkBusy(true);
+    try {
+      await apiFetch("/admin/posts/bulk-restore", {
+        method: "PATCH",
+        accessToken: token ?? undefined,
+        body: JSON.stringify({ ids: Array.from(selected) }),
+      });
+      setBulkRestoreOpen(false);
+      reload();
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? err.message : "Something went wrong");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  async function bulkPurge() {
+    if (selected.size === 0 || bulkBusy) return;
+    const token = getAccessToken();
+    setBulkBusy(true);
+    try {
+      await apiFetch("/admin/posts/bulk-permanent", {
+        method: "DELETE",
+        accessToken: token ?? undefined,
+        body: JSON.stringify({ ids: Array.from(selected) }),
+      });
+      setBulkPurgeOpen(false);
+      reload();
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? err.message : "Something went wrong");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
@@ -332,6 +509,34 @@ function DeletedPostsTab() {
 
       {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 
+      {posts && posts.length > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
+          <label className="flex items-center gap-1.5 text-gray-600">
+            <input type="checkbox" checked={allSelected} onChange={toggleAll} className="h-4 w-4 rounded border-gray-300" />
+            Select all
+          </label>
+          {selected.size > 0 && (
+            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-orange-200 bg-orange-50 px-3 py-1.5">
+              <span className="font-medium text-orange-800">{selected.size} selected</span>
+              <button
+                onClick={() => setBulkRestoreOpen(true)}
+                disabled={bulkBusy}
+                className="rounded-md bg-orange-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-orange-700 disabled:opacity-60"
+              >
+                Restore
+              </button>
+              <button
+                onClick={() => setBulkPurgeOpen(true)}
+                disabled={bulkBusy}
+                className="rounded-md border border-red-200 bg-white px-2.5 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60"
+              >
+                Delete permanently
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {posts === null ? (
         <p className="text-sm text-gray-500">Loading...</p>
       ) : posts.length === 0 ? (
@@ -342,6 +547,12 @@ function DeletedPostsTab() {
         <div className="space-y-3">
           {posts.map((p) => (
             <div key={p.id} className="flex flex-col gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:flex-row">
+              <input
+                type="checkbox"
+                checked={selected.has(p.id)}
+                onChange={() => toggleOne(p.id)}
+                className="h-4 w-4 shrink-0 self-start rounded border-gray-300 sm:mt-1"
+              />
               <div className="h-28 w-full shrink-0 overflow-hidden rounded-lg bg-gray-100 sm:w-36">
                 {p.images[0] && (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -430,6 +641,29 @@ function DeletedPostsTab() {
           busy={busyId === purgeTarget.id}
           onCancel={() => setPurgeTarget(null)}
           onConfirm={purge}
+        />
+      )}
+
+      {bulkRestoreOpen && (
+        <ConfirmModal
+          title={`Restore ${selected.size} post${selected.size > 1 ? "s" : ""}?`}
+          description="These will become active and visible again (unless their owner's account is still deleted)."
+          confirmLabel="Restore"
+          danger={false}
+          busy={bulkBusy}
+          onCancel={() => setBulkRestoreOpen(false)}
+          onConfirm={bulkRestore}
+        />
+      )}
+
+      {bulkPurgeOpen && (
+        <ConfirmModal
+          title={`Permanently delete ${selected.size} post${selected.size > 1 ? "s" : ""}?`}
+          description="This cannot be undone."
+          confirmLabel="Delete permanently"
+          busy={bulkBusy}
+          onCancel={() => setBulkPurgeOpen(false)}
+          onConfirm={bulkPurge}
         />
       )}
     </>

@@ -3,9 +3,10 @@ import { FollowModel } from "./follow.model";
 import { BlockModel } from "./block.model";
 import { ReportModel } from "./report.model";
 import { UserModel } from "../users/user.model";
-import { reportUserSchema } from "./social.schemas";
+import { reportUserSchema, resolveReportSchema } from "./social.schemas";
 import { reportImageUrl } from "../../middleware/upload";
 import { ApiError } from "../../middleware/errorHandler";
+import { notifyUser } from "../notifications/notification.service";
 
 function toSummary(u: any) {
   return { id: u._id.toString(), name: u.name };
@@ -24,8 +25,12 @@ function toReportDTO(r: any) {
     reporter: toSummaryOrUnknown(r.reporterId, r.reporterId?._id ?? r.reporterId),
     reported: toSummaryOrUnknown(r.reportedId, r.reportedId?._id ?? r.reportedId),
     reason: r.reason,
+    category: r.category || "other",
     screenshots: (r.screenshots ?? []).map((f: string) => f),
     status: r.status,
+    resolutionNotes: r.resolutionNotes || undefined,
+    resolvedAt: r.resolvedAt ? r.resolvedAt.toISOString() : undefined,
+    resolvedByName: r.resolvedBy && typeof r.resolvedBy === "object" ? r.resolvedBy.name : undefined,
     createdAt: r.createdAt.toISOString(),
   };
 }
@@ -111,6 +116,7 @@ export const socialController = {
       reporterId: req.user!.sub,
       reportedId: targetId,
       reason: input.reason,
+      category: input.category,
       screenshots,
       conversationId: input.conversationId || undefined,
     });
@@ -120,22 +126,49 @@ export const socialController = {
   // GET /social/admin/reports?status=pending — admin-only review queue.
   async listReports(req: Request, res: Response) {
     const filter: Record<string, unknown> = {};
-    if (req.query.status === "pending" || req.query.status === "reviewed") filter.status = req.query.status;
+    if (req.query.status === "pending" || req.query.status === "reviewed" || req.query.status === "resolved") {
+      filter.status = req.query.status;
+    }
+    if (req.query.category) filter.category = req.query.category;
 
     const reports = await ReportModel.find(filter)
       .sort({ createdAt: -1 })
       .populate("reporterId", "name")
-      .populate("reportedId", "name");
+      .populate("reportedId", "name")
+      .populate("resolvedBy", "name");
     res.json({ reports: reports.map(toReportDTO) });
   },
 
-  // PATCH /social/admin/reports/:id — mark a report reviewed.
+  // PATCH /social/admin/reports/:id — mark a report reviewed (no resolution notes yet).
   async reviewReport(req: Request, res: Response) {
     const report = await ReportModel.findById(req.params.id);
     if (!report) throw new ApiError(404, "Report not found");
     report.status = "reviewed";
     await report.save();
     res.json({ reviewed: true });
+  },
+
+  // PATCH /social/admin/reports/:id/resolve — closes out a report with a resolution note and
+  // notifies the reporter. This is the dispute-resolution step: for "transaction_dispute"
+  // reports specifically, the note should make clear the platform only mediated communication —
+  // it does not adjudicate or refund money, since buyer/seller transactions are their own concern.
+  async resolveReport(req: Request, res: Response) {
+    const input = resolveReportSchema.parse(req.body);
+    const report = await ReportModel.findById(req.params.id);
+    if (!report) throw new ApiError(404, "Report not found");
+    report.status = "resolved";
+    (report as any).resolutionNotes = input.notes;
+    (report as any).resolvedAt = new Date();
+    (report as any).resolvedBy = req.user!.sub;
+    await report.save();
+
+    notifyUser(
+      report.reporterId.toString(),
+      "report_resolved",
+      `Your report has been reviewed: ${input.notes}`
+    ).catch(() => {});
+
+    res.json({ resolved: true });
   },
 
   // DELETE /social/admin/reports/:id — permanently remove a report from the review queue.

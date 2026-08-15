@@ -1,6 +1,7 @@
 import type { ListingDTO } from "@eventsaman/types";
 import { serverFetch } from "@/lib/server-api";
 import { ListingCard } from "@/components/ListingCard";
+import { BrowseFilters } from "@/components/BrowseFilters";
 import { getNearbyCities } from "@/lib/cities";
 
 interface BrowsePageProps {
@@ -11,6 +12,9 @@ interface BrowsePageProps {
     category?: string;
     purpose?: string;
     condition?: string;
+    minPrice?: string;
+    maxPrice?: string;
+    sort?: string;
   }>;
 }
 
@@ -25,6 +29,9 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   if (params.category) query.set("categorySlug", params.category);
   if (params.purpose) query.set("purpose", params.purpose);
   if (params.condition) query.set("condition", params.condition);
+  if (params.minPrice) query.set("minPrice", params.minPrice);
+  if (params.maxPrice) query.set("maxPrice", params.maxPrice);
+  if (params.sort) query.set("sort", params.sort);
   query.set("limit", "40");
 
   const { listings } = await serverFetch<{ listings: ListingDTO[] }>(`/listings?${query.toString()}`);
@@ -45,6 +52,8 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
       {params.city && params.city !== "All India" && (
         <p className="mt-1 text-xs text-gray-500">Showing results in {params.city} and nearby areas</p>
       )}
+
+      <BrowseFilters />
 
       {listings.length === 0 ? (
         <p className="mt-6 text-sm text-gray-500">No listings match your search yet.</p>

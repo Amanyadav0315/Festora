@@ -7,4 +7,11 @@ export const createStoreSchema = z.object({
   city: z.string().max(100).optional(),
 });
 
+export const updateAvailabilitySchema = z.object({
+  unavailableDates: z
+    .array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Dates must be in YYYY-MM-DD format"))
+    .max(365),
+});
+
 export type CreateStoreInput = z.infer<typeof createStoreSchema>;
+export type UpdateAvailabilityInput = z.infer<typeof updateAvailabilitySchema>;

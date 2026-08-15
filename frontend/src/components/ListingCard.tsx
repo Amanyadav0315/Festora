@@ -6,6 +6,7 @@ import type { ListingDTO } from "@eventsaman/types";
 import { ImageCarousel } from "@/components/ImageCarousel";
 import { SellerAvatar } from "@/components/SellerAvatar";
 import { WishlistButton } from "@/components/WishlistButton";
+import { CompareButton } from "@/components/CompareButton";
 
 function formatPrice(price: number, priceUnit?: string) {
   const formatted = new Intl.NumberFormat("en-IN", {
@@ -26,8 +27,9 @@ export function ListingCard({ listing }: { listing: ListingDTO }) {
     >
       <div className="relative w-full overflow-hidden bg-gray-100">
         <ImageCarousel images={listing.images} alt={listing.title} />
-        <div className="absolute left-2 top-2 z-10">
+        <div className="absolute left-2 top-2 z-10 flex flex-col gap-1.5">
           <WishlistButton listingId={listing.id} />
+          <CompareButton listingId={listing.id} />
         </div>
         <span className="absolute right-2 top-2 z-10 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-orange-600 shadow-sm">
           {listing.purpose === "rent" ? "For rent" : "For sale"}

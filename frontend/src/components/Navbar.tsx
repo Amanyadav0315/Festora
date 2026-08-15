@@ -12,6 +12,7 @@ import { BrowseDropdown } from "@/components/BrowseDropdown";
 import { LocationPicker } from "@/components/LocationPicker";
 import { isChatThreadPath } from "@/lib/chatRoute";
 import { useUnreadChatCount } from "@/lib/useUnreadChatCount";
+import { useUnreadNotifCount } from "@/lib/useUnreadNotifCount";
 
 const LOCATION_KEY = "eventsaman_location";
 // Mirrors LOCATION_KEY into a cookie (readable by server components like the homepage) and
@@ -45,6 +46,18 @@ function RentIcon({ className }: { className?: string }) {
   );
 }
 
+function BellIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={1.8}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 11-6 0m6 0H9"
+      />
+    </svg>
+  );
+}
+
 function ChatIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={1.8}>
@@ -66,6 +79,7 @@ export function Navbar() {
   const [location, setLocation] = useState<string>("All India");
   const [search, setSearch] = useState("");
   const unreadChatCount = useUnreadChatCount();
+  const unreadNotifCount = useUnreadNotifCount();
 
   useEffect(() => {
     setUser(getUser());
@@ -191,6 +205,23 @@ export function Navbar() {
             <WishlistIcon className="h-5 w-5" />
           </Link>
 
+          {user && (
+            <Link
+              href="/notifications"
+              aria-label="Notifications"
+              className="relative flex h-9 w-9 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100"
+            >
+              <BellIcon className="h-5 w-5" />
+              <span
+                className={`absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-orange-600 px-1 text-[10px] font-semibold text-white ${
+                  unreadNotifCount > 0 ? "" : "invisible"
+                }`}
+              >
+                {unreadNotifCount > 9 ? "9+" : unreadNotifCount}
+              </span>
+            </Link>
+          )}
+
           {user ? (
             <ProfileMenu user={user} size="sm" />
           ) : (
@@ -269,6 +300,23 @@ export function Navbar() {
                 {unreadChatCount > 9 ? "9+" : unreadChatCount}
               </span>
             </Link>
+
+            {user && (
+              <Link
+                href="/notifications"
+                aria-label="Notifications"
+                className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-gray-600 shadow-sm hover:bg-orange-50"
+              >
+                <BellIcon className="h-5 w-5" />
+                <span
+                  className={`absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-orange-600 px-1 text-[10px] font-semibold text-white ring-2 ring-white ${
+                    unreadNotifCount > 0 ? "" : "invisible"
+                  }`}
+                >
+                  {unreadNotifCount > 9 ? "9+" : unreadNotifCount}
+                </span>
+              </Link>
+            )}
           </form>
         </div>
       </div>

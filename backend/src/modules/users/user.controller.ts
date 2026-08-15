@@ -15,6 +15,8 @@ import { FollowModel } from "../social/follow.model";
 import { BlockModel } from "../social/block.model";
 import { StoreModel } from "../stores/store.model";
 import { ListingModel } from "../listings/listing.model";
+import { ReviewModel } from "../reviews/review.model";
+import { getRatingSummary } from "../reviews/review.controller";
 
 const SALT_ROUNDS = 10;
 // Must match the cookie name/path auth.controller.ts issues the refresh token under, so
@@ -30,6 +32,7 @@ function toStoreDTO(store: any) {
     description: store.description,
     categories: store.categories,
     city: store.city,
+    unavailableDates: store.unavailableDates ?? [],
     createdAt: store.createdAt.toISOString(),
   };
 }
@@ -101,13 +104,16 @@ export const userController = {
     const viewerId = req.user?.sub;
     const store = await StoreModel.findOne({ ownerId: target._id });
 
-    const [followersCount, followingCount, postsCount, isFollowing, isBlocked] = await Promise.all([
-      FollowModel.countDocuments({ followingId: target._id }),
-      FollowModel.countDocuments({ followerId: target._id }),
-      store ? ListingModel.countDocuments({ storeId: store._id, isActive: true }) : Promise.resolve(0),
-      viewerId ? FollowModel.exists({ followerId: viewerId, followingId: target._id }) : Promise.resolve(false),
-      viewerId ? BlockModel.exists({ blockerId: viewerId, blockedId: target._id }) : Promise.resolve(false),
-    ]);
+    const [followersCount, followingCount, postsCount, isFollowing, isBlocked, ratingSummary, myReview] =
+      await Promise.all([
+        FollowModel.countDocuments({ followingId: target._id }),
+        FollowModel.countDocuments({ followerId: target._id }),
+        store ? ListingModel.countDocuments({ storeId: store._id, isActive: true }) : Promise.resolve(0),
+        viewerId ? FollowModel.exists({ followerId: viewerId, followingId: target._id }) : Promise.resolve(false),
+        viewerId ? BlockModel.exists({ blockerId: viewerId, blockedId: target._id }) : Promise.resolve(false),
+        getRatingSummary(target._id.toString()),
+        viewerId ? ReviewModel.findOne({ reviewerId: viewerId, revieweeId: target._id }) : Promise.resolve(null),
+      ]);
 
     res.json({
       profile: {
@@ -126,6 +132,10 @@ export const userController = {
         isFollowing: !!isFollowing,
         isBlocked: !!isBlocked,
         isSelf: viewerId === target._id.toString(),
+        isVerified: Boolean((target as any).isVerified),
+        ratingAvg: ratingSummary.ratingAvg,
+        ratingCount: ratingSummary.ratingCount,
+        myRating: myReview ? myReview.rating : undefined,
         store: store ? toStoreDTO(store) : undefined,
       },
     });

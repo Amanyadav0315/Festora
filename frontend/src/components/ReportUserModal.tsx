@@ -25,6 +25,13 @@ function AttachIcon({ className }: { className?: string }) {
 
 const MAX_SCREENSHOTS = 4;
 
+const CATEGORIES: { value: string; label: string }[] = [
+  { value: "behavior", label: "Rude or inappropriate behavior" },
+  { value: "transaction_dispute", label: "Issue with a deal (payment, delivery, quality)" },
+  { value: "scam_suspicion", label: "Suspected scam / fake listing" },
+  { value: "other", label: "Something else" },
+];
+
 export function ReportUserModal({
   targetId,
   targetName,
@@ -39,6 +46,7 @@ export function ReportUserModal({
   onClose: () => void;
 }) {
   const [reason, setReason] = useState("");
+  const [category, setCategory] = useState("behavior");
   const [files, setFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,6 +77,7 @@ export function ReportUserModal({
     try {
       const formData = new FormData();
       formData.set("reason", reason.trim());
+      formData.set("category", category);
       if (conversationId) formData.set("conversationId", conversationId);
       files.forEach((f) => formData.append("screenshots", f));
       await apiUpload(`/social/report/${targetId}`, formData, { accessToken });
@@ -110,7 +119,27 @@ export function ReportUserModal({
         ) : (
           <>
             <div className="min-h-0 flex-1 overflow-y-auto p-5">
-              <label className="text-xs font-semibold text-gray-500">What's wrong?</label>
+              <label className="text-xs font-semibold text-gray-500">What's this about?</label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="mt-1.5 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
+              >
+                {CATEGORIES.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+              {category === "transaction_dispute" && (
+                <p className="mt-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                  Event Saman only connects buyers and sellers — any transaction between you is your own concern. We
+                  can review the conduct and step in to mediate communication, but we cannot process refunds or
+                  resolve payment disputes.
+                </p>
+              )}
+
+              <label className="mt-4 block text-xs font-semibold text-gray-500">What's wrong?</label>
               <textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}

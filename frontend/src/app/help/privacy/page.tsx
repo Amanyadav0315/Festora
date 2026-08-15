@@ -64,17 +64,32 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section>
-          <h2 className="text-base font-semibold text-gray-900">7. Your choices</h2>
+          <h2 className="text-base font-semibold text-gray-900">7. Your choices & rights</h2>
           <p className="mt-1">
             You can edit or delete your profile information, control phone number visibility, and
-            delete your account at any time from Settings.
+            delete your account at any time from Settings. Under the Digital Personal Data
+            Protection Act, 2023, you have the right to access, correct, and request erasure of
+            your personal data, and to withdraw consent at any time — reach out via "Report an
+            issue" in the Help section to exercise these rights.
           </p>
         </section>
 
         <section>
-          <h2 className="text-base font-semibold text-gray-900">8. Contact us</h2>
+          <h2 className="text-base font-semibold text-gray-900">8. Payments & transactions</h2>
           <p className="mt-1">
-            Questions about this policy? Reach out via "Report an issue" in the Help section.
+            Event Saman does not process, collect, or store any payment information, and we are
+            not involved in any transaction between a buyer and a seller. Any money, advance, or
+            payment exchanged for a listed product or service is arranged directly between the
+            users involved, entirely outside of Event Saman. We do not currently charge users
+            anything to post or browse listings.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-base font-semibold text-gray-900">9. Contact us</h2>
+          <p className="mt-1">
+            Questions about this policy, or a data protection request? Reach out via "Report an
+            issue" in the Help section.
           </p>
         </section>
       </div>

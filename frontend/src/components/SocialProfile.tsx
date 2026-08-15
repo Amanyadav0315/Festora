@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import type { ListingDTO, PublicUserProfileDTO, UserDTO } from "@eventsaman/types";
+import type { ListingDTO, PublicUserProfileDTO, ReviewDTO, UserDTO } from "@eventsaman/types";
 import { apiFetch, apiUpload, ApiRequestError } from "@/lib/api";
 import { getAccessToken, getUser, saveUser } from "@/lib/auth-client";
 import { getOrCreateConversation } from "@/lib/chat-client";
@@ -50,6 +50,57 @@ function MessageIcon({ className }: { className?: string }) {
   );
 }
 
+function VerifiedBadge({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-label="Verified seller">
+      <path d="M12 2l2.4 1.9 3-.5 1 2.9 2.7 1.5-1 2.9 1 2.9-2.7 1.5-1 2.9-3-.5L12 22l-2.4-1.9-3 .5-1-2.9-2.7-1.5 1-2.9-1-2.9 2.7-1.5 1-2.9 3 .5L12 2z" />
+      <path d="M9 12.5l2 2 4-4.5" stroke="white" strokeWidth={1.6} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function StarIcon({ className, filled }: { className?: string; filled: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.5}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9L12 3.5z"
+      />
+    </svg>
+  );
+}
+
+function StarRating({
+  value,
+  size = "sm",
+  interactive,
+  onChange,
+}: {
+  value: number;
+  size?: "sm" | "md";
+  interactive?: boolean;
+  onChange?: (v: number) => void;
+}) {
+  const cls = size === "md" ? "h-6 w-6" : "h-4 w-4";
+  return (
+    <div className="flex items-center gap-0.5 text-amber-400">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button
+          key={n}
+          type="button"
+          disabled={!interactive}
+          onClick={() => onChange?.(n)}
+          className={interactive ? "cursor-pointer" : "cursor-default"}
+          aria-label={`${n} star`}
+        >
+          <StarIcon className={cls} filled={n <= Math.round(value)} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function SocialProfile({
   profile: initialProfile,
   listings,
@@ -77,6 +128,51 @@ export function SocialProfile({
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  const [reviews, setReviews] = useState<ReviewDTO[]>([]);
+  const [reviewsLoaded, setReviewsLoaded] = useState(false);
+  const [rateOpen, setRateOpen] = useState(false);
+  const [draftRating, setDraftRating] = useState(profile.myRating ?? 5);
+  const [draftComment, setDraftComment] = useState("");
+  const [reviewBusy, setReviewBusy] = useState(false);
+
+  useEffect(() => {
+    apiFetch<{ reviews: ReviewDTO[] }>(`/reviews/${profile.id}`)
+      .then((body) => setReviews(body.reviews))
+      .catch(() => {})
+      .finally(() => setReviewsLoaded(true));
+  }, [profile.id]);
+
+  async function submitReview() {
+    if (!requireLogin()) return;
+    setReviewBusy(true);
+    setError(null);
+    try {
+      const token = getAccessToken() ?? undefined;
+      const { review } = await apiFetch<{ review: ReviewDTO }>(`/reviews/${profile.id}`, {
+        method: "PUT",
+        accessToken: token,
+        body: JSON.stringify({ rating: draftRating, comment: draftComment.trim() }),
+      });
+      setReviews((prev) => {
+        const others = prev.filter((r) => r.reviewerId !== review.reviewerId);
+        return [review, ...others];
+      });
+      const nonSelf = reviews.filter((r) => r.reviewerId !== review.reviewerId);
+      const avg = [review, ...nonSelf].reduce((s, r) => s + r.rating, 0) / (nonSelf.length + 1);
+      setProfile((p) => ({
+        ...p,
+        myRating: review.rating,
+        ratingAvg: Math.round(avg * 10) / 10,
+        ratingCount: nonSelf.length + 1,
+      }));
+      setRateOpen(false);
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? err.message : t("somethingWrong"));
+    } finally {
+      setReviewBusy(false);
+    }
+  }
 
   const [avatarPreview, setAvatarPreview] = useState<{ file: File; url: string } | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -275,9 +371,20 @@ export function SocialProfile({
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h1 className="truncate text-xl font-bold text-gray-900">{profile.name}</h1>
+              <h1 className="flex items-center gap-1.5 truncate text-xl font-bold text-gray-900">
+                {profile.name}
+                {profile.isVerified && <VerifiedBadge className="h-4 w-4 shrink-0 text-sky-500" />}
+              </h1>
               {profile.businessName && profile.businessName !== profile.name && (
                 <p className="truncate text-sm font-medium text-orange-600">{profile.businessName}</p>
+              )}
+              {profile.ratingCount > 0 && (
+                <div className="mt-0.5 flex items-center gap-1.5">
+                  <StarRating value={profile.ratingAvg} />
+                  <span className="text-xs text-gray-500">
+                    {profile.ratingAvg.toFixed(1)} ({profile.ratingCount})
+                  </span>
+                </div>
               )}
             </div>
             {!profile.isSelf && (
@@ -342,6 +449,18 @@ export function SocialProfile({
           )}
 
           {profile.about && <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{profile.about}</p>}
+
+          {profile.store && profile.store.unavailableDates.length > 0 && (
+            <p className="mt-2 text-xs text-gray-500">
+              Unavailable on: {profile.store.unavailableDates
+                .filter((d) => d >= new Date().toISOString().slice(0, 10))
+                .slice(0, 6)
+                .map((d) => new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short" }))
+                .join(", ") || "—"}
+              {" "}
+              <span className="text-gray-400">(coordinate directly with the seller to confirm)</span>
+            </p>
+          )}
 
           <div className="mt-3 flex items-center gap-5 text-sm">
             <span className="text-gray-700">
@@ -411,6 +530,40 @@ export function SocialProfile({
           </>
         )}
       </div>
+
+      {!profile.isSelf && !profile.isBlocked && (
+        <button
+          type="button"
+          onClick={() => {
+            if (!requireLogin()) return;
+            setDraftRating(profile.myRating ?? 5);
+            setRateOpen(true);
+          }}
+          className="mt-3 text-sm font-medium text-orange-600 hover:text-orange-700"
+        >
+          {profile.myRating ? "Edit your rating" : "Rate this seller"}
+        </button>
+      )}
+
+      {reviewsLoaded && reviews.length > 0 && (
+        <div className="mt-6 border-t border-gray-100 pt-5">
+          <h2 className="text-base font-bold text-gray-900">Reviews ({reviews.length})</h2>
+          <div className="mt-3 space-y-4">
+            {reviews.slice(0, 8).map((r) => (
+              <div key={r.id} className="flex gap-3">
+                <UserAvatar name={r.reviewerName} avatarUrl={r.reviewerAvatarUrl} size="sm" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate text-sm font-semibold text-gray-900">{r.reviewerName}</span>
+                    <StarRating value={r.rating} />
+                  </div>
+                  {r.comment && <p className="mt-0.5 text-sm text-gray-600">{r.comment}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="mt-8">
         <h2 className="text-base font-bold text-gray-900">
@@ -527,6 +680,43 @@ export function SocialProfile({
                 {t("cancel")}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {rateOpen && (
+        <div
+          className="fixed inset-0 z-30 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setRateOpen(false)}
+        >
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base font-bold text-gray-900">Rate {profile.name}</h3>
+            <div className="mt-3 flex justify-center">
+              <StarRating value={draftRating} size="md" interactive onChange={setDraftRating} />
+            </div>
+            <textarea
+              value={draftComment}
+              onChange={(e) => setDraftComment(e.target.value)}
+              placeholder="Share your experience (optional)"
+              rows={3}
+              maxLength={500}
+              className="mt-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
+            />
+            <button
+              type="button"
+              disabled={reviewBusy}
+              onClick={submitReview}
+              className="mt-3 w-full rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-700 disabled:opacity-60"
+            >
+              {reviewBusy ? "Saving..." : "Submit rating"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setRateOpen(false)}
+              className="mt-2 w-full rounded-lg px-4 py-2.5 text-sm font-medium text-gray-500 hover:bg-gray-50"
+            >
+              {t("cancel")}
+            </button>
           </div>
         </div>
       )}

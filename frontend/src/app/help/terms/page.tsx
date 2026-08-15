@@ -47,23 +47,64 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-base font-semibold text-gray-900">5. Reporting & enforcement</h2>
+          <h2 className="text-base font-semibold text-gray-900">5. We are a listing platform only — not a party to any deal</h2>
+          <p className="mt-1">
+            Event Saman only helps buyers and sellers of event/celebration services find and
+            contact each other. We do not sell, rent, book, or supply any product or service
+            listed on the platform ourselves, and we are not a party to any agreement, booking,
+            payment, or delivery that results from a listing. Any transaction — including price,
+            advance payments, cancellation, quality, delivery, or refunds — is negotiated and
+            agreed to directly between the buyer and the seller, entirely at their own risk and
+            discretion. Event Saman does not guarantee the accuracy of any listing, the identity
+            or conduct of any user, or the outcome of any deal, and takes no responsibility for
+            disputes between users.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-base font-semibold text-gray-900">6. Free to use</h2>
+          <p className="mt-1">
+            Event Saman is currently free to use for both posting and browsing listings. We do not
+            charge any commission, booking fee, or subscription at this time. If this changes in
+            the future, we will clearly communicate it in advance and update these Terms.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-base font-semibold text-gray-900">7. Reporting & enforcement</h2>
           <p className="mt-1">
             We may remove listings, suspend, or delete accounts that violate these terms, receive
-            credible reports of fraud or abuse, or otherwise harm the platform or its users.
+            credible reports of fraud or abuse, or otherwise harm the platform or its users. Users
+            can report a listing, profile, or issue at any time via "Report an issue" in the Help
+            section, and we act on genuine, verifiable reports.
           </p>
         </section>
 
         <section>
-          <h2 className="text-base font-semibold text-gray-900">6. Limitation of liability</h2>
+          <h2 className="text-base font-semibold text-gray-900">8. Limitation of liability</h2>
           <p className="mt-1">
-            Event Saman is provided "as is". We are not liable for disputes, losses, or damages
-            arising from transactions or interactions between users conducted outside our control.
+            Event Saman is provided "as is". To the maximum extent permitted under applicable
+            Indian law (including the Indian Contract Act, 1872 and the Information Technology
+            Act, 2000), we are not liable for disputes, financial loss, property damage, or any
+            other loss or damage arising from a transaction or interaction between users that took
+            place outside our control. We act as an intermediary within the meaning of the
+            Information Technology Act, 2000, and are not the seller or provider of any listed
+            product or service.
           </p>
         </section>
 
         <section>
-          <h2 className="text-base font-semibold text-gray-900">7. Changes to these terms</h2>
+          <h2 className="text-base font-semibold text-gray-900">9. Grievance redressal</h2>
+          <p className="mt-1">
+            In accordance with the Information Technology Act, 2000 and the rules made thereunder,
+            you may raise a grievance regarding any content on the platform via "Report an issue"
+            in the Help section. We aim to acknowledge grievances promptly and resolve them within
+            the timelines prescribed under applicable law.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-base font-semibold text-gray-900">10. Changes to these terms</h2>
           <p className="mt-1">
             We may update these Terms from time to time. Continued use of the platform after
             changes means you accept the updated terms.
@@ -71,7 +112,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-base font-semibold text-gray-900">8. Contact us</h2>
+          <h2 className="text-base font-semibold text-gray-900">11. Contact us</h2>
           <p className="mt-1">
             Questions about these terms? Reach out via "Report an issue" in the Help section.
           </p>

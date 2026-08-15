@@ -8,6 +8,7 @@ import { createListingSchema, updateListingSchema, listListingsQuerySchema } fro
 import { toListingDTO } from "./listing.mapper";
 import { listingImageUrl } from "../../middleware/upload";
 import { ApiError } from "../../middleware/errorHandler";
+import { notifyWishlisters } from "../notifications/notification.service";
 
 const MAX_LISTINGS_PER_DAY = 20;
 
@@ -54,6 +55,12 @@ export const listingController = {
     }
     if (query.q) filter.$text = { $search: query.q };
     if (query.storeId) filter.storeId = query.storeId;
+    if (query.minPrice !== undefined || query.maxPrice !== undefined) {
+      const priceFilter: Record<string, number> = {};
+      if (query.minPrice !== undefined) priceFilter.$gte = query.minPrice;
+      if (query.maxPrice !== undefined) priceFilter.$lte = query.maxPrice;
+      filter.price = priceFilter;
+    }
 
     let allowInactive = false;
     if (query.includeInactive && query.storeId && req.user) {
@@ -62,8 +69,11 @@ export const listingController = {
     }
     if (!allowInactive) filter.isActive = true;
 
+    const sortSpec: Record<string, 1 | -1> =
+      query.sort === "priceLow" ? { price: 1 } : query.sort === "priceHigh" ? { price: -1 } : { createdAt: -1 };
+
     const listings = await ListingModel.find(filter)
-      .sort({ createdAt: -1 })
+      .sort(sortSpec)
       .limit(query.limit)
       .populate({ path: "storeId", populate: { path: "ownerId", select: "avatarUrl" } });
 
@@ -124,9 +134,34 @@ export const listingController = {
       throw new ApiError(400, `Keep between ${MIN_LISTING_IMAGES} and ${MAX_LISTING_IMAGES} photos`);
     }
 
+    const previousPrice = listing.price;
+    const previousActive = listing.isActive;
+    const store = listing.storeId as unknown as { ownerId: { toString(): string } };
+    const ownerId = store.ownerId.toString();
+
     const { existingImages: _existingImages, ...rest } = input;
     Object.assign(listing, rest, { images });
     await listing.save();
+
+    // Fire wishlist alerts — price drop or the listing becoming active again — after the
+    // save succeeds, so a notification failure never blocks the actual update.
+    if (typeof rest.price === "number" && rest.price < previousPrice) {
+      notifyWishlisters(
+        listing._id.toString(),
+        ownerId,
+        "price_drop",
+        `Price dropped for "${listing.title}" — now ₹${rest.price.toLocaleString("en-IN")}`
+      ).catch(() => {});
+    }
+    if (rest.isActive === true && previousActive === false) {
+      notifyWishlisters(
+        listing._id.toString(),
+        ownerId,
+        "listing_available",
+        `"${listing.title}" is available again`
+      ).catch(() => {});
+    }
+
     const populated = await listing.populate({ path: "storeId", populate: { path: "ownerId", select: "avatarUrl" } });
     res.json({ listing: toListingDTO(populated) });
   },

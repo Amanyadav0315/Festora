@@ -14,6 +14,7 @@ export interface UserDTO {
   avatarUrl?: string;
   role: UserRole;
   showPhonePublicly: boolean;
+  isVerified: boolean;
   createdAt: string;
 }
 
@@ -48,6 +49,9 @@ export interface StoreDTO {
   description?: string;
   categories: CategorySlug[];
   city?: string;
+  // Dates (YYYY-MM-DD) the seller has marked as unavailable. Purely informational — the
+  // platform does not confirm or hold bookings; buyer and seller still coordinate directly.
+  unavailableDates: string[];
   createdAt: string;
 }
 
@@ -117,7 +121,34 @@ export interface PublicUserProfileDTO {
   isFollowing: boolean;
   isBlocked: boolean;
   isSelf: boolean;
+  isVerified: boolean;
+  ratingAvg: number;
+  ratingCount: number;
+  myRating?: number;
   store?: StoreDTO;
+}
+
+export type NotificationType = "price_drop" | "listing_available" | "new_review" | "verified_badge" | "report_resolved";
+
+export interface NotificationDTO {
+  id: string;
+  type: NotificationType;
+  message: string;
+  listingId?: string;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface ReviewDTO {
+  id: string;
+  reviewerId: string;
+  reviewerName: string;
+  reviewerAvatarUrl?: string;
+  revieweeId: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface MessageReplyPreviewDTO {
@@ -155,13 +186,19 @@ export interface ChatMediaItemDTO {
   createdAt: string;
 }
 
+export type ReportCategory = "behavior" | "transaction_dispute" | "scam_suspicion" | "other";
+
 export interface ReportDTO {
   id: string;
   reporter: { id: string; name: string };
   reported: { id: string; name: string };
   reason: string;
+  category: ReportCategory;
   screenshots: string[];
-  status: "pending" | "reviewed";
+  status: "pending" | "reviewed" | "resolved";
+  resolutionNotes?: string;
+  resolvedAt?: string;
+  resolvedByName?: string;
   createdAt: string;
 }
 
@@ -185,6 +222,7 @@ export interface AdminUserListItemDTO {
   city?: string;
   role: UserRole;
   postsCount: number;
+  isVerified: boolean;
   createdAt: string;
 }
 

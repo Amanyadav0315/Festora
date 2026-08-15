@@ -4,6 +4,8 @@ import { StoreModel } from "../stores/store.model";
 import { ListingModel } from "../listings/listing.model";
 import { toListingDTO } from "../listings/listing.mapper";
 import { purgeUserData } from "../users/accountDeletion.service";
+import { ReportModel } from "../social/report.model";
+import { notifyUser } from "../notifications/notification.service";
 import { ApiError } from "../../middleware/errorHandler";
 import {
   listUsersQuerySchema,
@@ -11,6 +13,9 @@ import {
   deleteUserSchema,
   deletePostSchema,
   deletedListQuerySchema,
+  bulkIdsSchema,
+  bulkDeleteSchema,
+  bulkVerifySchema,
 } from "./admin.schemas";
 
 function escapeRegex(s: string) {
@@ -66,11 +71,79 @@ function toAdminUserListItem(u: any, city: string | undefined, postsCount: numbe
     city,
     role: u.role,
     postsCount,
+    isVerified: Boolean(u.isVerified),
     createdAt: u.createdAt.toISOString(),
   };
 }
 
 export const adminController = {
+  // GET /admin/analytics — platform-wide counts for the admin dashboard. Cheap aggregate
+  // queries, computed on demand (no caching layer per CLAUDE.md's "no Redis" constraint).
+  async analytics(req: Request, res: Response) {
+    const now = Date.now();
+    const since24h = new Date(now - 24 * 60 * 60 * 1000);
+    const since7d = new Date(now - 7 * 24 * 60 * 60 * 1000);
+    const since30d = new Date(now - 30 * 24 * 60 * 60 * 1000);
+
+    const [
+      totalUsers,
+      newUsers24h,
+      newUsers7d,
+      totalListings,
+      newListings24h,
+      newListings7d,
+      activeListings,
+      deletedUsers,
+      deletedPosts,
+      pendingReports,
+      listingsByCategory,
+      listingsByCity,
+    ] = await Promise.all([
+      UserModel.countDocuments({ adminDeletedAt: null }),
+      UserModel.countDocuments({ adminDeletedAt: null, createdAt: { $gte: since24h } }),
+      UserModel.countDocuments({ adminDeletedAt: null, createdAt: { $gte: since7d } }),
+      ListingModel.countDocuments({ adminDeletedAt: null }),
+      ListingModel.countDocuments({ adminDeletedAt: null, createdAt: { $gte: since24h } }),
+      ListingModel.countDocuments({ adminDeletedAt: null, createdAt: { $gte: since7d } }),
+      ListingModel.countDocuments({ adminDeletedAt: null, isActive: true }),
+      UserModel.countDocuments({ adminDeletedAt: { $ne: null } }),
+      ListingModel.countDocuments({ adminDeletedAt: { $ne: null } }),
+      ReportModel.countDocuments({ status: "pending" }),
+      ListingModel.aggregate([
+        { $match: { adminDeletedAt: null } },
+        { $unwind: "$categorySlugs" },
+        { $group: { _id: "$categorySlugs", count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 8 },
+      ]),
+      ListingModel.aggregate([
+        { $match: { adminDeletedAt: null, city: { $nin: [null, ""] } } },
+        { $group: { _id: "$city", count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 8 },
+      ]),
+    ]);
+
+    res.json({
+      users: { total: totalUsers, new24h: newUsers24h, new7d: newUsers7d, deleted: deletedUsers },
+      listings: {
+        total: totalListings,
+        new24h: newListings24h,
+        new7d: newListings7d,
+        active: activeListings,
+        deleted: deletedPosts,
+      },
+      pendingReports,
+      listingsByCategory: listingsByCategory.map((c: any) => ({ category: c._id, count: c.count })),
+      listingsByCity: listingsByCity.map((c: any) => ({ city: c._id, count: c.count })),
+      // Purely growth timeframe context — not a signup date filter of its own, just to show
+      // that the last-30-day window used elsewhere in the admin (e.g. Deleted Items date
+      // filters) lines up with what's summarized here.
+      windowStart30d: since30d.toISOString(),
+    });
+  },
+
+
   // GET /admin/users?search=&page=&limit=
   async listUsers(req: Request, res: Response) {
     const query = listUsersQuerySchema.parse(req.query);
@@ -135,6 +208,20 @@ export const adminController = {
       .populate({ path: "storeId", populate: { path: "ownerId", select: "avatarUrl" } });
 
     res.json({ listings: listings.map(toListingDTO) });
+  },
+
+  // PATCH /admin/users/:id/verify — toggles the "verified seller" badge. Admin-granted trust
+  // signal, not self-service; body: { isVerified: boolean }.
+  async verifyUser(req: Request, res: Response) {
+    const target = await UserModel.findById(req.params.id);
+    if (!target || (target as any).adminDeletedAt) throw new ApiError(404, "User not found");
+    const nowVerified = Boolean(req.body?.isVerified);
+    (target as any).isVerified = nowVerified;
+    await target.save();
+    if (nowVerified) {
+      notifyUser(target._id.toString(), "verified_badge", "You're now a verified seller on Event Saman").catch(() => {});
+    }
+    res.json({ isVerified: (target as any).isVerified });
   },
 
   // DELETE /admin/users/:id — soft delete: hides the account and cascades to their listings,
@@ -274,6 +361,128 @@ export const adminController = {
     if (!listing || !(listing as any).adminDeletedAt) throw new ApiError(404, "Deleted post not found");
     await listing.deleteOne();
     res.status(204).send();
+  },
+
+  // PATCH /admin/users/bulk-verify — grant/revoke the verified-seller badge for many accounts
+  // at once. Skips any account that no longer exists rather than failing the whole batch.
+  async bulkVerifyUsers(req: Request, res: Response) {
+    const input = bulkVerifySchema.parse(req.body);
+    const result = await UserModel.updateMany(
+      { _id: { $in: input.ids }, adminDeletedAt: null },
+      { $set: { isVerified: input.isVerified } }
+    );
+    if (input.isVerified) {
+      for (const id of input.ids) {
+        notifyUser(id, "verified_badge", "You're now a verified seller on Event Saman").catch(() => {});
+      }
+    }
+    res.json({ modified: result.modifiedCount });
+  },
+
+  // DELETE /admin/users/bulk — soft-deletes many accounts at once (same cascade-to-listings
+  // behavior as the single-user delete), skipping the caller's own account and other admins.
+  async bulkDeleteUsers(req: Request, res: Response) {
+    const input = bulkDeleteSchema.parse(req.body);
+    const ids = input.ids.filter((id) => id !== req.user!.sub);
+    const targets = await UserModel.find({ _id: { $in: ids }, adminDeletedAt: null, role: { $ne: "admin" } });
+
+    for (const target of targets) {
+      (target as any).adminDeletedAt = new Date();
+      (target as any).adminDeletedReason = input.reason;
+      (target as any).adminDeletedBy = req.user!.sub;
+      await target.save();
+
+      const store = await StoreModel.findOne({ ownerId: target._id });
+      if (store) {
+        await ListingModel.updateMany(
+          { storeId: store._id, adminDeletedAt: null },
+          {
+            $set: {
+              adminDeletedAt: new Date(),
+              adminDeletedReason: "Owner account deleted",
+              adminDeletedBy: req.user!.sub,
+              adminDeleteCascade: true,
+            },
+          }
+        );
+      }
+    }
+
+    res.json({ modified: targets.length });
+  },
+
+  // PATCH /admin/users/bulk-restore
+  async bulkRestoreUsers(req: Request, res: Response) {
+    const input = bulkIdsSchema.parse(req.body);
+    const targets = await UserModel.find({ _id: { $in: input.ids }, adminDeletedAt: { $ne: null } });
+
+    for (const target of targets) {
+      (target as any).adminDeletedAt = null;
+      (target as any).adminDeletedReason = undefined;
+      (target as any).adminDeletedBy = undefined;
+      await target.save();
+
+      const store = await StoreModel.findOne({ ownerId: target._id });
+      if (store) {
+        await ListingModel.updateMany(
+          { storeId: store._id, adminDeleteCascade: true },
+          {
+            $set: {
+              adminDeletedAt: null,
+              adminDeletedReason: undefined,
+              adminDeletedBy: undefined,
+              adminDeleteCascade: false,
+            },
+          }
+        );
+      }
+    }
+
+    res.json({ modified: targets.length });
+  },
+
+  // DELETE /admin/users/bulk-permanent — irreversible.
+  async bulkPermanentlyDeleteUsers(req: Request, res: Response) {
+    const input = bulkIdsSchema.parse(req.body);
+    const targets = await UserModel.find({ _id: { $in: input.ids }, adminDeletedAt: { $ne: null } });
+    for (const target of targets) {
+      await purgeUserData(target._id.toString());
+    }
+    res.json({ modified: targets.length });
+  },
+
+  // DELETE /admin/posts/bulk — soft delete many listings at once.
+  async bulkDeletePosts(req: Request, res: Response) {
+    const input = bulkDeleteSchema.parse(req.body);
+    const result = await ListingModel.updateMany(
+      { _id: { $in: input.ids }, adminDeletedAt: null },
+      {
+        $set: {
+          adminDeletedAt: new Date(),
+          adminDeletedReason: input.reason,
+          adminDeletedBy: req.user!.sub,
+          adminDeleteCascade: false,
+        },
+      }
+    );
+    res.json({ modified: result.modifiedCount });
+  },
+
+  // PATCH /admin/posts/bulk-restore
+  async bulkRestorePosts(req: Request, res: Response) {
+    const input = bulkIdsSchema.parse(req.body);
+    const result = await ListingModel.updateMany(
+      { _id: { $in: input.ids }, adminDeletedAt: { $ne: null } },
+      { $set: { adminDeletedAt: null, adminDeletedReason: undefined, adminDeletedBy: undefined, adminDeleteCascade: false } }
+    );
+    res.json({ modified: result.modifiedCount });
+  },
+
+  // DELETE /admin/posts/bulk-permanent — irreversible.
+  async bulkPermanentlyDeletePosts(req: Request, res: Response) {
+    const input = bulkIdsSchema.parse(req.body);
+    const result = await ListingModel.deleteMany({ _id: { $in: input.ids }, adminDeletedAt: { $ne: null } });
+    res.json({ modified: result.deletedCount });
   },
 
   // GET /admin/deleted-posts?search=&from=&to=&page= — search matches the owning user's
