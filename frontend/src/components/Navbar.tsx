@@ -141,9 +141,9 @@ export function Navbar() {
   // causing mobile browsers to recompute the layout viewport mid-navigation, which showed up as
   // the page snapping to a zoomed-in state when coming back to Home/Rent from another page.
   return (
-    <header className={`sticky top-0 z-30 border-b border-gray-200 bg-white ${isVisiblePage ? "" : "hidden"}`}>
+    <header className={`sticky top-0 z-30 border-b border-orange-700 bg-orange-600 ${isVisiblePage ? "" : "hidden"}`}>
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
-        <Link href="/" className="hidden shrink-0 text-xl font-extrabold text-orange-600 lg:block">
+        <Link href="/" className="hidden shrink-0 text-xl font-extrabold text-white lg:block">
           {tCommon("brand")}
         </Link>
 
