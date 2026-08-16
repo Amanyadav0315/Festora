@@ -33,3 +33,5 @@ adminRouter.get("/deleted-posts", asyncHandler(adminController.listDeletedPosts)
 adminRouter.get("/audit-log", asyncHandler(auditLogController.list));
 
 adminRouter.get("/analytics", asyncHandler(adminController.analytics));
+
+adminRouter.post("/notifications/send", asyncHandler(adminController.sendNotification));

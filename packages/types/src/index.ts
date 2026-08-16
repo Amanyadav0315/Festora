@@ -128,7 +128,13 @@ export interface PublicUserProfileDTO {
   store?: StoreDTO;
 }
 
-export type NotificationType = "price_drop" | "listing_available" | "new_review" | "verified_badge" | "report_resolved";
+export type NotificationType =
+  | "price_drop"
+  | "listing_available"
+  | "new_review"
+  | "verified_badge"
+  | "report_resolved"
+  | "admin_message";
 
 export interface NotificationDTO {
   id: string;
@@ -158,6 +164,17 @@ export interface MessageReplyPreviewDTO {
   imageUrl?: string;
 }
 
+// Attached to the message that kicks off a "Message seller" flow from a listing, so the
+// recipient can see exactly which post the conversation is about.
+export interface MessageListingContextDTO {
+  id: string;
+  title: string;
+  price: number;
+  priceUnit?: string;
+  image?: string;
+  isActive: boolean;
+}
+
 export interface MessageDTO {
   id: string;
   conversationId: string;
@@ -165,6 +182,7 @@ export interface MessageDTO {
   text?: string;
   imageUrl?: string;
   replyTo?: MessageReplyPreviewDTO;
+  listingContext?: MessageListingContextDTO;
   edited: boolean;
   deletedForEveryone: boolean;
   isMine: boolean;

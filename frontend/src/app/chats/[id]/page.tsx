@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import type { MessageDTO } from "@eventsaman/types";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import type { ListingDTO, MessageDTO } from "@eventsaman/types";
 import { getAccessToken, getUser } from "@/lib/auth-client";
 import { apiFetch, apiUpload, ApiRequestError, ASSET_BASE_URL } from "@/lib/api";
 import { ReportUserModal } from "@/components/ReportUserModal";
@@ -144,6 +144,34 @@ function ReplyPreviewLine({ msg, myId }: { msg: NonNullable<MessageDTO["replyTo"
   );
 }
 
+// Shown at the top of the message that started a "message seller about this listing" chat, so
+// the recipient can see exactly which post the conversation is about, on both sides of the chat.
+function ListingContextCard({ listing, mine }: { listing: NonNullable<MessageDTO["listingContext"]>; mine: boolean }) {
+  return (
+    <Link
+      href={`/listings/${listing.id}`}
+      onClick={(e) => e.stopPropagation()}
+      className={`mb-1.5 flex items-center gap-2 rounded-lg border px-2 py-1.5 ${
+        mine ? "border-white/25 bg-white/10" : "border-gray-200 bg-gray-50"
+      }`}
+    >
+      {listing.image ? (
+        <img src={imgSrc(listing.image)} alt={listing.title} className="h-10 w-10 shrink-0 rounded-md object-cover" />
+      ) : (
+        <div className={`h-10 w-10 shrink-0 rounded-md ${mine ? "bg-white/20" : "bg-gray-200"}`} />
+      )}
+      <div className="min-w-0 flex-1">
+        <p className={`truncate text-xs font-semibold ${mine ? "text-white" : "text-gray-900"}`}>{listing.title}</p>
+        <p className={`text-[11px] ${mine ? "text-orange-100" : "text-gray-500"}`}>
+          ₹{listing.price.toLocaleString("en-IN")}
+          {listing.priceUnit ? ` / ${listing.priceUnit.replace(/^per /, "")}` : ""}
+          {!listing.isActive ? " · No longer available" : ""}
+        </p>
+      </div>
+    </Link>
+  );
+}
+
 function DaySeparator({ label }: { label: string }) {
   return (
     <div className="my-3 flex items-center justify-center">
@@ -157,9 +185,13 @@ function DaySeparator({ label }: { label: string }) {
 export default function ChatThreadPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const conversationId = params.id;
+  const initialListingId = searchParams.get("listingId") ?? undefined;
 
   const [otherUser, setOtherUser] = useState<{ id: string; name: string } | null>(null);
+  const [pendingListingId, setPendingListingId] = useState<string | undefined>(initialListingId);
+  const [pendingListing, setPendingListing] = useState<ListingDTO | null>(null);
   const [messages, setMessages] = useState<MessageDTO[] | null>(null);
   const [error, setError] = useState("");
   const [text, setText] = useState("");
@@ -227,6 +259,14 @@ export default function ChatThreadPage() {
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId]);
+
+  useEffect(() => {
+    if (!pendingListingId || !token) return;
+    apiFetch<{ listing: ListingDTO }>(`/listings/${pendingListingId}`, { accessToken: token })
+      .then((body) => setPendingListing(body.listing))
+      .catch(() => setPendingListingId(undefined));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingListingId]);
 
   useEffect(() => {
     function onDocClick() {
@@ -334,10 +374,12 @@ export default function ChatThreadPage() {
         const body = await apiFetch<{ message: MessageDTO }>(`/chats/${conversationId}/messages`, {
           method: "POST",
           accessToken: token,
-          body: JSON.stringify({ text: trimmed, replyToId: replyTarget?.id }),
+          body: JSON.stringify({ text: trimmed, replyToId: replyTarget?.id, listingId: pendingListingId }),
         });
         setMessages((prev) => (prev ? [...prev, body.message] : [body.message]));
         setReplyTarget(null);
+        setPendingListingId(undefined);
+        setPendingListing(null);
         setText("");
         scrollToBottom();
       }
@@ -474,6 +516,7 @@ export default function ChatThreadPage() {
                         "This message was deleted"
                       ) : (
                         <>
+                          {m.listingContext && <ListingContextCard listing={m.listingContext} mine={mine} />}
                           {m.replyTo && <ReplyPreviewLine msg={m.replyTo} myId={myId} />}
                           {m.imageUrl && (
                             <img
@@ -545,6 +588,29 @@ export default function ChatThreadPage() {
           </p>
         ) : (
           <>
+            {pendingListing && (
+              <div className="mb-2 flex items-center gap-2 rounded-lg border border-orange-100 bg-orange-50 px-3 py-2">
+                {pendingListing.images[0] ? (
+                  <img src={imgSrc(pendingListing.images[0])} alt={pendingListing.title} className="h-11 w-11 shrink-0 rounded-md object-cover" />
+                ) : (
+                  <div className="h-11 w-11 shrink-0 rounded-md bg-orange-100" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-semibold text-gray-900">{pendingListing.title}</p>
+                  <p className="text-[11px] text-orange-700">Sending with this post attached</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setPendingListingId(undefined);
+                    setPendingListing(null);
+                  }}
+                  aria-label="Remove listing"
+                  className="shrink-0 text-gray-400 hover:text-gray-600"
+                >
+                  <CloseIcon className="h-4 w-4" />
+                </button>
+              </div>
+            )}
             {replyTarget && (
               <div className="mb-2 flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-xs">
                 <div className="min-w-0 truncate text-gray-600">

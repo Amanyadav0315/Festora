@@ -1,7 +1,13 @@
 import { NotificationModel } from "./notification.model";
 import { WishlistModel } from "../wishlist/wishlist.model";
 
-export type NotificationType = "price_drop" | "listing_available" | "new_review" | "verified_badge" | "report_resolved";
+export type NotificationType =
+  | "price_drop"
+  | "listing_available"
+  | "new_review"
+  | "verified_badge"
+  | "report_resolved"
+  | "admin_message";
 
 // Shared helper — every module that needs to notify a user goes through here rather than
 // creating NotificationModel docs directly, so the shape stays consistent.
@@ -22,5 +28,15 @@ export async function notifyWishlisters(
   if (recipients.length === 0) return;
   await NotificationModel.insertMany(
     recipients.map((userId) => ({ userId, type, message, listingId }))
+  );
+}
+
+// Broadcasts an admin-composed message to every user account. Used by the admin panel's
+// "send notification" tool when no specific recipient is chosen. Batches via insertMany so a
+// large user base doesn't trigger thousands of individual writes.
+export async function notifyAllUsers(userIds: string[], message: string, listingId?: string) {
+  if (userIds.length === 0) return;
+  await NotificationModel.insertMany(
+    userIds.map((userId) => ({ userId, type: "admin_message" as const, message, listingId: listingId || undefined }))
   );
 }

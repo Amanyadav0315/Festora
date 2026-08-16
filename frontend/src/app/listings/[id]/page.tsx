@@ -6,6 +6,7 @@ import { ImageCarousel } from "@/components/ImageCarousel";
 import { SellerAvatar } from "@/components/SellerAvatar";
 import { WishlistButton } from "@/components/WishlistButton";
 import { ShareListingButton } from "@/components/ShareListingButton";
+import { MessageSellerButton } from "@/components/MessageSellerButton";
 
 export default async function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -83,17 +84,24 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
           )}
 
           {listing.ownerId ? (
-            <Link
-              href={`/u/${listing.ownerId}`}
-              className="mt-4 flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-3 transition hover:border-orange-300 hover:bg-orange-50"
-            >
-              <SellerAvatar name={listing.storeName} avatarUrl={listing.ownerAvatarUrl} size="md" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-gray-900">{listing.storeName}</p>
-                <p className="text-xs text-gray-500">{listing.city ? listing.city : "View seller profile"}</p>
-              </div>
-              <span className="shrink-0 text-sm font-medium text-orange-600">View profile ›</span>
-            </Link>
+            <>
+              <Link
+                href={`/u/${listing.ownerId}`}
+                className="mt-4 flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-3 transition hover:border-orange-300 hover:bg-orange-50"
+              >
+                <SellerAvatar name={listing.storeName} avatarUrl={listing.ownerAvatarUrl} size="md" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-gray-900">{listing.storeName}</p>
+                  <p className="text-xs text-gray-500">{listing.city ? listing.city : "View seller profile"}</p>
+                </div>
+                <span className="shrink-0 text-sm font-medium text-orange-600">View profile ›</span>
+              </Link>
+              <MessageSellerButton
+                ownerId={listing.ownerId}
+                listingId={listing.id}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-700"
+              />
+            </>
           ) : (
             <div className="mt-4 flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-3">
               <SellerAvatar name={listing.storeName} avatarUrl={listing.ownerAvatarUrl} size="md" />

@@ -11,6 +11,8 @@ import { getOrCreateConversation } from "@/lib/chat-client";
 import { ListingCard } from "@/components/ListingCard";
 import { OwnListingCard } from "@/components/OwnListingCard";
 import { UserAvatar } from "@/components/UserAvatar";
+import { ShareSheet } from "@/components/ShareSheet";
+import { ProfileQrCode } from "@/components/ProfileQrCode";
 
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 const ACCEPTED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -38,6 +40,28 @@ function CameraIcon({ className }: { className?: string }) {
   );
 }
 
+function ShareIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={1.8}>
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path strokeLinecap="round" d="M8.6 10.5l6.8-3.8M8.6 13.5l6.8 3.8" />
+    </svg>
+  );
+}
+
+function QrIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={1.8}>
+      <rect x="3.5" y="3.5" width="6" height="6" rx="1" />
+      <rect x="14.5" y="3.5" width="6" height="6" rx="1" />
+      <rect x="3.5" y="14.5" width="6" height="6" rx="1" />
+      <path strokeLinecap="round" d="M14.5 14.5h3v3h-3zM20.5 14.5v2M14.5 20.5h2M20.5 20.5h.01" />
+    </svg>
+  );
+}
+
 function MessageIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={1.8}>
@@ -50,11 +74,13 @@ function MessageIcon({ className }: { className?: string }) {
   );
 }
 
+// Circular verified-seller badge in the brand orange — deliberately a plain circle (not the
+// scalloped "seal" shape) so it reads clearly at small sizes next to a name.
 function VerifiedBadge({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-label="Verified seller">
-      <path d="M12 2l2.4 1.9 3-.5 1 2.9 2.7 1.5-1 2.9 1 2.9-2.7 1.5-1 2.9-3-.5L12 22l-2.4-1.9-3 .5-1-2.9-2.7-1.5 1-2.9-1-2.9 2.7-1.5 1-2.9 3 .5L12 2z" />
-      <path d="M9 12.5l2 2 4-4.5" stroke="white" strokeWidth={1.6} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="12" cy="12" r="10" />
+      <path d="M8 12.3l2.5 2.5L16.5 9" stroke="white" strokeWidth={1.8} fill="none" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -111,6 +137,7 @@ export function SocialProfile({
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useTranslations("socialProfile");
+  const tShare = useTranslations("share");
   const locale = useLocale();
   const SAFETY_TIPS = [t("safetyTip1"), t("safetyTip2"), t("safetyTip3"), t("safetyTip4"), t("safetyTip5")];
   const [profile, setProfile] = useState(initialProfile);
@@ -125,6 +152,8 @@ export function SocialProfile({
   const [busy, setBusy] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [msgOpen, setMsgOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -319,14 +348,10 @@ export function SocialProfile({
     }
   }
 
-  async function handleShare() {
-    const url = typeof window !== "undefined" ? window.location.href : "";
-    if (navigator.share) {
-      await navigator.share({ title: profile.name, url }).catch(() => {});
-    } else {
-      await navigator.clipboard.writeText(url);
-      window.alert(t("linkCopied"));
-    }
+  const profileUrl = typeof window !== "undefined" ? window.location.href : "";
+
+  function openShareSheet() {
+    setShareOpen(true);
     setMenuOpen(false);
   }
 
@@ -373,7 +398,7 @@ export function SocialProfile({
             <div className="min-w-0">
               <h1 className="flex items-center gap-1.5 truncate text-xl font-bold text-gray-900">
                 {profile.name}
-                {profile.isVerified && <VerifiedBadge className="h-4 w-4 shrink-0 text-sky-500" />}
+                {profile.isVerified && <VerifiedBadge className="h-4 w-4 shrink-0 text-orange-500" />}
               </h1>
               {profile.businessName && profile.businessName !== profile.name && (
                 <p className="truncate text-sm font-medium text-orange-600">{profile.businessName}</p>
@@ -400,7 +425,7 @@ export function SocialProfile({
                 {menuOpen && (
                   <div className="absolute right-0 z-20 mt-1 w-48 overflow-hidden rounded-lg border border-gray-100 bg-white py-1 shadow-lg">
                     <button
-                      onClick={handleShare}
+                      onClick={openShareSheet}
                       className="block w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50"
                     >
                       {t("shareProfile")}
@@ -497,12 +522,32 @@ export function SocialProfile({
 
       <div className="mt-5 flex gap-3">
         {profile.isSelf ? (
-          <Link
-            href="/account/edit"
-            className="flex-1 rounded-lg bg-orange-600 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-orange-700 sm:flex-none sm:px-8"
-          >
-            {t("editProfile")}
-          </Link>
+          <>
+            <Link
+              href="/account/edit"
+              className="flex-1 rounded-lg bg-orange-600 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-orange-700 sm:flex-none sm:px-8"
+            >
+              {t("editProfile")}
+            </Link>
+            <button
+              type="button"
+              onClick={() => setShareOpen(true)}
+              aria-label={t("shareProfile")}
+              title={t("shareProfile")}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-300 text-orange-600 hover:bg-orange-50"
+            >
+              <ShareIcon className="h-4.5 w-4.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setQrOpen(true)}
+              aria-label={tShare("myQrCode")}
+              title={tShare("myQrCode")}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-300 text-orange-600 hover:bg-orange-50"
+            >
+              <QrIcon className="h-4.5 w-4.5" />
+            </button>
+          </>
         ) : profile.isBlocked ? (
           <p className="rounded-lg bg-gray-100 px-4 py-2.5 text-sm text-gray-600">{t("blockedNotice")}</p>
         ) : (
@@ -592,6 +637,9 @@ export function SocialProfile({
           </div>
         )}
       </div>
+
+      {shareOpen && <ShareSheet title={profile.name} url={profileUrl} onClose={() => setShareOpen(false)} />}
+      {qrOpen && <ProfileQrCode name={profile.name} url={profileUrl} onClose={() => setQrOpen(false)} />}
 
       {msgOpen && (
         <div

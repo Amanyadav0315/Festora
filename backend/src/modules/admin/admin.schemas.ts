@@ -36,6 +36,15 @@ export const bulkVerifySchema = bulkIdsSchema.extend({
   isVerified: z.boolean(),
 });
 
+// Admin -> user notifications. Either a specific userId is targeted, or omitted entirely to
+// broadcast to every user account. listingId is optional — lets an admin deep-link the
+// notification to a specific post (e.g. "your listing needs attention").
+export const sendNotificationSchema = z.object({
+  userId: z.string().trim().optional(),
+  message: z.string().trim().min(3, "Please write a message (min 3 characters)").max(500),
+  listingId: z.string().trim().optional(),
+});
+
 export const deletedListQuerySchema = z.object({
   search: z.string().trim().optional(),
   from: z.string().optional(),

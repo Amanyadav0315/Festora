@@ -3,21 +3,22 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import type { NotificationDTO } from "@eventsaman/types";
 import { getAccessToken, getUser } from "@/lib/auth-client";
 import { apiFetch, ApiRequestError } from "@/lib/api";
 import { NOTIFICATIONS_READ_EVENT } from "@/lib/useUnreadNotifCount";
 import { BackHeader } from "@/components/BackHeader";
 
-function timeAgo(iso: string): string {
+function timeAgo(iso: string, t: ReturnType<typeof useTranslations>): string {
   const diffMs = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t("justNow");
+  if (mins < 60) return t("minutesAgo", { count: mins });
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return t("hoursAgo", { count: hours });
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
+  if (days < 30) return t("daysAgo", { count: days });
   return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
@@ -48,6 +49,16 @@ function NotifIcon({ type }: { type: NotificationDTO["type"] }) {
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       );
+    case "admin_message":
+      return (
+        <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth={1.8}>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M11 5L6 9H3v6h3l5 4V5zM16.5 8.5a5 5 0 010 7"
+          />
+        </svg>
+      );
     default:
       return (
         <svg viewBox="0 0 24 24" className={common} fill="none" stroke="currentColor" strokeWidth={1.8}>
@@ -59,6 +70,7 @@ function NotifIcon({ type }: { type: NotificationDTO["type"] }) {
 
 export default function NotificationsPage() {
   const router = useRouter();
+  const t = useTranslations("notifications");
   const [notifications, setNotifications] = useState<NotificationDTO[] | null>(null);
   const [error, setError] = useState("");
 
@@ -71,8 +83,8 @@ export default function NotificationsPage() {
 
     apiFetch<{ notifications: NotificationDTO[] }>("/notifications", { accessToken: token })
       .then((body) => setNotifications(body.notifications))
-      .catch((err) => setError(err instanceof ApiRequestError ? err.message : "Something went wrong"));
-  }, [router]);
+      .catch((err) => setError(err instanceof ApiRequestError ? err.message : t("error")));
+  }, [router, t]);
 
   async function markAllRead() {
     const token = getAccessToken();
@@ -103,12 +115,12 @@ export default function NotificationsPage() {
 
   return (
     <main className="mx-auto max-w-2xl px-4 pb-10 sm:pb-16">
-      <BackHeader title="Notifications" />
+      <BackHeader title={t("title")} />
 
       {hasUnread && (
         <div className="mt-3 flex justify-end">
           <button onClick={markAllRead} className="text-sm font-medium text-orange-600 hover:text-orange-700">
-            Mark all as read
+            {t("markAllRead")}
           </button>
         </div>
       )}
@@ -116,10 +128,10 @@ export default function NotificationsPage() {
       {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
       {notifications === null && !error ? (
-        <p className="mt-6 text-sm text-gray-500">Loading...</p>
+        <p className="mt-6 text-sm text-gray-500">{t("loading")}</p>
       ) : notifications && notifications.length === 0 ? (
         <div className="mt-4 rounded-xl border border-gray-100 bg-white px-4 py-10 text-center shadow-sm">
-          <p className="text-sm text-gray-500">You&apos;re all caught up — nothing here yet.</p>
+          <p className="text-sm text-gray-500">{t("empty")}</p>
         </div>
       ) : (
         notifications && (
@@ -136,7 +148,7 @@ export default function NotificationsPage() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className={`text-sm ${n.read ? "text-gray-600" : "font-medium text-gray-900"}`}>{n.message}</p>
-                    <p className="mt-0.5 text-xs text-gray-400">{timeAgo(n.createdAt)}</p>
+                    <p className="mt-0.5 text-xs text-gray-400">{timeAgo(n.createdAt, t)}</p>
                   </div>
                   {!n.read && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-orange-600" />}
                 </div>

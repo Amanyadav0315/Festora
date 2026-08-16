@@ -3,6 +3,7 @@ import type { MessageDTO } from "@eventsaman/types";
 export function toMessageDTO(msg: any, viewerId: string): MessageDTO {
   const deletedForEveryone = !!msg.deletedForEveryone;
   const replyTo = msg.replyToId && typeof msg.replyToId === "object" ? msg.replyToId : null;
+  const listing = msg.listingId && typeof msg.listingId === "object" ? msg.listingId : null;
 
   return {
     id: msg._id.toString(),
@@ -18,6 +19,17 @@ export function toMessageDTO(msg: any, viewerId: string): MessageDTO {
           imageUrl: replyTo.deletedForEveryone ? undefined : replyTo.imageUrl ?? undefined,
         }
       : undefined,
+    listingContext:
+      listing && !deletedForEveryone
+        ? {
+            id: listing._id.toString(),
+            title: listing.title,
+            price: listing.price,
+            priceUnit: listing.priceUnit ?? undefined,
+            image: listing.images?.[0],
+            isActive: Boolean(listing.isActive),
+          }
+        : undefined,
     edited: !!msg.editedAt,
     deletedForEveryone,
     isMine: msg.senderId.toString() === viewerId,

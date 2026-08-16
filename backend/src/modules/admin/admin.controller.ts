@@ -5,7 +5,7 @@ import { ListingModel } from "../listings/listing.model";
 import { toListingDTO } from "../listings/listing.mapper";
 import { purgeUserData } from "../users/accountDeletion.service";
 import { ReportModel } from "../social/report.model";
-import { notifyUser } from "../notifications/notification.service";
+import { notifyUser, notifyAllUsers } from "../notifications/notification.service";
 import { ApiError } from "../../middleware/errorHandler";
 import {
   listUsersQuerySchema,
@@ -16,6 +16,7 @@ import {
   bulkIdsSchema,
   bulkDeleteSchema,
   bulkVerifySchema,
+  sendNotificationSchema,
 } from "./admin.schemas";
 
 function escapeRegex(s: string) {
@@ -530,5 +531,24 @@ export const adminController = {
       page: query.page,
       limit: query.limit,
     });
+  },
+
+  // POST /admin/notifications/send — targets a single user (userId provided) or broadcasts
+  // to every account when userId is omitted. Shows up in the recipient's in-app notification
+  // list/bell exactly like any other notification.
+  async sendNotification(req: Request, res: Response) {
+    const input = sendNotificationSchema.parse(req.body);
+
+    if (input.userId) {
+      const target = await UserModel.findById(input.userId, { adminDeletedAt: 1 });
+      if (!target || (target as any).adminDeletedAt) throw new ApiError(404, "User not found");
+      await notifyUser(input.userId, "admin_message", input.message, input.listingId);
+      return res.json({ sent: 1 });
+    }
+
+    const users = await UserModel.find({ adminDeletedAt: null }, { _id: 1 });
+    const userIds = users.map((u) => u._id.toString());
+    await notifyAllUsers(userIds, input.message, input.listingId);
+    res.json({ sent: userIds.length });
   },
 };

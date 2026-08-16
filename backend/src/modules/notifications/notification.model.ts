@@ -5,7 +5,14 @@ const notificationSchema = new Schema(
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     type: {
       type: String,
-      enum: ["price_drop", "listing_available", "new_review", "verified_badge", "report_resolved"],
+      enum: [
+        "price_drop",
+        "listing_available",
+        "new_review",
+        "verified_badge",
+        "report_resolved",
+        "admin_message",
+      ],
       required: true,
     },
     message: { type: String, required: true, trim: true },

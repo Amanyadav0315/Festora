@@ -3,12 +3,14 @@ import { ConversationModel, pairKeyFor } from "./conversation.model";
 import { MessageModel } from "./message.model";
 import { UserModel } from "../users/user.model";
 import { BlockModel } from "../social/block.model";
+import { ListingModel } from "../listings/listing.model";
 import { sendMessageSchema, editMessageSchema, listMessagesQuerySchema } from "./chat.schemas";
 import { toMessageDTO } from "./chat.mapper";
 import { chatImageUrl } from "../../middleware/upload";
 import { ApiError } from "../../middleware/errorHandler";
 
 const REPLY_PREVIEW_SELECT = "senderId text imageUrl deletedForEveryone";
+const LISTING_CONTEXT_SELECT = "title price priceUnit images isActive";
 
 async function getOwnedConversation(conversationId: string, userId: string) {
   const conversation = await ConversationModel.findById(conversationId);
@@ -105,7 +107,8 @@ export const chatController = {
     const messages = await MessageModel.find(filter)
       .sort({ createdAt: -1 })
       .limit(query.limit)
-      .populate("replyToId", REPLY_PREVIEW_SELECT);
+      .populate("replyToId", REPLY_PREVIEW_SELECT)
+      .populate("listingId", LISTING_CONTEXT_SELECT);
 
     res.json({ messages: messages.reverse().map((m) => toMessageDTO(m, userId)) });
   },
@@ -125,14 +128,22 @@ export const chatController = {
       if (!replyTo) throw new ApiError(404, "Message being replied to was not found");
     }
 
+    let listingId: string | undefined;
+    if (input.listingId) {
+      const listing = await ListingModel.findById(input.listingId, "_id");
+      if (listing) listingId = listing._id.toString();
+    }
+
     const message = await MessageModel.create({
       conversationId: conversation._id,
       senderId: userId,
       text: input.text,
       replyToId: input.replyToId,
+      listingId,
       readBy: [userId],
     });
     await message.populate("replyToId", REPLY_PREVIEW_SELECT);
+    await message.populate("listingId", LISTING_CONTEXT_SELECT);
 
     conversation.lastMessageAt = new Date();
     conversation.lastMessageText = input.text.slice(0, 120);
