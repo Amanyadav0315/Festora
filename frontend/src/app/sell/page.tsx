@@ -73,6 +73,33 @@ export default function SellPage() {
   const [newImages, setNewImages] = useState<File[]>([]);
   const totalImageCount = existingImages.length + newImages.length;
 
+  // Data-URL preview for each newly-picked file, kept in sync with newImages below. We read
+  // these via FileReader rather than URL.createObjectURL — blob: URLs are unreliable inside
+  // Android WebView (the <img> often renders blank/white for them, especially for files that
+  // came from a content:// URI handed back through the native file-chooser intent), while a
+  // data: URL is just inline bytes and always renders.
+  const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all(
+      newImages.map(
+        (file) =>
+          new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+            reader.onerror = () => resolve("");
+            reader.readAsDataURL(file);
+          })
+      )
+    ).then((urls) => {
+      if (!cancelled) setNewImagePreviews(urls);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [newImages]);
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [created, setCreated] = useState<ListingDTO | null>(null);
@@ -314,6 +341,28 @@ export default function SellPage() {
     setNewImages((prev) => [...prev, ...picked]);
   }
 
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  // Android WebView occasionally fails to dispatch React's synthetic "change" event for
+  // <input type="file"> after a picked file returns from the native gallery/camera intent
+  // (the file chooser result comes back through onShowFileChooser/onActivityResult, one
+  // process hop away from the page, and some WebView builds don't re-fire it through React's
+  // document-level event delegation reliably). Attaching a plain DOM listener directly to the
+  // input element as a fallback sidesteps that — it fires straight off the native element
+  // regardless of how React's synthetic event system behaves in that environment. Desktop/
+  // mobile browsers keep working exactly as before since the native "change" event still
+  // fires there too; this only ever adds a path, never removes one.
+  useEffect(() => {
+    const input = photoInputRef.current;
+    if (!input) return;
+    function handleNativeChange(e: Event) {
+      const target = e.target as HTMLInputElement;
+      addImages(target.files);
+      target.value = "";
+    }
+    input.addEventListener("change", handleNativeChange);
+    return () => input.removeEventListener("change", handleNativeChange);
+  });
+
   function removeExistingImage(url: string) {
     setExistingImages((prev) => prev.filter((u) => u !== url));
   }
@@ -444,7 +493,15 @@ export default function SellPage() {
   }
 
   return (
-    <main className="mx-auto max-w-lg px-4 py-6 sm:py-10">
+    <main
+      className="mx-auto max-w-lg px-4 py-6 sm:py-10"
+      // MobileBottomNav is fixed to the bottom of the viewport (lg:hidden, ~64px tall plus the
+      // Android status-bar-style safe-area inset at the very bottom). Without reserving that
+      // much space here, the last thing on the page — the Back/Next row — renders underneath
+      // the fixed nav instead of above it, so it's partially or fully hidden. lg: screens don't
+      // render MobileBottomNav at all, so the extra padding is removed there.
+      style={{ paddingBottom: "calc(5.5rem + env(safe-area-inset-bottom))" }}
+    >
       {pendingDraft && (
         <ChoiceModal
           title={t("draftFoundTitle")}
@@ -737,9 +794,18 @@ export default function SellPage() {
                 {(existingImages.length > 0 || newImages.length > 0) && (
                   <div className="mb-2 flex flex-wrap gap-2">
                     {existingImages.map((url) => (
-                      <div key={url} className="relative h-16 w-16 overflow-hidden rounded-md border border-gray-200">
+                      <div
+                        key={url}
+                        className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md border border-gray-200 bg-gray-100"
+                      >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={resolveImageUrl(url)} alt="" className="h-full w-full object-cover" />
+                        <img
+                          src={resolveImageUrl(url)}
+                          alt=""
+                          width={64}
+                          height={64}
+                          className="h-full w-full object-cover"
+                        />
                         <button
                           type="button"
                           onClick={() => removeExistingImage(url)}
@@ -753,10 +819,18 @@ export default function SellPage() {
                     {newImages.map((file, i) => (
                       <div
                         key={`${file.name}-${i}`}
-                        className="relative h-16 w-16 overflow-hidden rounded-md border border-gray-200"
+                        className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md border border-gray-200 bg-gray-100"
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={URL.createObjectURL(file)} alt="" className="h-full w-full object-cover" />
+                        {newImagePreviews[i] && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={newImagePreviews[i]}
+                            alt=""
+                            width={64}
+                            height={64}
+                            className="h-full w-full object-cover"
+                          />
+                        )}
                         <button
                           type="button"
                           onClick={() => removeNewImage(i)}
@@ -771,13 +845,10 @@ export default function SellPage() {
                 )}
                 {totalImageCount < MAX_LISTING_IMAGES && (
                   <input
+                    ref={photoInputRef}
                     type="file"
                     accept="image/*"
                     multiple
-                    onChange={(e) => {
-                      addImages(e.target.files);
-                      e.target.value = "";
-                    }}
                     className="w-full text-sm"
                   />
                 )}

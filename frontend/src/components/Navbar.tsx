@@ -141,7 +141,13 @@ export function Navbar() {
   // causing mobile browsers to recompute the layout viewport mid-navigation, which showed up as
   // the page snapping to a zoomed-in state when coming back to Home/Rent from another page.
   return (
-    <header className={`sticky top-0 z-30 border-b border-orange-700 bg-orange-600 ${isVisiblePage ? "" : "hidden"}`}>
+    <header
+      className={`sticky top-0 z-30 border-b border-orange-700 bg-orange-600 ${isVisiblePage ? "" : "hidden"}`}
+      // Pushes the navbar's content below the phone's status bar when running edge-to-edge
+      // (the Android WebView app). Resolves to 0 in a regular browser tab, where the browser
+      // chrome already reserves that space itself, so this is a no-op there.
+      style={{ paddingTop: "env(safe-area-inset-top)" }}
+    >
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
         <Link href="/" className="hidden shrink-0 items-center gap-2 text-xl font-extrabold text-white lg:flex">
           {tCommon("brand")}

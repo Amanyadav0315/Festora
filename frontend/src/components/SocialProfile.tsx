@@ -411,13 +411,7 @@ export function SocialProfile({
             <>
               <button
                 type="button"
-                onClick={() => {
-                  if (profile.avatarUrl) {
-                    setAvatarMenuOpen(true);
-                  } else {
-                    avatarInputRef.current?.click();
-                  }
-                }}
+                onClick={() => setAvatarMenuOpen(true)}
                 aria-label={profile.avatarUrl ? t("changePhoto") : t("uploadPhoto")}
                 className="group relative block rounded-full active:opacity-80"
               >
@@ -839,7 +833,7 @@ export function SocialProfile({
               }}
               className="block w-full rounded-xl px-4 py-3 text-left text-sm font-medium text-gray-900 hover:bg-gray-50"
             >
-              {t("changePhoto")}
+              {profile.avatarUrl ? t("changePhoto") : t("uploadPhoto")}
             </button>
             {profile.avatarUrl && (
               <button

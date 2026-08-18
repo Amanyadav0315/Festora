@@ -14,7 +14,12 @@ export function BackHeader({ title, backHref }: { title: string; backHref?: stri
   const router = useRouter();
 
   return (
-    <div className="sticky top-0 z-10 -mx-4 mb-6 flex items-center gap-3 border-b border-gray-100 bg-white/95 px-4 py-3.5 backdrop-blur sm:-mx-6 sm:px-6">
+    <div
+      className="sticky top-0 z-10 -mx-4 mb-6 flex items-center gap-3 border-b border-gray-100 bg-white/95 px-4 py-3.5 backdrop-blur sm:-mx-6 sm:px-6"
+      // Same status-bar-overlap fix as the main Navbar — see Navbar.tsx for why this only
+      // has an effect inside the Android WebView app.
+      style={{ paddingTop: "env(safe-area-inset-top)" }}
+    >
       <button
         type="button"
         onClick={() => (backHref ? router.push(backHref) : router.back())}

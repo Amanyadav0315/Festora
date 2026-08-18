@@ -21,10 +21,17 @@ export const metadata: Metadata = {
 // Without this, mobile browsers render at a fake ~980px desktop viewport and scale the page
 // down to fit — which is what makes the site look "zoomed in" on load and only match its
 // mobile (lg:hidden) layout after the user manually pinch-zooms.
+//
+// viewportFit: "cover" opts into drawing under the status bar / notch (rather than the
+// browser/WebView reserving that space itself), which is what makes env(safe-area-inset-*)
+// resolve to a real, non-zero value instead of 0 — needed for the Android WebView app, where
+// the status bar otherwise overlaps the orange navbar. Regular mobile browsers are unaffected
+// since they already reserve the status bar area on their own.
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
