@@ -4,7 +4,8 @@ import { toUserDTO } from "../users/user.mapper";
 import { tokenService } from "./token.service";
 import { ApiError } from "../../middleware/errorHandler";
 import { isDeletionExpired, purgeUserData } from "../users/accountDeletion.service";
-import type { SignupInput, LoginInput } from "./auth.schemas";
+import { otpService } from "../otp/otp.service";
+import type { SignupInput, LoginInput, ResetPasswordInput } from "./auth.schemas";
 
 const SALT_ROUNDS = 10;
 
@@ -56,6 +57,21 @@ export const authService = {
     }
 
     return buildAuthResult(user);
+  },
+
+  async resetPassword(input: ResetPasswordInput) {
+    // Re-verifies (and consumes) the OTP here rather than trusting an earlier /otp/verify call
+    // in isolation — the code must still be valid, unused, and unexpired at the exact moment
+    // the password actually changes.
+    await otpService.verifyOtp({ email: input.email, code: input.code, purpose: "reset" });
+
+    const user = await userRepository.findByEmail(input.email);
+    if (!user) throw new ApiError(404, "No account found with that email address");
+
+    const passwordHash = await bcrypt.hash(input.newPassword, SALT_ROUNDS);
+    await userRepository.updatePasswordHash(user._id.toString(), passwordHash);
+
+    return buildAuthResult(await userRepository.findById(user._id.toString()) as typeof user);
   },
 
   async refresh(refreshToken: string) {

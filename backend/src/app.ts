@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import path from "node:path";
 import { env } from "./config/env";
 import { authRouter } from "./modules/auth/auth.routes";
+import { otpRouter } from "./modules/otp/otp.routes";
 import { userRouter } from "./modules/users/user.routes";
 import { categoryRouter } from "./modules/categories/category.routes";
 import { subcategoryRouter } from "./modules/categories/subcategory.routes";
@@ -37,6 +38,7 @@ export function createApp() {
   app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 
   app.use("/api/auth", authRouter);
+  app.use("/api/otp", otpRouter);
   app.use("/api/users", userRouter);
   app.use("/api/categories", categoryRouter);
   app.use("/api/subcategories", subcategoryRouter);

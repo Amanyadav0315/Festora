@@ -8,7 +8,7 @@ export default function PrivacyPolicyPage() {
     <main className="mx-auto max-w-2xl px-4 pb-10 sm:px-6 sm:pb-16">
       <BackHeader title={t("privacyPolicyTitle")} backHref="/help" />
       <div className="mt-4 space-y-5 rounded-xl border border-gray-100 bg-white px-4 py-6 text-sm leading-relaxed text-gray-700 shadow-sm sm:px-6">
-        <p className="text-xs text-gray-400">Last updated: 14 August 2026</p>
+        <p className="text-xs text-gray-400">Last updated: 19 August 2026</p>
 
         <section>
           <h2 className="text-base font-semibold text-gray-900">1. Who we are</h2>
@@ -22,7 +22,7 @@ export default function PrivacyPolicyPage() {
         <section>
           <h2 className="text-base font-semibold text-gray-900">2. Information we collect</h2>
           <ul className="mt-1 list-disc space-y-1 pl-5">
-            <li>Account details you provide at signup: name, business name, phone number, and email (optional).</li>
+            <li>Account details you provide at signup: name, business name, phone number, and email address.</li>
             <li>Content you post: listings, photos, messages, and reviews.</li>
             <li>Usage data such as pages visited and actions taken, to keep the platform working reliably.</li>
           </ul>
@@ -91,6 +91,42 @@ export default function PrivacyPolicyPage() {
             Questions about this policy, or a data protection request? Reach out via "Report an
             issue" in the Help section.
           </p>
+        </section>
+
+        <section>
+          <h2 className="text-base font-semibold text-gray-900">10. Grievance Officer</h2>
+          <p className="mt-1">
+            In accordance with the Digital Personal Data Protection Act, 2023, and the Information
+            Technology Act, 2000, the contact details of the Grievance Officer are provided below.
+            If you have any complaints, concerns, or grievances regarding your personal data or the
+            use of this platform, you may reach out directly.
+          </p>
+          <dl className="mt-3 space-y-1.5 rounded-lg bg-gray-50 px-4 py-3">
+            <div className="flex gap-2">
+              <dt className="w-28 shrink-0 font-medium text-gray-900">Name</dt>
+              <dd>Vipin Bhati</dd>
+            </div>
+            <div className="flex gap-2">
+              <dt className="w-28 shrink-0 font-medium text-gray-900">Company</dt>
+              <dd>Event Saman</dd>
+            </div>
+            <div className="flex gap-2">
+              <dt className="w-28 shrink-0 font-medium text-gray-900">Email</dt>
+              <dd>
+                <a href="mailto:grievance@eventsaman.com" className="text-orange-600 hover:text-orange-700">
+                  grievance@eventsaman.com
+                </a>
+              </dd>
+            </div>
+            <div className="flex gap-2">
+              <dt className="w-28 shrink-0 font-medium text-gray-900">Address</dt>
+              <dd>Gurugram, Haryana, India</dd>
+            </div>
+            <div className="flex gap-2">
+              <dt className="w-28 shrink-0 font-medium text-gray-900">Response time</dt>
+              <dd>Within 30 days of receiving a complaint</dd>
+            </div>
+          </dl>
         </section>
       </div>
     </main>

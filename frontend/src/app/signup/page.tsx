@@ -27,7 +27,7 @@ export default function SignupPage() {
     try {
       sessionStorage.setItem(
         "eventsaman_pending_signup",
-        JSON.stringify({ name, businessName, phone, email: email || undefined, password })
+        JSON.stringify({ name, businessName, phone, email, password })
       );
     } catch {
       // sessionStorage unavailable (e.g. private mode) — fall through, confirm page will
@@ -78,12 +78,13 @@ export default function SignupPage() {
               required
             />
             <AuthField
-              label={t("email")}
+              label={`${t("email")} *`}
               icon="mail"
               type="email"
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
             />
             <AuthField
               label={t("password")}

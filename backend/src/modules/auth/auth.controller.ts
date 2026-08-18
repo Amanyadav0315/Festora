@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { authService } from "./auth.service";
-import { signupSchema, loginSchema } from "./auth.schemas";
+import { signupSchema, loginSchema, resetPasswordSchema } from "./auth.schemas";
 import { ApiError } from "../../middleware/errorHandler";
 
 const REFRESH_COOKIE = "eventsaman_refresh_token";
@@ -28,6 +28,16 @@ export const authController = {
   async login(req: Request, res: Response) {
     const input = loginSchema.parse(req.body);
     const result = await authService.login(input);
+    res.cookie(REFRESH_COOKIE, result.refreshToken, refreshCookieOptions(result.user.role));
+    res.status(200).json({ user: result.user, accessToken: result.accessToken });
+  },
+
+  async resetPassword(req: Request, res: Response) {
+    const input = resetPasswordSchema.parse(req.body);
+    const result = await authService.resetPassword(input);
+    // Resetting the password also logs the user in immediately — the OTP already proved they
+    // own the email/account, so there's no reason to make them log in again with the password
+    // they just set.
     res.cookie(REFRESH_COOKIE, result.refreshToken, refreshCookieOptions(result.user.role));
     res.status(200).json({ user: result.user, accessToken: result.accessToken });
   },

@@ -9,5 +9,6 @@ export const authRouter = Router();
 // hammer. /refresh and /logout are left unlimited (they run silently on every page load).
 authRouter.post("/signup", authLimiter, asyncHandler(authController.signup));
 authRouter.post("/login", authLimiter, asyncHandler(authController.login));
+authRouter.post("/reset-password", authLimiter, asyncHandler(authController.resetPassword));
 authRouter.post("/refresh", asyncHandler(authController.refresh));
 authRouter.post("/logout", asyncHandler(authController.logout));
