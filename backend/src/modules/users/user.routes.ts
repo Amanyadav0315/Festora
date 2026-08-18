@@ -9,6 +9,7 @@ export const userRouter = Router();
 userRouter.get("/me", requireAuth, asyncHandler(userController.me));
 userRouter.patch("/me", requireAuth, asyncHandler(userController.updateMe));
 userRouter.patch("/me/avatar", requireAuth, uploadAvatar.single("avatar"), asyncHandler(userController.updateAvatar));
+userRouter.delete("/me/avatar", requireAuth, asyncHandler(userController.removeAvatar));
 userRouter.patch("/me/password", requireAuth, asyncHandler(userController.changePassword));
 userRouter.patch("/me/phone-visibility", requireAuth, asyncHandler(userController.updatePhoneVisibility));
 userRouter.delete("/me", requireAuth, asyncHandler(userController.deleteMe));

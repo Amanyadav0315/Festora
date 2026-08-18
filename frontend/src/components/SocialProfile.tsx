@@ -27,6 +27,15 @@ function DotsIcon({ className }: { className?: string }) {
   );
 }
 
+function SpinnerIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={`animate-spin ${className ?? ""}`} fill="none">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth={3} opacity={0.25} />
+      <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth={3} strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function CameraIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={1.8}>
@@ -205,16 +214,26 @@ export function SocialProfile({
 
   const [avatarPreview, setAvatarPreview] = useState<{ file: File; url: string } | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarRemoving, setAvatarRemoving] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
-  const [avatarSuccess, setAvatarSuccess] = useState(false);
+  const [avatarSuccess, setAvatarSuccess] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
 
-  // Lets the "Upload/Change photo" row in the Edit Profile menu (/account/edit) deep-link
-  // straight into the file picker instead of duplicating the upload trigger on this page.
+  // The "Upload/Change photo" row in the Edit Profile menu (/account/edit) deep-links here
+  // with ?openAvatarUpload=1. We intentionally do NOT auto-open the file picker from this
+  // effect — most mobile browsers/WebViews only allow input.click() to open a native file
+  // chooser when it happens synchronously inside a real tap, and by the time this effect
+  // runs (after the page navigation) that user-gesture chain is already broken, so the
+  // picker would silently fail to open. Instead we just surface the preview modal trigger
+  // state so the user still gets a one-tap path once the profile page has mounted.
   useEffect(() => {
     if (profile.isSelf && searchParams.get("openAvatarUpload") === "1") {
-      avatarInputRef.current?.click();
       router.replace("/account");
+      // Opening this sheet IS a genuine tap-driven interaction (the user taps a row inside
+      // it), so the file picker it triggers works reliably — unlike calling input.click()
+      // directly from this effect, which browsers/WebViews block as not user-initiated.
+      setAvatarMenuOpen(true);
     }
   }, [profile.isSelf, searchParams, router]);
 
@@ -224,13 +243,13 @@ export function SocialProfile({
     if (!file) return;
 
     setAvatarError(null);
-    setAvatarSuccess(false);
+    setAvatarSuccess(null);
     if (!ACCEPTED_AVATAR_TYPES.includes(file.type)) {
-      setAvatarError("Please choose a JPEG, PNG, WEBP, or GIF image.");
+      setAvatarError(t("avatarInvalidType"));
       return;
     }
     if (file.size > MAX_AVATAR_BYTES) {
-      setAvatarError("Image is too large — please choose one under 5 MB.");
+      setAvatarError(t("avatarTooLarge"));
       return;
     }
     setAvatarPreview({ file, url: URL.createObjectURL(file) });
@@ -239,6 +258,7 @@ export function SocialProfile({
   function cancelAvatarPreview() {
     if (avatarPreview) URL.revokeObjectURL(avatarPreview.url);
     setAvatarPreview(null);
+    setAvatarError(null);
   }
 
   async function saveAvatar() {
@@ -257,12 +277,35 @@ export function SocialProfile({
       });
       setProfile((p) => ({ ...p, avatarUrl: user.avatarUrl }));
       saveUser(user); // syncs localStorage + fires AUTH_CHANGED_EVENT so navbar/bottom nav update too
-      setAvatarSuccess(true);
+      setAvatarSuccess(t("photoUpdated"));
       cancelAvatarPreview();
     } catch (err) {
       setAvatarError(err instanceof ApiRequestError ? err.message : t("somethingWrong"));
     } finally {
       setAvatarUploading(false);
+    }
+  }
+
+  async function removeAvatar() {
+    const token = getAccessToken();
+    if (!token) return;
+    if (!window.confirm(t("removePhotoConfirm"))) return;
+
+    setAvatarRemoving(true);
+    setAvatarError(null);
+    try {
+      const { user } = await apiFetch<{ user: UserDTO }>("/users/me/avatar", {
+        method: "DELETE",
+        accessToken: token,
+      });
+      setProfile((p) => ({ ...p, avatarUrl: user.avatarUrl }));
+      saveUser(user);
+      setAvatarSuccess(t("photoRemoved"));
+      cancelAvatarPreview();
+    } catch (err) {
+      setAvatarError(err instanceof ApiRequestError ? err.message : t("somethingWrong"));
+    } finally {
+      setAvatarRemoving(false);
     }
   }
 
@@ -368,12 +411,25 @@ export function SocialProfile({
             <>
               <button
                 type="button"
-                onClick={() => avatarInputRef.current?.click()}
-                aria-label={profile.avatarUrl ? "Change profile photo" : "Upload profile photo"}
-                className="group relative block rounded-full"
+                onClick={() => {
+                  if (profile.avatarUrl) {
+                    setAvatarMenuOpen(true);
+                  } else {
+                    avatarInputRef.current?.click();
+                  }
+                }}
+                aria-label={profile.avatarUrl ? t("changePhoto") : t("uploadPhoto")}
+                className="group relative block rounded-full active:opacity-80"
               >
                 <UserAvatar name={profile.name} avatarUrl={profile.avatarUrl} size="lg" />
-                <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 opacity-0 transition group-hover:bg-black/30 group-hover:opacity-100">
+                {(avatarUploading || avatarRemoving) && (
+                  <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
+                    <SpinnerIcon className="h-6 w-6 text-white" />
+                  </span>
+                )}
+                {/* Always at least partially visible (not hover-only) so the affordance is
+                    discoverable on touch devices, not just with a mouse. */}
+                <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/25 opacity-0 transition sm:group-hover:opacity-100">
                   <CameraIcon className="h-6 w-6 text-white" />
                 </span>
                 <span className="absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-orange-600 text-white shadow-sm">
@@ -517,7 +573,7 @@ export function SocialProfile({
       </div>
 
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-      {avatarSuccess && <p className="mt-3 text-sm text-green-600">Profile photo updated.</p>}
+      {avatarSuccess && <p className="mt-3 text-sm text-green-600">{avatarSuccess}</p>}
       {avatarError && !avatarPreview && <p className="mt-3 text-sm text-red-600">{avatarError}</p>}
 
       <div className="mt-5 flex gap-3">
@@ -769,10 +825,49 @@ export function SocialProfile({
         </div>
       )}
 
+      {avatarMenuOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setAvatarMenuOpen(false)}
+        >
+          <div className="w-full max-w-sm rounded-2xl bg-white p-2" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => {
+                setAvatarMenuOpen(false);
+                avatarInputRef.current?.click();
+              }}
+              className="block w-full rounded-xl px-4 py-3 text-left text-sm font-medium text-gray-900 hover:bg-gray-50"
+            >
+              {t("changePhoto")}
+            </button>
+            {profile.avatarUrl && (
+              <button
+                type="button"
+                onClick={() => {
+                  setAvatarMenuOpen(false);
+                  removeAvatar();
+                }}
+                className="block w-full rounded-xl px-4 py-3 text-left text-sm font-medium text-red-600 hover:bg-red-50"
+              >
+                {t("removePhoto")}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setAvatarMenuOpen(false)}
+              className="mt-1 block w-full rounded-xl px-4 py-3 text-left text-sm font-medium text-gray-500 hover:bg-gray-50"
+            >
+              {t("cancel")}
+            </button>
+          </div>
+        </div>
+      )}
+
       {avatarPreview && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
-          <div className="w-full max-w-sm rounded-t-2xl bg-white p-5 sm:rounded-2xl">
-            <h3 className="text-base font-semibold text-gray-900">Update profile photo</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-5">
+            <h3 className="text-base font-semibold text-gray-900">{t("updatePhotoTitle")}</h3>
             <div className="mt-4 flex justify-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -786,9 +881,10 @@ export function SocialProfile({
               type="button"
               disabled={avatarUploading}
               onClick={saveAvatar}
-              className="mt-4 w-full rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-700 disabled:opacity-60"
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-700 disabled:opacity-60"
             >
-              {avatarUploading ? "Saving..." : "Save photo"}
+              {avatarUploading && <SpinnerIcon className="h-4 w-4" />}
+              {avatarUploading ? t("savingPhoto") : t("savePhoto")}
             </button>
             <button
               type="button"

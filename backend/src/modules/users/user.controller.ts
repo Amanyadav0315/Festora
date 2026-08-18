@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import type { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import { userRepository } from "./user.repository";
@@ -11,6 +13,15 @@ import {
   updatePhoneVisibilitySchema,
 } from "./user.schemas";
 import { avatarImageUrl } from "../../middleware/upload";
+
+// Best-effort cleanup so replacing/removing an avatar doesn't leave orphaned files behind in
+// local disk storage. Never throws — a missing/already-deleted file is not worth failing the
+// request over.
+function deleteLocalAvatarFile(avatarUrl: string | undefined) {
+  if (!avatarUrl || !avatarUrl.startsWith("/uploads/avatars/")) return;
+  const filePath = path.join(__dirname, "..", "..", "..", avatarUrl);
+  fs.unlink(filePath, () => {});
+}
 import { FollowModel } from "../social/follow.model";
 import { BlockModel } from "../social/block.model";
 import { StoreModel } from "../stores/store.model";
@@ -53,8 +64,18 @@ export const userController = {
 
   async updateAvatar(req: Request, res: Response) {
     if (!req.file) throw new ApiError(400, "No image uploaded");
+    const previous = await userRepository.findById(req.user!.sub);
     const user = await userRepository.updateAvatar(req.user!.sub, avatarImageUrl(req.file.filename));
     if (!user) throw new ApiError(404, "User not found");
+    deleteLocalAvatarFile((previous as any)?.avatarUrl);
+    res.json({ user: toUserDTO(user) });
+  },
+
+  async removeAvatar(req: Request, res: Response) {
+    const previous = await userRepository.findById(req.user!.sub);
+    const user = await userRepository.removeAvatar(req.user!.sub);
+    if (!user) throw new ApiError(404, "User not found");
+    deleteLocalAvatarFile((previous as any)?.avatarUrl);
     res.json({ user: toUserDTO(user) });
   },
 

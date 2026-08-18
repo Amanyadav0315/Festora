@@ -95,22 +95,20 @@ export default function SettingsPage() {
             <p className="text-[15px] font-medium text-gray-800">{t("showPhoneOption")}</p>
             <p className="mt-0.5 text-xs text-gray-500">{t("showPhoneHint")}</p>
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={Boolean(user?.showPhonePublicly)}
-            onClick={togglePhoneVisibility}
-            disabled={!user || phoneVisSaving}
-            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-60 ${
-              user?.showPhonePublicly ? "bg-orange-600" : "bg-gray-300"
-            }`}
-          >
-            <span
-              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                user?.showPhonePublicly ? "translate-x-[22px]" : "translate-x-0.5"
-              }`}
+          {/* Native checkbox + `peer-checked` drives both the track color and knob position off
+              the same underlying state, so they can never render out of sync with each other. */}
+          <label className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center">
+            <input
+              type="checkbox"
+              role="switch"
+              className="peer sr-only"
+              checked={Boolean(user?.showPhonePublicly)}
+              onChange={togglePhoneVisibility}
+              disabled={!user || phoneVisSaving}
             />
-          </button>
+            <span className="absolute inset-0 rounded-full bg-gray-300 transition-colors duration-200 peer-checked:bg-orange-600 peer-disabled:opacity-60" />
+            <span className="absolute left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 peer-checked:translate-x-[22px]" />
+          </label>
         </div>
         {phoneVisError && <p className="px-4 pb-3 text-xs text-red-600">{phoneVisError}</p>}
       </div>

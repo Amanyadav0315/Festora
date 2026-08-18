@@ -11,6 +11,11 @@ import { CompareBar } from "@/components/CompareBar";
 export const metadata: Metadata = {
   title: "Event Saman",
   description: "Marketplace for event and celebration services in India",
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 // Without this, mobile browsers render at a fake ~980px desktop viewport and scale the page

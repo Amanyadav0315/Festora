@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -74,8 +75,8 @@ export default function SignupConfirmPage() {
     <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-gradient-to-b from-orange-50 via-gray-50 to-gray-50 px-4 py-10 sm:px-6">
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
-          <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-600 text-2xl font-bold text-white shadow-lg shadow-orange-600/20">
-            F
+          <span className="inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-lg shadow-orange-600/20 ring-1 ring-orange-100">
+            <Image src="/logo.png" alt="Event Saman" width={64} height={64} className="h-full w-full object-contain" priority />
           </span>
           <h1 className="mt-4 text-2xl font-bold text-gray-900">{t("agreementTitle")}</h1>
           <p className="mt-1 text-sm text-gray-500">{t("agreementSubtitle")}</p>

@@ -23,6 +23,9 @@ export const userRepository = {
   updateAvatar(id: string, avatarUrl: string) {
     return UserModel.findByIdAndUpdate(id, { $set: { avatarUrl } }, { new: true });
   },
+  removeAvatar(id: string) {
+    return UserModel.findByIdAndUpdate(id, { $unset: { avatarUrl: "" } }, { new: true });
+  },
   updatePhoneVisibility(id: string, showPhonePublicly: boolean) {
     return UserModel.findByIdAndUpdate(id, { $set: { showPhonePublicly } }, { new: true });
   },

@@ -143,7 +143,7 @@ export function Navbar() {
   return (
     <header className={`sticky top-0 z-30 border-b border-orange-700 bg-orange-600 ${isVisiblePage ? "" : "hidden"}`}>
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
-        <Link href="/" className="hidden shrink-0 text-xl font-extrabold text-white lg:block">
+        <Link href="/" className="hidden shrink-0 items-center gap-2 text-xl font-extrabold text-white lg:flex">
           {tCommon("brand")}
         </Link>
 
@@ -245,7 +245,7 @@ export function Navbar() {
             visually disconnected icon strip. */}
         <div className="-mx-4 w-full bg-orange-600 px-4 py-2.5 lg:hidden">
           <div className="flex items-center gap-3">
-            <Link href="/" className="shrink-0 text-xl font-extrabold tracking-tight text-white">
+            <Link href="/" className="flex shrink-0 items-center gap-1.5 text-xl font-extrabold tracking-tight text-white">
               {tCommon("brand")}
             </Link>
 

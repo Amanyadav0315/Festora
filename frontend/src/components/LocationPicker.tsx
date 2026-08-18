@@ -24,6 +24,14 @@ function ChevronIcon({ className }: { className?: string }) {
   );
 }
 
+function CloseIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  );
+}
+
 interface LocationPickerProps {
   value: string;
   onChange: (city: string) => void;
@@ -93,7 +101,65 @@ export function LocationPicker({ value, onChange, compact = false, className }: 
         <ChevronIcon className={compact ? "h-3 w-3 shrink-0 text-gray-500" : "h-3.5 w-3.5 shrink-0 text-gray-500"} />
       </button>
 
-      {open && (
+      {open && compact && (
+        // On mobile the pill trigger sits near the left edge of a narrow header, so an
+        // absolutely-positioned dropdown either gets clipped or has to stretch almost the full
+        // screen width to fit the city list — both read as broken. A bottom sheet (same pattern
+        // as ShareSheet/ProfileQrCode) keeps it anchored to the viewport instead of the trigger.
+        <div
+          className="fixed inset-0 z-50 flex items-end bg-black/40"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="flex max-h-[75vh] w-full flex-col rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-gray-200" />
+            <div className="flex shrink-0 items-center justify-between px-4 pb-2 pt-3">
+              <h3 className="text-sm font-bold text-gray-900">Select location</h3>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Close"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100"
+              >
+                <CloseIcon className="h-4.5 w-4.5" />
+              </button>
+            </div>
+            <div className="shrink-0 border-b border-gray-100 px-4 pb-3">
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search location"
+                className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:border-orange-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-orange-400"
+              />
+            </div>
+            <ul className="min-h-0 flex-1 overflow-y-auto py-1" role="listbox">
+              {results.length === 0 ? (
+                <li className="px-4 py-2 text-sm text-gray-400">No matching location</li>
+              ) : (
+                results.map((city) => (
+                  <li key={city}>
+                    <button
+                      type="button"
+                      onClick={() => select(city)}
+                      className={`flex w-full items-center px-4 py-2.5 text-left text-sm hover:bg-orange-50 ${
+                        city === value ? "font-semibold text-orange-600" : "text-gray-700"
+                      }`}
+                    >
+                      {city}
+                    </button>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {open && !compact && (
         <div className="absolute left-0 top-full z-40 mt-1.5 w-72 max-w-[85vw] rounded-lg border border-gray-200 bg-white shadow-lg">
           <div className="border-b border-gray-100 p-2">
             <input
