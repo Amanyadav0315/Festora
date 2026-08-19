@@ -11,6 +11,11 @@ import { saveAccessToken, saveUser, type AuthResponse } from "@/lib/auth-client"
 const STORAGE_KEY = "eventsaman_pending_signup";
 const RESEND_COOLDOWN_SECONDS = 60;
 
+// AWS SES production-access request is still pending, so sending real OTP emails isn't
+// reliable yet — skip straight to the agreement step until it's approved. Flip this back to
+// true (the whole OTP UI/flow below is otherwise untouched) once SES is ready.
+const SIGNUP_EMAIL_OTP_ENABLED = false;
+
 type PendingSignup = {
   name: string;
   businessName: string;
@@ -27,7 +32,7 @@ export default function SignupConfirmPage() {
 
   // Step 1: verify the email address with a 6-digit code before anything is agreed to or
   // actually created — this proves the email is real and reachable, not just typed correctly.
-  const [step, setStep] = useState<"otp" | "agree">("otp");
+  const [step, setStep] = useState<"otp" | "agree">(SIGNUP_EMAIL_OTP_ENABLED ? "otp" : "agree");
   const [otpSent, setOtpSent] = useState(false);
   const [otpSending, setOtpSending] = useState(false);
   const [otpVerifying, setOtpVerifying] = useState(false);
@@ -80,7 +85,7 @@ export default function SignupConfirmPage() {
   // Send the first code automatically once the pending signup data is available — only once,
   // even though effects can re-run in strict mode.
   useEffect(() => {
-    if (pending && !sentOnceRef.current) {
+    if (SIGNUP_EMAIL_OTP_ENABLED && pending && !sentOnceRef.current) {
       sentOnceRef.current = true;
       sendOtp();
     }
