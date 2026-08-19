@@ -391,7 +391,15 @@ export function SocialProfile({
     }
   }
 
-  const profileUrl = typeof window !== "undefined" ? window.location.href : "";
+  // Always point at the public /u/[id] route, never at window.location.href — this page also
+  // renders at /account (which requires login and always shows the signed-in user's own
+  // profile). Encoding that URL in the QR code meant scanning it never actually opened this
+  // profile: an unauthenticated scanner got bounced to /login and then to their own /account,
+  // and an already-logged-in scanner landed straight on their own profile instead of this
+  // one. /u/[id] is public and always resolves to this specific profile regardless of who
+  // (or whether anyone) is signed in on the scanning device.
+  const profileUrl =
+    typeof window !== "undefined" ? `${window.location.origin}/u/${profile.id}` : "";
 
   function openShareSheet() {
     setShareOpen(true);

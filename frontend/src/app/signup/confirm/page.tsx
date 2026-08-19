@@ -9,6 +9,9 @@ import { apiFetch, ApiRequestError } from "@/lib/api";
 import { saveAccessToken, saveUser, type AuthResponse } from "@/lib/auth-client";
 
 const STORAGE_KEY = "eventsaman_pending_signup";
+// Set by /onboarding/auth when a signup is started from the first-run onboarding flow, so this
+// page knows to send the user back into onboarding (language step) instead of home once done.
+const ONBOARDING_FLAG_KEY = "eventsaman_onboarding_flow";
 const RESEND_COOLDOWN_SECONDS = 60;
 
 // AWS SES production-access request is still pending, so sending real OTP emails isn't
@@ -127,9 +130,11 @@ export default function SignupConfirmPage() {
         body: JSON.stringify({ ...pending, acceptedTerms: true }),
       });
       sessionStorage.removeItem(STORAGE_KEY);
+      const fromOnboarding = sessionStorage.getItem(ONBOARDING_FLAG_KEY) === "1";
+      sessionStorage.removeItem(ONBOARDING_FLAG_KEY);
       saveAccessToken(res.accessToken);
       saveUser(res.user);
-      router.push("/");
+      router.push(fromOnboarding ? "/onboarding/language" : "/");
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : t("somethingWrong"));
     } finally {
@@ -205,7 +210,9 @@ export default function SignupConfirmPage() {
 
               <button
                 type="button"
-                onClick={() => router.push("/signup")}
+                onClick={() =>
+                  router.push(sessionStorage.getItem(ONBOARDING_FLAG_KEY) === "1" ? "/onboarding/auth" : "/signup")
+                }
                 className="text-center text-sm font-medium text-gray-500 hover:text-gray-700"
               >
                 {t("backToEdit")}

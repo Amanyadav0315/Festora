@@ -1,136 +1,243 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { apiFetch, ApiRequestError } from "@/lib/api";
 import { saveAccessToken, saveUser, type AuthResponse } from "@/lib/auth-client";
+import { AuthField } from "@/components/auth/AuthField";
+
+// Marks a pending signup (stashed in sessionStorage by this page, same as the standalone
+// /signup flow) as having started from onboarding, so /signup/confirm knows to send the user
+// back into the onboarding flow (language step) instead of the home page once it's done.
+const ONBOARDING_FLAG_KEY = "eventsaman_onboarding_flow";
+const PENDING_SIGNUP_KEY = "eventsaman_pending_signup";
 
 export default function OnboardingAuthPage() {
   const router = useRouter();
   const t = useTranslations("auth");
   const tOnboarding = useTranslations("onboarding");
   const [mode, setMode] = useState<"login" | "signup">("login");
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [identifier, setIdentifier] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: FormEvent) {
+  // Login fields — identical to the standalone /login page.
+  const [identifier, setIdentifier] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginLoading, setLoginLoading] = useState(false);
+
+  // Signup fields — identical to the standalone /signup page, including business name, which
+  // the earlier version of this page was missing entirely.
+  const [name, setName] = useState("");
+  const [businessName, setBusinessName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [signupError, setSignupError] = useState<string | null>(null);
+
+  async function handleLoginSubmit(e: FormEvent) {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
+    setLoginError(null);
+    setLoginLoading(true);
     try {
-      const res =
-        mode === "login"
-          ? await apiFetch<AuthResponse>("/auth/login", {
-              method: "POST",
-              body: JSON.stringify({ identifier, password }),
-            })
-          : await apiFetch<AuthResponse>("/auth/signup", {
-              method: "POST",
-              body: JSON.stringify({ name, phone, email: email || undefined, password }),
-            });
+      const res = await apiFetch<AuthResponse>("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ identifier, password: loginPassword }),
+      });
       saveAccessToken(res.accessToken);
       saveUser(res.user);
       router.push("/onboarding/language");
     } catch (err) {
-      setError(err instanceof ApiRequestError ? err.message : t("somethingWrong"));
+      setLoginError(err instanceof ApiRequestError ? err.message : t("somethingWrong"));
     } finally {
-      setLoading(false);
+      setLoginLoading(false);
     }
   }
 
+  function handleSignupSubmit(e: FormEvent) {
+    e.preventDefault();
+    setSignupError(null);
+    // Mirrors the standalone /signup page: the account isn't created here — it's created on
+    // /signup/confirm after the user accepts the Privacy Policy and Terms & Conditions, which
+    // is a required step for every new account, onboarding included.
+    try {
+      sessionStorage.setItem(
+        PENDING_SIGNUP_KEY,
+        JSON.stringify({ name, businessName, phone, email, password: signupPassword })
+      );
+      sessionStorage.setItem(ONBOARDING_FLAG_KEY, "1");
+    } catch {
+      // sessionStorage unavailable (e.g. private mode) — fall through, confirm page will
+      // detect the missing data and send the user back here.
+    }
+    router.push("/signup/confirm");
+  }
+
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4 py-10 sm:px-6">
-      <h1 className="text-xl font-bold sm:text-2xl">{tOnboarding("authTitle")}</h1>
-      <p className="mt-1 text-sm text-gray-500">{tOnboarding("authSubtitle")}</p>
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-orange-50 via-gray-50 to-gray-50 px-4 py-10 sm:px-6">
+      <div className="w-full max-w-sm">
+        <div className="mb-6 text-center">
+          <span className="inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-lg shadow-orange-600/20 ring-1 ring-orange-100">
+            <Image src="/logo.png" alt="Event Saman" width={64} height={64} className="h-full w-full object-contain" priority />
+          </span>
+          <h1 className="mt-4 text-2xl font-bold text-gray-900">{tOnboarding("authTitle")}</h1>
+          <p className="mt-1 text-sm text-gray-500">{tOnboarding("authSubtitle")}</p>
+        </div>
 
-      <div className="mt-6 flex rounded-md border border-gray-300 p-1 text-sm">
-        <button
-          type="button"
-          onClick={() => setMode("login")}
-          className={`flex-1 rounded py-1.5 font-medium ${mode === "login" ? "bg-orange-600 text-white" : "text-gray-600"}`}
-        >
-          {t("login")}
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode("signup")}
-          className={`flex-1 rounded py-1.5 font-medium ${mode === "signup" ? "bg-orange-600 text-white" : "text-gray-600"}`}
-        >
-          {t("signup")}
-        </button>
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xl shadow-gray-200/50 sm:p-7">
+          <div className="mb-5 flex rounded-md border border-gray-300 p-1 text-sm">
+            <button
+              type="button"
+              onClick={() => setMode("login")}
+              className={`flex-1 rounded py-1.5 font-medium transition ${
+                mode === "login" ? "bg-orange-600 text-white" : "text-gray-600"
+              }`}
+            >
+              {t("login")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("signup")}
+              className={`flex-1 rounded py-1.5 font-medium transition ${
+                mode === "signup" ? "bg-orange-600 text-white" : "text-gray-600"
+              }`}
+            >
+              {t("signup")}
+            </button>
+          </div>
+
+          {mode === "login" ? (
+            <form onSubmit={handleLoginSubmit} className="flex flex-col gap-4">
+              <AuthField
+                label={t("identifier")}
+                icon="mail"
+                type="text"
+                autoComplete="username"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                required
+              />
+              <AuthField
+                label={t("password")}
+                icon="lock"
+                type="password"
+                autoComplete="current-password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                showToggle
+                showLabel={t("showPassword")}
+                hideLabel={t("hidePassword")}
+                required
+              />
+
+              <div className="-mt-2 text-right">
+                <Link href="/forgot-password" className="text-xs font-medium text-orange-600 hover:text-orange-700">
+                  {t("forgotPassword")}
+                </Link>
+              </div>
+
+              {loginError && (
+                <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600" role="alert">
+                  {loginError}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loginLoading}
+                className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loginLoading && <Spinner />}
+                {loginLoading ? t("loggingIn") : t("login")}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleSignupSubmit} className="flex flex-col gap-4">
+              <AuthField
+                label={t("name")}
+                icon="user"
+                autoComplete="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+              <div>
+                <AuthField
+                  label={`${t("businessName")} *`}
+                  icon="user"
+                  autoComplete="organization"
+                  value={businessName}
+                  onChange={(e) => setBusinessName(e.target.value)}
+                  required
+                />
+                <p className="mt-1 text-xs text-gray-500">{t("businessNameHint")}</p>
+              </div>
+              <AuthField
+                label={`${t("phone")} *`}
+                icon="phone"
+                type="tel"
+                autoComplete="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
+              />
+              <AuthField
+                label={`${t("email")} *`}
+                icon="mail"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <AuthField
+                label={t("password")}
+                icon="lock"
+                type="password"
+                autoComplete="new-password"
+                value={signupPassword}
+                onChange={(e) => setSignupPassword(e.target.value)}
+                showToggle
+                showLabel={t("showPassword")}
+                hideLabel={t("hidePassword")}
+                required
+                minLength={6}
+              />
+
+              {signupError && (
+                <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600" role="alert">
+                  {signupError}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {t("continue")}
+              </button>
+            </form>
+          )}
+
+          <button
+            type="button"
+            onClick={() => router.push("/onboarding/language")}
+            className="mt-4 w-full text-center text-sm font-medium text-gray-500 hover:text-gray-700"
+          >
+            {tOnboarding("skip")}
+          </button>
+        </div>
       </div>
-
-      <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-        {mode === "signup" && (
-          <input
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-            placeholder={t("name")}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-        )}
-        {mode === "signup" ? (
-          <>
-            <input
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-              placeholder={t("phone")}
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-            />
-            <input
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-              placeholder={t("email")}
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </>
-        ) : (
-          <input
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-            placeholder={t("identifier")}
-            type="text"
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
-            required
-          />
-        )}
-        <input
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-          placeholder={t("password")}
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={mode === "signup" ? 6 : undefined}
-        />
-        {error && <p className="text-sm text-red-600">{error}</p>}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-md bg-orange-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50"
-        >
-          {loading ? (mode === "login" ? t("loggingIn") : t("signingUp")) : mode === "login" ? t("login") : t("signup")}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => router.push("/onboarding/language")}
-          className="text-sm text-gray-500 hover:text-orange-600"
-        >
-          {tOnboarding("skip")}
-        </button>
-      </form>
     </main>
+  );
+}
+
+function Spinner() {
+  return (
+    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4Z" />
+    </svg>
   );
 }
