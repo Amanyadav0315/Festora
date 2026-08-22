@@ -3,6 +3,7 @@ import { StoreModel } from "../stores/store.model";
 import { ListingModel } from "../listings/listing.model";
 import { FollowModel } from "../social/follow.model";
 import { BlockModel } from "../social/block.model";
+import { DeletedAccountLogModel } from "./deletedAccountLog.model";
 
 // How long a soft-deleted account's data is kept before it is purged for good.
 export const DELETION_GRACE_PERIOD_MS = 60 * 24 * 60 * 60 * 1000; // 60 days
@@ -17,12 +18,38 @@ export function isDeletionExpired(deletionRequestedAt: Date): boolean {
   return Date.now() - deletionRequestedAt.getTime() >= DELETION_GRACE_PERIOD_MS;
 }
 
+export type PurgeSource = "grace-period-expired" | "admin-forced" | "admin-direct";
+
+export type PurgeMeta = {
+  source: PurgeSource;
+  reason?: string;
+  deletedBy?: string;
+};
+
 /**
  * Permanently removes a user and everything owned by them: their store(s), the listings
  * under those stores, and their follow/block relationships. Safe to call more than once
  * for the same id (all queries are no-ops once the user is gone).
+ *
+ * Before deleting, writes a permanent snapshot to DeletedAccountLogModel — this is the only
+ * record left once the User document itself is gone, and is what the admin panel's
+ * "Deletion Log" screen reads from.
  */
-export async function purgeUserData(userId: string): Promise<void> {
+export async function purgeUserData(userId: string, meta: PurgeMeta): Promise<void> {
+  const user = await UserModel.findById(userId, { name: 1, businessName: 1, phone: 1, email: 1 });
+  if (user) {
+    await DeletedAccountLogModel.create({
+      name: user.name,
+      businessName: user.businessName || "",
+      phone: user.phone,
+      email: user.email || undefined,
+      source: meta.source,
+      reason: meta.reason,
+      deletedBy: meta.deletedBy,
+      deletedAt: new Date(),
+    });
+  }
+
   const stores = await StoreModel.find({ ownerId: userId }, { _id: 1 });
   const storeIds = stores.map((s) => s._id);
 
@@ -49,7 +76,7 @@ export async function purgeExpiredAccounts(): Promise<void> {
 
   for (const user of expired) {
     try {
-      await purgeUserData(user._id.toString());
+      await purgeUserData(user._id.toString(), { source: "grace-period-expired" });
     } catch (err) {
       console.error(`[accountDeletion] failed to purge user ${user._id.toString()}`, err);
     }

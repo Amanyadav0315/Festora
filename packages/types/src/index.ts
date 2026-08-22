@@ -271,6 +271,33 @@ export interface AuthTokensDTO {
   refreshToken: string;
 }
 
+// A user-initiated ("self-deleted") account, still inside its grace period — as opposed to
+// DeletedUserDTO above, which is an admin-deleted account. Shown in a separate admin screen so
+// the two flows (user deleted themselves vs. an admin removed them) stay distinguishable.
+export interface SelfDeletedUserDTO extends AdminUserListItemDTO {
+  deletionRequestedAt: string;
+  purgeAt: string;
+}
+
+// Permanent record of an account that has actually been purged from the database — the only
+// remaining trace of it, since purging removes the User document itself. Written for every
+// permanent deletion: the 60-day grace-period sweep, an admin's direct "Delete permanently" on
+// an admin-deleted account, and an admin force-purging a still-in-grace-period self-deleted
+// account early.
+export type DeletedAccountLogSource = "grace-period-expired" | "admin-forced" | "admin-direct";
+
+export interface DeletedAccountLogDTO {
+  id: string;
+  name: string;
+  businessName: string;
+  phone: string;
+  email?: string;
+  source: DeletedAccountLogSource;
+  reason?: string;
+  deletedByName?: string;
+  deletedAt: string;
+}
+
 export interface ApiErrorResponse {
   message: string;
   errors?: Record<string, string>;

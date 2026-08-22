@@ -3,7 +3,8 @@ import { UserModel } from "../users/user.model";
 import { StoreModel } from "../stores/store.model";
 import { ListingModel } from "../listings/listing.model";
 import { toListingDTO } from "../listings/listing.mapper";
-import { purgeUserData } from "../users/accountDeletion.service";
+import { purgeUserData, DELETION_GRACE_PERIOD_MS } from "../users/accountDeletion.service";
+import { DeletedAccountLogModel } from "../users/deletedAccountLog.model";
 import { ReportModel } from "../social/report.model";
 import { notifyUser, notifyAllUsers } from "../notifications/notification.service";
 import { ApiError } from "../../middleware/errorHandler";
@@ -287,11 +288,17 @@ export const adminController = {
   },
 
   // DELETE /admin/users/:id/permanent — irreversible: purges the user, their store, and
-  // their listings for good (same routine used for expired self-deleted accounts).
+  // their listings for good (same routine used for expired self-deleted accounts). Only
+  // applies to accounts an admin already soft-deleted (adminDeletedAt set) — see
+  // permanentlyDeleteSelfDeletedUser below for purging a still-in-grace-period self-deletion.
   async permanentlyDeleteUser(req: Request, res: Response) {
     const target = await UserModel.findById(req.params.id);
     if (!target || !(target as any).adminDeletedAt) throw new ApiError(404, "Deleted user not found");
-    await purgeUserData(target._id.toString());
+    await purgeUserData(target._id.toString(), {
+      source: "admin-direct",
+      reason: (target as any).adminDeletedReason || undefined,
+      deletedBy: req.user!.sub,
+    });
     res.status(204).send();
   },
 
@@ -322,6 +329,100 @@ export const adminController = {
         deletedAt: (u as any).adminDeletedAt.toISOString(),
         deletedReason: (u as any).adminDeletedReason || "",
         deletedByName: (u as any).adminDeletedBy?.name,
+      })),
+      total,
+      page: query.page,
+      limit: query.limit,
+    });
+  },
+
+  // GET /admin/self-deleted-users?search=&from=&to=&page= — accounts the user themselves
+  // deleted (deletionRequestedAt set), still inside the 60-day grace period and not yet
+  // purged by the background sweep. Distinct from /admin/deleted-users, which is
+  // admin-initiated deletions.
+  async listSelfDeletedUsers(req: Request, res: Response) {
+    const query = deletedListQuerySchema.parse(req.query);
+    const dateFilter: Record<string, Date> = {};
+    if (query.from) dateFilter.$gte = new Date(query.from);
+    if (query.to) dateFilter.$lte = new Date(query.to);
+    const filter: Record<string, unknown> = {
+      deletionRequestedAt: Object.keys(dateFilter).length > 0 ? { $ne: null, ...dateFilter } : { $ne: null },
+    };
+    if (query.search) {
+      const re = new RegExp(escapeRegex(query.search), "i");
+      filter.$or = [{ name: re }, { businessName: re }, { phone: re }, { email: re }];
+    }
+
+    const total = await UserModel.countDocuments(filter);
+    const users = await UserModel.find(filter)
+      .sort({ deletionRequestedAt: -1 })
+      .skip((query.page - 1) * query.limit)
+      .limit(query.limit);
+
+    res.json({
+      users: users.map((u) => {
+        const requestedAt = (u as any).deletionRequestedAt as Date;
+        return {
+          ...toAdminUserListItem(u, undefined, 0),
+          deletionRequestedAt: requestedAt.toISOString(),
+          purgeAt: new Date(requestedAt.getTime() + DELETION_GRACE_PERIOD_MS).toISOString(),
+        };
+      }),
+      total,
+      page: query.page,
+      limit: query.limit,
+    });
+  },
+
+  // DELETE /admin/self-deleted-users/:id/permanent — lets an admin purge a self-deleted
+  // account before its grace period naturally elapses. Requires a reason and (via the admin
+  // UI) an explicit confirmation, since this is irreversible.
+  async permanentlyDeleteSelfDeletedUser(req: Request, res: Response) {
+    const input = deleteUserSchema.parse(req.body);
+    const target = await UserModel.findById(req.params.id);
+    if (!target || !(target as any).deletionRequestedAt) throw new ApiError(404, "Self-deleted user not found");
+
+    await purgeUserData(target._id.toString(), {
+      source: "admin-forced",
+      reason: input.reason,
+      deletedBy: req.user!.sub,
+    });
+    res.status(204).send();
+  },
+
+  // GET /admin/deleted-account-log?search=&from=&to=&page= — permanent record of every
+  // account that has actually been purged (grace-period expiry, an admin's direct permanent
+  // delete, or an admin force-purging a self-deletion early). This is the only place these
+  // accounts remain visible once purged, since the User document itself is gone by then.
+  async listDeletedAccountLog(req: Request, res: Response) {
+    const query = deletedListQuerySchema.parse(req.query);
+    const dateFilter: Record<string, Date> = {};
+    if (query.from) dateFilter.$gte = new Date(query.from);
+    if (query.to) dateFilter.$lte = new Date(query.to);
+    const filter: Record<string, unknown> = Object.keys(dateFilter).length > 0 ? { deletedAt: dateFilter } : {};
+    if (query.search) {
+      const re = new RegExp(escapeRegex(query.search), "i");
+      filter.$or = [{ name: re }, { businessName: re }, { phone: re }, { email: re }];
+    }
+
+    const total = await DeletedAccountLogModel.countDocuments(filter);
+    const entries = await DeletedAccountLogModel.find(filter)
+      .sort({ deletedAt: -1 })
+      .skip((query.page - 1) * query.limit)
+      .limit(query.limit)
+      .populate("deletedBy", "name");
+
+    res.json({
+      entries: entries.map((e: any) => ({
+        id: e._id.toString(),
+        name: e.name,
+        businessName: e.businessName || "",
+        phone: e.phone,
+        email: e.email || undefined,
+        source: e.source,
+        reason: e.reason || undefined,
+        deletedByName: e.deletedBy?.name,
+        deletedAt: e.deletedAt.toISOString(),
       })),
       total,
       page: query.page,
@@ -447,7 +548,11 @@ export const adminController = {
     const input = bulkIdsSchema.parse(req.body);
     const targets = await UserModel.find({ _id: { $in: input.ids }, adminDeletedAt: { $ne: null } });
     for (const target of targets) {
-      await purgeUserData(target._id.toString());
+      await purgeUserData(target._id.toString(), {
+        source: "admin-direct",
+        reason: (target as any).adminDeletedReason || undefined,
+        deletedBy: req.user!.sub,
+      });
     }
     res.json({ modified: targets.length });
   },

@@ -14,10 +14,9 @@ const STORAGE_KEY = "eventsaman_pending_signup";
 const ONBOARDING_FLAG_KEY = "eventsaman_onboarding_flow";
 const RESEND_COOLDOWN_SECONDS = 60;
 
-// AWS SES production-access request is still pending, so sending real OTP emails isn't
-// reliable yet — skip straight to the agreement step until it's approved. Flip this back to
-// true (the whole OTP UI/flow below is otherwise untouched) once SES is ready.
-const SIGNUP_EMAIL_OTP_ENABLED = false;
+// Email sending now goes through Resend (see backend/src/lib/email.service.ts), so OTP
+// verification at signup is back on.
+const SIGNUP_EMAIL_OTP_ENABLED = true;
 
 type PendingSignup = {
   name: string;

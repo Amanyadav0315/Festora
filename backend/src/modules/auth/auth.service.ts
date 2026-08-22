@@ -48,7 +48,7 @@ export const authService = {
         // Grace period already elapsed — this account is effectively gone even if the
         // background sweep hasn't gotten to it yet. Purge it now and deny the login rather
         // than let someone log into an account that's supposed to be permanently deleted.
-        await purgeUserData(user._id.toString());
+        await purgeUserData(user._id.toString(), { source: "grace-period-expired" });
         throw new ApiError(401, "Invalid credentials");
       }
       // Still within the 60-day window — logging back in restores the account.
@@ -60,10 +60,12 @@ export const authService = {
   },
 
   async resetPassword(input: ResetPasswordInput) {
-    // Re-verifies (and consumes) the OTP here rather than trusting an earlier /otp/verify call
-    // in isolation — the code must still be valid, unused, and unexpired at the exact moment
-    // the password actually changes.
-    await otpService.verifyOtp({ email: input.email, code: input.code, purpose: "reset" });
+    // Re-verifies and consumes the OTP here rather than trusting an earlier /otp/verify call in
+    // isolation — the code must still be valid and unexpired at the exact moment the password
+    // actually changes. The earlier /otp/verify call (on the OTP-entry screen) deliberately
+    // does not consume "reset"-purpose codes, so the same code the user was shown still works
+    // here as the final, actual consumption.
+    await otpService.consumeResetOtp(input.email, input.code);
 
     const user = await userRepository.findByEmail(input.email);
     if (!user) throw new ApiError(404, "No account found with that email address");

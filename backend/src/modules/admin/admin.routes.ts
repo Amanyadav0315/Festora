@@ -22,6 +22,10 @@ adminRouter.patch("/users/:id/restore", asyncHandler(adminController.restoreUser
 adminRouter.delete("/users/:id/permanent", asyncHandler(adminController.permanentlyDeleteUser));
 adminRouter.get("/deleted-users", asyncHandler(adminController.listDeletedUsers));
 
+adminRouter.get("/self-deleted-users", asyncHandler(adminController.listSelfDeletedUsers));
+adminRouter.delete("/self-deleted-users/:id/permanent", asyncHandler(adminController.permanentlyDeleteSelfDeletedUser));
+adminRouter.get("/deleted-account-log", asyncHandler(adminController.listDeletedAccountLog));
+
 adminRouter.delete("/posts/bulk", asyncHandler(adminController.bulkDeletePosts));
 adminRouter.patch("/posts/bulk-restore", asyncHandler(adminController.bulkRestorePosts));
 adminRouter.delete("/posts/bulk-permanent", asyncHandler(adminController.bulkPermanentlyDeletePosts));

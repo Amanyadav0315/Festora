@@ -1,6 +1,6 @@
-import nodemailer, { type Transporter } from "nodemailer";
 import { env } from "../../config/env";
 import { ApiError } from "../../middleware/errorHandler";
+import { emailService } from "../../lib/email.service";
 import { OtpModel } from "./otp.model";
 import type { SendOtpInput, VerifyOtpInput } from "./otp.schemas";
 
@@ -40,37 +40,21 @@ function generateCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-let transporter: Transporter | null = null;
-
-function getTransporter(): Transporter {
-  if (transporter) return transporter;
-  if (!env.smtpHost || !env.smtpUser || !env.smtpPass) {
-    throw new ApiError(500, "Email sending isn't configured on this server yet.");
-  }
-  transporter = nodemailer.createTransport({
-    host: env.smtpHost,
-    port: env.smtpPort,
-    secure: env.smtpPort === 465,
-    auth: { user: env.smtpUser, pass: env.smtpPass },
-  });
-  return transporter;
-}
-
 const PURPOSE_COPY: Record<string, { subject: string; heading: string; intro: string }> = {
   signup: {
-    subject: "Verify your email — Event Saman",
+    subject: "Verify your Event Saman account",
     heading: "Verify your email address",
-    intro: "Use the code below to verify your email address and finish creating your Event Saman account.",
+    intro: "Use the verification code below to verify your email address and finish creating your Event Saman account.",
   },
   reset: {
-    subject: "Reset your password — Event Saman",
+    subject: "Reset your Event Saman password",
     heading: "Reset your password",
-    intro: "Use the code below to reset your Event Saman account password. If you did not request this, you can safely ignore this email.",
+    intro: "Use the verification code below to reset your Event Saman account password.",
   },
   "email-change": {
-    subject: "Confirm your new email — Event Saman",
+    subject: "Confirm your Event Saman email address",
     heading: "Confirm your new email address",
-    intro: "Use the code below to confirm this email address on your Event Saman account.",
+    intro: "Use the verification code below to confirm this email address on your Event Saman account.",
   },
 };
 
@@ -78,7 +62,7 @@ function buildEmailHtml(purpose: string, code: string, resetLink?: string) {
   const copy = PURPOSE_COPY[purpose] ?? PURPOSE_COPY.signup;
   const linkBlock = resetLink
     ? `<p style="margin:24px 0 0;font-size:14px;color:#4b5563;">You can also complete this by opening the link below:</p>
-       <p style="margin:8px 0 0;"><a href="${resetLink}" style="color:#E65100;font-size:14px;">${resetLink}</a></p>`
+       <p style="margin:8px 0 0;word-break:break-all;"><a href="${resetLink}" style="color:#E65100;font-size:14px;">${resetLink}</a></p>`
     : "";
 
   return `
@@ -93,14 +77,37 @@ function buildEmailHtml(purpose: string, code: string, resetLink?: string) {
         <div style="text-align:center;margin:24px 0;">
           <span style="display:inline-block;letter-spacing:6px;font-size:28px;font-weight:bold;color:#E65100;background:#fff3e0;padding:14px 24px;border-radius:8px;">${code}</span>
         </div>
-        <p style="margin:0;font-size:13px;color:#6b7280;">This code expires in 5 minutes. Do not share this code with anyone.</p>
+        <p style="margin:0 0 6px;font-size:13px;color:#6b7280;">Valid for 5 minutes.</p>
+        <p style="margin:0 0 6px;font-size:13px;color:#6b7280;">Do not share this code with anyone.</p>
+        <p style="margin:0;font-size:13px;color:#6b7280;">If you did not request this, ignore this email.</p>
         ${linkBlock}
       </div>
       <div style="padding:16px 24px;background:#f9fafb;border-top:1px solid #e5e7eb;">
-        <p style="margin:0;font-size:12px;color:#9ca3af;">This is an automated message from Event Saman. Please do not reply to this email.</p>
+        <p style="margin:0;font-size:12px;color:#9ca3af;">Event Saman - eventsaman.com</p>
       </div>
     </div>
   </div>`;
+}
+
+function buildEmailText(purpose: string, code: string, resetLink?: string) {
+  const copy = PURPOSE_COPY[purpose] ?? PURPOSE_COPY.signup;
+  const lines = [
+    "Event Saman",
+    "",
+    copy.heading,
+    copy.intro,
+    "",
+    `Verification code: ${code}`,
+    "",
+    "Valid for 5 minutes.",
+    "Do not share this code with anyone.",
+    "If you did not request this, ignore this email.",
+  ];
+  if (resetLink) {
+    lines.push("", `You can also complete this by opening this link: ${resetLink}`);
+  }
+  lines.push("", "Event Saman - eventsaman.com");
+  return lines.join("\n");
 }
 
 export const otpService = {
@@ -128,17 +135,21 @@ export const otpService = {
         : undefined;
 
     const copy = PURPOSE_COPY[input.purpose] ?? PURPOSE_COPY.signup;
-    await getTransporter().sendMail({
-      from: `Event Saman <${env.fromEmail}>`,
+    await emailService.send({
       to: email,
       subject: copy.subject,
       html: buildEmailHtml(input.purpose, code, resetLink),
+      text: buildEmailText(input.purpose, code, resetLink),
     });
 
     return { expiresInSeconds: OTP_TTL_MS / 1000 };
   },
 
-  async verifyOtp(input: VerifyOtpInput) {
+  // Checks a code without consuming it. Used both by the standalone POST /otp/verify route
+  // and internally by consumeOtp below — kept separate so the "reset" flow can validate the
+  // same code twice (once when the user types it in on the OTP screen, again right before
+  // actually changing the password) without the first check burning it.
+  async checkOtp(input: VerifyOtpInput) {
     const email = input.email.toLowerCase().trim();
     const record = await OtpModel.findOne({
       email,
@@ -151,9 +162,29 @@ export const otpService = {
     if (record.expiresAt.getTime() < Date.now()) {
       throw new ApiError(400, "This code has expired. Please request a new one.");
     }
+    return record;
+  },
 
+  // Validates a code and, for one-shot purposes (signup, email-change), marks it used right
+  // away so it can't be replayed. The "reset" purpose is deliberately NOT consumed here —
+  // resetPassword() below re-validates and consumes it as the very last step of actually
+  // changing the password, so the code the user is shown/typed keeps working right up until
+  // the password is changed, and only then becomes single-use.
+  async verifyOtp(input: VerifyOtpInput) {
+    const record = await this.checkOtp(input);
+    if (input.purpose !== "reset") {
+      record.isUsed = true;
+      await record.save();
+    }
+    return true;
+  },
+
+  // Final consumption of a "reset"-purpose code, called from auth.service.ts's resetPassword
+  // right before the password is actually changed. Marks the code used so it can't be reused
+  // for a second reset afterwards.
+  async consumeResetOtp(email: string, code: string) {
+    const record = await this.checkOtp({ email, code, purpose: "reset" });
     record.isUsed = true;
     await record.save();
-    return true;
   },
 };

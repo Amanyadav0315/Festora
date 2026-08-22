@@ -16,13 +16,18 @@ export const env = {
   corsOrigins: (process.env.CORS_ORIGIN ?? "http://localhost:3000,http://localhost:3001")
     .split(",")
     .map((origin) => origin.trim()),
-  // AWS SES SMTP credentials for sending OTP emails (see otp.service.ts). Left optional rather
-  // than required() so the rest of the app still boots on a machine that hasn't set these up
-  // yet — otp.service.ts throws a clear config error only when an email actually needs sending.
+  // Email sending is currently done via Resend (see src/lib/email.service.ts) — the active
+  // provider while AWS SES production access is pending. Left optional rather than required()
+  // so the rest of the app still boots on a machine that hasn't set this up yet;
+  // email.service.ts throws a clear config error only when an email actually needs sending.
+  resendApiKey: process.env.RESEND_API_KEY,
+  // AWS SES SMTP credentials — kept here, unused, so switching the active provider back to SES
+  // later is just swapping the implementation in email.service.ts, not re-plumbing env vars.
   smtpHost: process.env.AWS_SES_SMTP_HOST,
   smtpPort: Number(process.env.AWS_SES_SMTP_PORT ?? 587),
   smtpUser: process.env.AWS_SES_SMTP_USER,
   smtpPass: process.env.AWS_SES_SMTP_PASS,
   fromEmail: process.env.FROM_EMAIL ?? "noreply@eventsaman.com",
+  fromName: process.env.FROM_NAME ?? "Event Saman",
   siteUrl: process.env.SITE_URL ?? "https://eventsaman.com",
 };

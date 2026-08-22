@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { DeletedUserDTO, DeletedPostDTO } from "@eventsaman/types";
+import type { DeletedUserDTO, DeletedPostDTO, SelfDeletedUserDTO, DeletedAccountLogDTO } from "@eventsaman/types";
 import { apiFetch, ApiRequestError, ASSET_BASE_URL } from "@/lib/api";
 import { getAccessToken } from "@/lib/auth-client";
 import { ConfirmModal } from "@/components/admin/ConfirmModal";
@@ -21,7 +21,13 @@ function formatDate(iso: string) {
   });
 }
 
-type Tab = "users" | "posts";
+type Tab = "users" | "self-deleted" | "posts" | "log";
+
+const SOURCE_LABEL: Record<DeletedAccountLogDTO["source"], string> = {
+  "grace-period-expired": "Grace period expired",
+  "admin-forced": "Force-deleted by admin",
+  "admin-direct": "Deleted by admin",
+};
 
 function useDebounced<T>(value: T, delayMs: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -372,6 +378,275 @@ function DeletedUsersTab() {
   );
 }
 
+function SelfDeletedUsersTab() {
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounced(search, 350);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [page, setPage] = useState(1);
+  const [users, setUsers] = useState<SelfDeletedUserDTO[] | null>(null);
+  const [total, setTotal] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [purgeTarget, setPurgeTarget] = useState<SelfDeletedUserDTO | null>(null);
+
+  useEffect(() => setPage(1), [debouncedSearch, from, to]);
+
+  function reload() {
+    const token = getAccessToken();
+    setUsers(null);
+    const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) });
+    if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
+    if (from) params.set("from", from);
+    if (to) params.set("to", to);
+    apiFetch<{ users: SelfDeletedUserDTO[]; total: number }>(`/admin/self-deleted-users?${params}`, {
+      accessToken: token ?? undefined,
+    })
+      .then((body) => {
+        setUsers(body.users);
+        setTotal(body.total);
+      })
+      .catch((err) => setError(err instanceof ApiRequestError ? err.message : "Something went wrong"));
+  }
+
+  useEffect(reload, [page, debouncedSearch, from, to]);
+
+  async function purge(reason?: string) {
+    if (!purgeTarget || !reason) return;
+    const token = getAccessToken();
+    setBusyId(purgeTarget.id);
+    try {
+      await apiFetch(`/admin/self-deleted-users/${purgeTarget.id}/permanent`, {
+        method: "DELETE",
+        accessToken: token ?? undefined,
+        body: JSON.stringify({ reason }),
+      });
+      setUsers((prev) => (prev ? prev.filter((u) => u.id !== purgeTarget.id) : prev));
+      setPurgeTarget(null);
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? err.message : "Something went wrong");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  return (
+    <>
+      <p className="mb-4 rounded-lg bg-orange-50 px-3 py-2 text-xs text-orange-800">
+        These users deleted their own accounts. Each is kept for 60 days from the date shown (auto-restored if they
+        log back in during that window) before being purged automatically. An admin can purge one early below —
+        that action is irreversible and requires a reason.
+      </p>
+
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search name, business, phone, or email"
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm sm:w-72"
+        />
+        <DateFilters from={from} to={to} onFrom={setFrom} onTo={setTo} />
+      </div>
+
+      {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+
+      {users === null ? (
+        <p className="text-sm text-gray-500">Loading...</p>
+      ) : users.length === 0 ? (
+        <div className="rounded-xl border border-gray-100 bg-white px-4 py-14 text-center shadow-sm">
+          <p className="text-sm text-gray-500">No self-deleted accounts pending.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {users.map((u) => (
+            <div key={u.id} className="flex gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-gray-900">{u.name}</p>
+                    <p className="text-sm text-orange-600">{u.businessName}</p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      📞 {u.phone} {u.email ? `· ✉️ ${u.email}` : ""}
+                    </p>
+                  </div>
+                  <div className="text-right text-xs text-gray-400">
+                    <p>Requested {formatDate(u.deletionRequestedAt)}</p>
+                    <p>Auto-purges {formatDate(u.purgeAt)}</p>
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <button
+                    onClick={() => setPurgeTarget(u)}
+                    disabled={busyId === u.id}
+                    className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60"
+                  >
+                    Delete permanently
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between text-sm">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            className="rounded-md border border-gray-300 px-3 py-1.5 font-medium text-gray-700 disabled:opacity-40"
+          >
+            Previous
+          </button>
+          <span className="text-gray-500">
+            Page {page} of {totalPages} · {total} self-deleted accounts
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
+            className="rounded-md border border-gray-300 px-3 py-1.5 font-medium text-gray-700 disabled:opacity-40"
+          >
+            Next
+          </button>
+        </div>
+      )}
+
+      {purgeTarget && (
+        <ConfirmModal
+          title={`Permanently delete ${purgeTarget.name}?`}
+          description="This cannot be undone. Their account, store, and all posts will be erased for good, ahead of the automatic 60-day purge."
+          confirmLabel="Delete permanently"
+          requireReason
+          busy={busyId === purgeTarget.id}
+          onCancel={() => setPurgeTarget(null)}
+          onConfirm={purge}
+        />
+      )}
+    </>
+  );
+}
+
+function DeletedAccountLogTab() {
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounced(search, 350);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [page, setPage] = useState(1);
+  const [entries, setEntries] = useState<DeletedAccountLogDTO[] | null>(null);
+  const [total, setTotal] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => setPage(1), [debouncedSearch, from, to]);
+
+  function reload() {
+    const token = getAccessToken();
+    setEntries(null);
+    const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) });
+    if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
+    if (from) params.set("from", from);
+    if (to) params.set("to", to);
+    apiFetch<{ entries: DeletedAccountLogDTO[]; total: number }>(`/admin/deleted-account-log?${params}`, {
+      accessToken: token ?? undefined,
+    })
+      .then((body) => {
+        setEntries(body.entries);
+        setTotal(body.total);
+      })
+      .catch((err) => setError(err instanceof ApiRequestError ? err.message : "Something went wrong"));
+  }
+
+  useEffect(reload, [page, debouncedSearch, from, to]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  return (
+    <>
+      <p className="mb-4 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600">
+        Permanent record of every account that has actually been purged from the database — whether by the
+        automatic 60-day sweep, an admin's direct permanent delete, or an admin force-purging a self-deletion
+        early. Nothing here can be restored.
+      </p>
+
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search name, business, phone, or email"
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm sm:w-72"
+        />
+        <DateFilters from={from} to={to} onFrom={setFrom} onTo={setTo} />
+      </div>
+
+      {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+
+      {entries === null ? (
+        <p className="text-sm text-gray-500">Loading...</p>
+      ) : entries.length === 0 ? (
+        <div className="rounded-xl border border-gray-100 bg-white px-4 py-14 text-center shadow-sm">
+          <p className="text-sm text-gray-500">No permanently deleted accounts yet.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {entries.map((e) => (
+            <div key={e.id} className="flex gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-gray-900">{e.name}</p>
+                    {e.businessName && <p className="text-sm text-orange-600">{e.businessName}</p>}
+                    <p className="mt-1 text-xs text-gray-500">
+                      📞 {e.phone} {e.email ? `· ✉️ ${e.email}` : ""}
+                    </p>
+                  </div>
+                  <div className="text-right text-xs text-gray-400">
+                    <p>Purged {formatDate(e.deletedAt)}</p>
+                    {e.deletedByName && <p>by {e.deletedByName}</p>}
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
+                    {SOURCE_LABEL[e.source]}
+                  </span>
+                  {e.reason && (
+                    <p className="rounded-lg bg-gray-50 px-3 py-1.5 text-sm text-gray-700">
+                      <span className="font-medium text-gray-500">Reason: </span>
+                      {e.reason}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between text-sm">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            className="rounded-md border border-gray-300 px-3 py-1.5 font-medium text-gray-700 disabled:opacity-40"
+          >
+            Previous
+          </button>
+          <span className="text-gray-500">
+            Page {page} of {totalPages} · {total} entries
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
+            className="rounded-md border border-gray-300 px-3 py-1.5 font-medium text-gray-700 disabled:opacity-40"
+          >
+            Next
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
 function DeletedPostsTab() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounced(search, 350);
@@ -677,14 +952,22 @@ export default function DeletedItemsPage() {
     <div>
       <div className="mb-5 flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900">Deleted Items</h1>
-        <div className="flex gap-1 rounded-lg border border-gray-200 bg-white p-1 text-sm">
+        <div className="flex flex-wrap gap-1 rounded-lg border border-gray-200 bg-white p-1 text-sm">
           <button
             onClick={() => setTab("users")}
             className={`rounded-md px-3 py-1.5 font-medium ${
               tab === "users" ? "bg-orange-600 text-white" : "text-gray-600 hover:bg-gray-100"
             }`}
           >
-            Users
+            Deleted by admin
+          </button>
+          <button
+            onClick={() => setTab("self-deleted")}
+            className={`rounded-md px-3 py-1.5 font-medium ${
+              tab === "self-deleted" ? "bg-orange-600 text-white" : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            Self-deleted
           </button>
           <button
             onClick={() => setTab("posts")}
@@ -694,10 +977,21 @@ export default function DeletedItemsPage() {
           >
             Posts
           </button>
+          <button
+            onClick={() => setTab("log")}
+            className={`rounded-md px-3 py-1.5 font-medium ${
+              tab === "log" ? "bg-orange-600 text-white" : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            Deletion log
+          </button>
         </div>
       </div>
 
-      {tab === "users" ? <DeletedUsersTab /> : <DeletedPostsTab />}
+      {tab === "users" && <DeletedUsersTab />}
+      {tab === "self-deleted" && <SelfDeletedUsersTab />}
+      {tab === "posts" && <DeletedPostsTab />}
+      {tab === "log" && <DeletedAccountLogTab />}
     </div>
   );
 }

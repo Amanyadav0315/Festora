@@ -25,6 +25,11 @@ import { globalLimiter } from "./middleware/rateLimit";
 export function createApp() {
   const app = express();
 
+  // Behind Nginx in production, req.ip/X-Forwarded-For is only trustworthy once Express knows
+  // there's exactly one reverse proxy in front of it — without this, express-rate-limit throws
+  // (it refuses to key rate limits off a spoofable X-Forwarded-For by default).
+  app.set("trust proxy", 1);
+
   // crossOriginResourcePolicy relaxed so uploaded images (served from /uploads) can still be
   // embedded by the frontend/admin apps on their own origins.
   app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
