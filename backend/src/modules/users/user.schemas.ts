@@ -26,7 +26,7 @@ export const updatePhoneVisibilitySchema = z.object({
 
 export type UpdatePhoneVisibilityInput = z.infer<typeof updatePhoneVisibilitySchema>;
 
-// Email/phone can't go through the plain profile PATCH — each change is verified with an OTP.
+// Email/phone can't go through the plain profile PATCH - each change is verified with an OTP.
 const emailField = z.string({ required_error: "Please enter your email address" }).email("Please enter a valid email address");
 const phoneField = z
   .string({ required_error: "Please enter your phone number" })
