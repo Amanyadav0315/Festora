@@ -11,7 +11,12 @@ import {
   changePasswordSchema,
   deleteAccountSchema,
   updatePhoneVisibilitySchema,
+  requestEmailChangeSchema,
+  confirmEmailChangeSchema,
+  requestPhoneChangeSchema,
+  confirmPhoneChangeSchema,
 } from "./user.schemas";
+import { otpService } from "../otp/otp.service";
 import { avatarImageUrl } from "../../middleware/upload";
 
 // Best-effort cleanup so replacing/removing an avatar doesn't leave orphaned files behind in
@@ -46,6 +51,28 @@ function toStoreDTO(store: any) {
     unavailableDates: store.unavailableDates ?? [],
     createdAt: store.createdAt.toISOString(),
   };
+}
+
+async function requirePasswordMatch(userId: string, password: string) {
+  const user = await UserModel.findById(userId);
+  if (!user) throw new ApiError(404, "User not found");
+  const valid = await bcrypt.compare(password, user.passwordHash);
+  if (!valid) throw new ApiError(400, "Incorrect password");
+  return user;
+}
+
+// The unique indexes are the real guard against two accounts claiming the same email/phone;
+// the up-front findBy* checks only give a friendlier error in the common case.
+async function saveContactChange(user: InstanceType<typeof UserModel>, field: "email" | "phone", value: string) {
+  user[field] = value;
+  try {
+    await user.save();
+  } catch (err: any) {
+    if (err?.code === 11000) {
+      throw new ApiError(409, field === "email" ? "Email already in use" : "Phone number already in use");
+    }
+    throw err;
+  }
 }
 
 export const userController = {
@@ -90,6 +117,51 @@ export const userController = {
     user.passwordHash = await bcrypt.hash(input.newPassword, SALT_ROUNDS);
     await user.save();
     res.json({ updated: true });
+  },
+
+  // Email change: the code goes to the NEW address, so only someone who controls it can claim it.
+  async requestEmailChange(req: Request, res: Response) {
+    const input = requestEmailChangeSchema.parse(req.body);
+    const user = await requirePasswordMatch(req.user!.sub, input.password);
+    const newEmail = input.newEmail.toLowerCase().trim();
+    if (newEmail === user.email) throw new ApiError(400, "This is already your email address");
+    if (await userRepository.findByEmail(newEmail)) throw new ApiError(409, "Email already in use");
+    const result = await otpService.sendOtp({ email: newEmail, purpose: "email-change" });
+    res.json(result);
+  },
+
+  async confirmEmailChange(req: Request, res: Response) {
+    const input = confirmEmailChangeSchema.parse(req.body);
+    const newEmail = input.newEmail.toLowerCase().trim();
+    const user = await UserModel.findById(req.user!.sub);
+    if (!user) throw new ApiError(404, "User not found");
+    if (await userRepository.findByEmail(newEmail)) throw new ApiError(409, "Email already in use");
+    await otpService.verifyOtp({ email: newEmail, code: input.code, purpose: "email-change" });
+    await saveContactChange(user, "email", newEmail);
+    res.json({ user: toUserDTO(user) });
+  },
+
+  // Phone change: there's no SMS provider, so the code goes to the account's current (verified)
+  // email instead. Accounts without an email must add one first.
+  async requestPhoneChange(req: Request, res: Response) {
+    const input = requestPhoneChangeSchema.parse(req.body);
+    const user = await requirePasswordMatch(req.user!.sub, input.password);
+    if (!user.email) throw new ApiError(400, "Please add an email address to your account first to verify a phone number change");
+    if (input.newPhone === user.phone) throw new ApiError(400, "This is already your phone number");
+    if (await userRepository.findByPhone(input.newPhone)) throw new ApiError(409, "Phone number already in use");
+    const result = await otpService.sendOtp({ email: user.email, purpose: "phone-change" });
+    res.json(result);
+  },
+
+  async confirmPhoneChange(req: Request, res: Response) {
+    const input = confirmPhoneChangeSchema.parse(req.body);
+    const user = await UserModel.findById(req.user!.sub);
+    if (!user) throw new ApiError(404, "User not found");
+    if (!user.email) throw new ApiError(400, "Please add an email address to your account first to verify a phone number change");
+    if (await userRepository.findByPhone(input.newPhone)) throw new ApiError(409, "Phone number already in use");
+    await otpService.verifyOtp({ email: user.email, code: input.code, purpose: "phone-change" });
+    await saveContactChange(user, "phone", input.newPhone);
+    res.json({ user: toUserDTO(user) });
   },
 
   async updatePhoneVisibility(req: Request, res: Response) {

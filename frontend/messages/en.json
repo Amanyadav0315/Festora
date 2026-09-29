@@ -281,7 +281,21 @@
     "activateListing": "Reactivate listing",
     "deleteListing": "Delete listing",
     "deleteListingConfirm": "Delete this listing? This can't be undone.",
-    "paused": "Paused"
+    "paused": "Paused",
+    "changeEmailOption": "Change email",
+    "changePhoneOption": "Change phone number",
+    "newEmail": "New email address",
+    "newPhone": "New phone number (10 digits)",
+    "currentPasswordConfirm": "Enter your password to confirm",
+    "sendCode": "Send verification code",
+    "sendingCode": "Please wait...",
+    "verifyAndSave": "Verify and save",
+    "otpLabel": "Verification code",
+    "emailCodeSentTo": "We sent a 6-digit code to {target}.",
+    "emailChangeDone": "Your email address has been updated.",
+    "phoneChangeDone": "Your phone number has been updated.",
+    "phoneCodeHint": "For your security, the code is sent to your current email address.",
+    "changeDetails": "Use different details"
   },
   "share": {
     "button": "Share",

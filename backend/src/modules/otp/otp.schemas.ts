@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const otpPurposeSchema = z.enum(["signup", "reset", "email-change"]);
+export const otpPurposeSchema = z.enum(["signup", "reset", "email-change", "phone-change"]);
 
 export const sendOtpSchema = z.object({
   email: z.string({ required_error: "Please enter your email address" }).email("Please enter a valid email address"),

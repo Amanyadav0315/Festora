@@ -12,7 +12,6 @@ export default function EditNamePage() {
   const router = useRouter();
   const t = useTranslations("socialProfile");
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -24,7 +23,6 @@ export default function EditNamePage() {
       return;
     }
     setName(user.name);
-    setEmail(user.email ?? "");
     setPhone(user.phone);
   }, [router]);
 
@@ -37,7 +35,7 @@ export default function EditNamePage() {
       const { user } = await apiFetch<{ user: UserDTO }>("/users/me", {
         method: "PATCH",
         accessToken: token,
-        body: JSON.stringify({ name: name.trim(), email: email.trim() || undefined }),
+        body: JSON.stringify({ name: name.trim() }),
       });
       saveUser(user);
       router.push("/account/edit");
@@ -60,16 +58,6 @@ export default function EditNamePage() {
             onChange={(e) => setName(e.target.value)}
             required
             minLength={2}
-            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
-          />
-        </div>
-
-        <div>
-          <label className="text-xs font-medium text-gray-500">{t("emailOptional")}</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
             className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
           />
         </div>

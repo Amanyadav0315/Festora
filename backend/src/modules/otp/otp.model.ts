@@ -4,7 +4,7 @@ const otpSchema = new Schema(
   {
     email: { type: String, required: true, lowercase: true, trim: true, index: true },
     code: { type: String, required: true },
-    purpose: { type: String, enum: ["signup", "reset", "email-change"], required: true },
+    purpose: { type: String, enum: ["signup", "reset", "email-change", "phone-change"], required: true },
     expiresAt: { type: Date, required: true },
     isUsed: { type: Boolean, default: false },
   },

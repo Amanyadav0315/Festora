@@ -281,7 +281,21 @@
     "activateListing": "फिर से चालू करें",
     "deleteListing": "लिस्टिंग हटाएं",
     "deleteListingConfirm": "इस लिस्टिंग को हटाएं? इसे वापस नहीं लाया जा सकता।",
-    "paused": "रुकी हुई"
+    "paused": "रुकी हुई",
+    "changeEmailOption": "ईमेल बदलें",
+    "changePhoneOption": "फ़ोन नंबर बदलें",
+    "newEmail": "नया ईमेल पता",
+    "newPhone": "नया फ़ोन नंबर (10 अंक)",
+    "currentPasswordConfirm": "पुष्टि के लिए अपना पासवर्ड दर्ज करें",
+    "sendCode": "वेरिफिकेशन कोड भेजें",
+    "sendingCode": "कृपया प्रतीक्षा करें...",
+    "verifyAndSave": "सत्यापित करें और सेव करें",
+    "otpLabel": "वेरिफिकेशन कोड",
+    "emailCodeSentTo": "हमने {target} पर 6 अंकों का कोड भेजा है।",
+    "emailChangeDone": "आपका ईमेल पता अपडेट हो गया है।",
+    "phoneChangeDone": "आपका फ़ोन नंबर अपडेट हो गया है।",
+    "phoneCodeHint": "आपकी सुरक्षा के लिए कोड आपके मौजूदा ईमेल पर भेजा जाता है।",
+    "changeDetails": "अलग जानकारी का उपयोग करें"
   },
   "share": {
     "button": "शेयर करें",

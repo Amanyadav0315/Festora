@@ -103,7 +103,8 @@ export default function ForgotPasswordPage() {
       });
       saveAccessToken(res.accessToken);
       saveUser(res.user);
-      router.push("/");
+      // Reset can start mid-onboarding (no onboarded cookie yet); "/" would bounce to /welcome.
+      router.push(document.cookie.includes("eventsaman_onboarded=1") ? "/" : "/onboarding/language");
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : t("somethingWrong"));
     } finally {

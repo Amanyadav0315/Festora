@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 const ONBOARDED_COOKIE = "eventsaman_onboarded";
-const BYPASS_PREFIXES = ["/welcome", "/onboarding", "/_next", "/api"];
+// /forgot-password and /signup/confirm are linked from the onboarding auth screen, which runs
+// before the onboarded cookie exists — gating them sent new app users back to /welcome.
+const BYPASS_PREFIXES = ["/welcome", "/onboarding", "/_next", "/api", "/forgot-password", "/signup/confirm"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

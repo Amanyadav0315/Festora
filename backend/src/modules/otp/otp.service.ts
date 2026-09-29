@@ -56,6 +56,11 @@ const PURPOSE_COPY: Record<string, { subject: string; heading: string; intro: st
     heading: "Confirm your new email address",
     intro: "Use the verification code below to confirm this email address on your Event Saman account.",
   },
+  "phone-change": {
+    subject: "Confirm your new Event Saman phone number",
+    heading: "Confirm your new phone number",
+    intro: "Use the verification code below to confirm the change of phone number on your Event Saman account.",
+  },
 };
 
 function buildEmailHtml(purpose: string, code: string, resetLink?: string) {
